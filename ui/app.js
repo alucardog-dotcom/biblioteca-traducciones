@@ -1,0 +1,799 @@
+'use strict';
+// Biblioteca de traducciones: catálogo con portadas, tus juegos (ROMs de tus carpetas y juegos de PC
+// de Steam, GOG y Epic) emparejados con sus traducciones y la cola de trabajos. Lo que toca disco o
+// red lo hace el programa (src-tauri) con invoke().
+
+const T = window.__TAURI__;
+const SYS = {nes:'NES',fds:'Famicom Disk System',snes:'Super Nintendo',satellaview:'Satellaview',sufami:'SuFami Turbo',gb:'Game Boy',gbc:'Game Boy Color',gba:'Game Boy Advance',n64:'Nintendo 64',nds:'Nintendo DS','3ds':'Nintendo 3DS',virtualboy:'Virtual Boy',gamecube:'GameCube',wii:'Wii',sg1000:'SG-1000',mastersystem:'Master System',gamegear:'Game Gear',megadrive:'Mega Drive',sega32x:'32X',megacd:'Mega CD',saturn:'Saturn',dreamcast:'Dreamcast',psx:'PlayStation',ps2:'PlayStation 2',psp:'PSP',psvita:'PS Vita',pcengine:'PC Engine',supergrafx:'SuperGrafx',pcenginecd:'PC Engine CD',pcfx:'PC-FX',neogeo:'Neo Geo',neogeocd:'Neo Geo CD',ngp:'Neo Geo Pocket',ngpc:'Neo Geo Pocket Color',wswan:'WonderSwan',wswanc:'WonderSwan Color',msx1:'MSX',msx2:'MSX2',pc98:'PC-98',x68000:'X68000',zxspectrum:'ZX Spectrum',amstradcpc:'Amstrad CPC',c64:'Commodore 64','3do':'3DO',colecovision:'ColecoVision',dos:'MS-DOS',windows:'Windows clásico',scummvm:'ScummVM',easyrpg:'RPG Maker',arcade:'Arcade',lynx:'Atari Lynx',xbox:'Xbox',pc:'PC'};
+const PC = new Set(['dos', 'windows', 'scummvm', 'easyrpg', 'pc']);
+const TIENDA = {steam: 'Steam', gog: 'GOG', epic: 'Epic Games'};
+const F = {sistema:0, juego:1, orig:2, grupo:3, version:4, fecha:5, estado:6, fmt:7, rom:8, crc:9, sha1:10, url:11, fuente:12, notas:13};
+const FUENTE = {wave: 'Traducciones Wave', rhdn2021: 'la copia de romhacking.net (2021) en archive.org', github: 'GitHub',
+                ra: 'la copia de parches de RetroAchievements en GitHub'};
+const VISTAS = {inicio: 'Inicio', mios: 'Mis juegos', todas: 'Descubrir', hechas: 'Traducidos', descargas: 'Descargas', ajustes: 'Ajustes'};
+
+let filas = [], grupos = [], porClave = new Map(), centro = {sistemas: {}, filas: {}}, traducidos = {}, tes = new Map();
+let juegos = [], pares = [], paresPorFila = new Map();
+let vista = 'inicio', limit = 60, lista = [];
+let filtro = {sys: '', directa: false, completa: false, sinia: false};
+let escaneando = false, trabajos = [], espera = null, ajustes = {}, propias = {};
+const $ = id => document.getElementById(id);
+const main = $('main');
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+
+async function api(cmd, args, opciones) {
+  try {
+    const r = await T.core.invoke(cmd, args || {}, opciones);
+    return typeof r === 'string' && /^[{\[]/.test(r) ? JSON.parse(r) : r;
+  } catch (e) {
+    throw new Error(typeof e === 'string' ? e : (e && e.message) || String(e));
+  }
+}
+
+function aviso(texto, tipo = '') {
+  const t = document.createElement('div');
+  t.className = 'toast ' + tipo;
+  t.textContent = texto;
+  // Con una ventana abierta (la ficha, la bienvenida), el aviso va dentro: fuera quedaría detrás.
+  const abierta = document.querySelector('dialog[open]');
+  const caja = abierta ? abierta.querySelector('.toasts') || abierta.appendChild(Object.assign(document.createElement('div'), {className: 'toasts'})) : $('toasts');
+  caja.append(t);
+  setTimeout(() => t.remove(), 6000);
+}
+
+// ---------------------------------------------------------------- nombres (como Parchear.ps1)
+const STOP = new Set(['the','a','an','el','la','los','las','de','del','of','and','y','en','to','traduccion','traducido','traducida','translation','translated','spanish','espanol','castellano','es','esp','spa','parche','patch','fix','final','rev','beta','completa','completo','ips','bps','ups','ppf','xdelta','aps','rom','iso','track','disc','usa','japan','europe','jap','jp','us','eu']);
+const ROMAN = {ii: '2', iii: '3', iv: '4', vi: '6', vii: '7', viii: '8', ix: '9'};
+function tokens(t) {
+  if (!t) return [];
+  const s = t.replace(/\[[^\]]*\]/g, ' ').replace(/\([^)]*\)/g, ' ').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase().replace(/['’]/g, '').replace(/[^a-z0-9]+/g, ' ');
+  const out = [];
+  for (let w of s.split(' ')) {
+    if (!w || /^v\d+$/.test(w) || (/^\d+[a-z]?$/.test(w) && w.length > 4) || STOP.has(w)) continue;
+    w = ROMAN[w] || w;
+    if (!out.includes(w)) out.push(w);
+  }
+  return out;
+}
+function simil(a, b) {
+  if (!a.length || !b.length) return 0;
+  // Secuelas: los números tienen que coincidir ("Mega Man" no es "Mega Man 2").
+  const na = a.filter(x => /^\d+$/.test(x)).sort().join(), nb = b.filter(x => /^\d+$/.test(x)).sort().join();
+  if (na !== nb) return 0;
+  const inter = a.filter(x => b.includes(x)).length;
+  if (!inter) return 0;
+  const union = new Set([...a, ...b]).size, min = Math.min(a.length, b.length);
+  return min >= 2 ? Math.max(inter / union, 0.9 * inter / min) : inter / union;
+}
+
+// ---------------------------------------------------------------- datos
+function cargarDatos(d) {
+  centro = d.centro || {sistemas: {}, filas: {}};
+  traducidos = d.traducidos || {};
+  filas = d.filas.map((a, i) => {
+    const key = a[F.sistema] + '|' + a[F.juego] + '|' + a[F.grupo];
+    const x = centro.filas[key] || {};
+    // Una descarga puede pedir otra revisión de la ROM que la ficha (p. ej. la de RetroAchievements): también vale.
+    const crcs = new Set([...a[F.crc].split('|'), ...(x.d || []).flatMap(d => d.c || [])]
+      .map(c => c.trim().toLowerCase()).filter(c => /^[0-9a-f]{8}$/.test(c)));
+    const titulos = [a[F.orig], a[F.juego], ...a[F.rom].split('|')].map(tokens).filter(t => t.length);
+    return {i, a, key, s: a[F.sistema], crcs, titulos, x};
+  });
+  porClave = new Map(filas.map(r => [r.key, r]));
+  agrupar();
+}
+
+// Un juego, una ficha: las traducciones del mismo juego (mismo sistema y mismo título, o mismo AppID de
+// Steam) van juntas, y dentro de la ficha se elige cuál.
+const conPortada = r => !!(r.x.pm || r.x.p || r.x.steam || r.x.pu);
+function claveJuego(r) {
+  if (r.x.steam) return 'steam|' + r.x.steam;
+  const t = tokens(r.a[F.juego]);
+  return r.s + '|' + (t.length ? [...t].sort().join(' ') : r.a[F.juego].toLowerCase());
+}
+function agrupar() {
+  grupos = [];
+  const porJuego = new Map();
+  for (const r of filas) {
+    const k = claveJuego(r);
+    let gr = porJuego.get(k);
+    if (!gr) { gr = {k, s: r.s, filas: []}; porJuego.set(k, gr); grupos.push(gr); }
+    gr.filas.push(r);
+    r.gr = gr;
+  }
+  for (const gr of grupos) {
+    // El título y la portada del juego: los de una ficha con portada y, si puede ser, sin paréntesis.
+    const rep = gr.filas.slice().sort((x, y) => conPortada(y) - conPortada(x) || /\(/.test(x.a[F.juego]) - /\(/.test(y.a[F.juego]))[0];
+    gr.titulo = rep.a[F.juego];
+    gr.portada = gr.filas.find(r => r.x.pm) || gr.filas.find(conPortada) || rep;
+  }
+}
+
+// ¿Puede la traducción `r` ser para el juego `g` por sistema? Los de PC solo con los de PC; un juego
+// cuyo sistema no se sabe (un .bin o un disco en una carpeta sin nombre de sistema) con cualquiera de consola.
+const mismoSistema = (g, r) => g.s === 'pc' ? PC.has(r.s) : g.s ? r.s === g.s : !PC.has(r.s);
+const anyadir = (m, k, v) => { if (!m.has(k)) m.set(k, []); m.get(k).push(v); };
+
+function emparejar() {
+  const porCrc = new Map(), porToken = new Map(), porSteam = new Map();
+  for (const r of filas) {
+    for (const c of r.crcs) anyadir(porCrc, c, r);
+    for (const t of new Set(r.titulos.flat())) anyadir(porToken, t, r);
+    if (r.x.steam) anyadir(porSteam, String(r.x.steam), r);
+  }
+  pares = [];
+  for (const g of juegos) {
+    const gc = new Set((g.c || []).map(x => x.toLowerCase()));
+    const vistosJuego = new Set();
+    // El CRC32 dice el juego exacto, esté en la carpeta que esté.
+    const exactos = [...[...gc].flatMap(c => porCrc.get(c) || []), ...(g.steam ? porSteam.get(String(g.steam)) || [] : [])];
+    for (const r of exactos) {
+      if (!vistosJuego.has(r)) { vistosJuego.add(r); pares.push({g, r, tipo: 'exacto'}); }
+    }
+    const gt = tokens(g.n), cands = new Set();
+    for (const t of gt) for (const r of porToken.get(t) || []) if (mismoSistema(g, r)) cands.add(r);
+    for (const r of cands) {
+      if (vistosJuego.has(r)) continue;
+      if (Math.max(...r.titulos.map(t => simil(gt, t))) < 0.8) continue;
+      vistosJuego.add(r);
+      pares.push({g, r, tipo: r.crcs.size && gc.size ? 'otra' : 'posible'});
+    }
+  }
+  const orden = {exacto: 0, posible: 1, otra: 2};
+  pares.sort((p, q) => orden[p.tipo] - orden[q.tipo] || p.g.n.localeCompare(q.g.n));
+  paresPorFila = new Map();
+  for (const p of pares) { if (!paresPorFila.has(p.r.key)) paresPorFila.set(p.r.key, []); paresPorFila.get(p.r.key).push(p); }
+}
+
+const esIA = r => r.a[F.notas].startsWith('[IA]');
+const directa = r => (r.x.d || []).length > 0;
+const completa = r => /complet/i.test(r.a[F.estado]);
+const salidaDe = (r, g) => traducidos[r.key] || (g && tes.get(g.s + '|' + g.n + ' [T-Es]')) || '';
+const hecha = (r, g) => !!salidaDe(r, g);
+const mejorPar = r => (paresPorFila.get(r.key) || [])[0] || null;
+const ORDEN = {exacto: 0, posible: 1, otra: 2};
+
+// Cuánto conviene enseñar primero una traducción del juego: la ya aplicada, la que vale para tu copia,
+// la de un clic, la completa y la más reciente.
+function puntos(r) {
+  const p = mejorPar(r);
+  return (hecha(r, p && p.g) ? 10000 : 0) + (p ? (3 - ORDEN[p.tipo]) * 1000 : 0) + (directa(r) ? 100 : 0) + (completa(r) ? 50 : 0)
+    + (esIA(r) ? 0 : 10) + (conPortada(r) ? 1 : 0);
+}
+const ordenadas = gr => gr.filas.slice().sort((x, y) => puntos(y) - puntos(x) || (y.a[F.fecha] || '').localeCompare(x.a[F.fecha] || ''));
+
+// La traducción que sale en la tarjeta del juego (entre las que pasan los filtros).
+function elegida(gr, vale = () => true) {
+  const r = ordenadas(gr).find(vale);
+  return r ? {gr, r, p: mejorPar(r)} : null;
+}
+
+// Juegos de cada sección.
+function gruposDe(v) {
+  if (v === 'mios') {
+    const conPar = pares.filter(p => p.tipo !== 'otra' || !pares.some(o => o.g === p.g && o.tipo !== 'otra'));
+    return [...new Set(conPar.map(p => p.r.gr))];
+  }
+  if (v === 'hechas') return grupos.filter(gr => gr.filas.some(r => hecha(r, (mejorPar(r) || {}).g)));
+  return grupos;
+}
+const itemsDe = v => gruposDe(v).map(gr => elegida(gr));
+
+function filtrar(grs) {
+  const q = tokens($('q').value);
+  const vale = r => (!filtro.directa || directa(r)) && (!filtro.completa || completa(r)) && (!filtro.sinia || !esIA(r));
+  const out = [];
+  for (const gr of grs) {
+    if (filtro.sys && gr.s !== filtro.sys) continue;
+    if (q.length) {
+      const t = tokens(gr.filas.map(r => [r.a[F.juego], r.a[F.orig], r.a[F.grupo], (mejorPar(r) || {g: {n: ''}}).g.n].join(' ')).join(' '));
+      if (!q.every(w => t.some(x => x.startsWith(w)))) continue;
+    }
+    const it = elegida(gr, vale);
+    if (it) out.push(it);
+  }
+  return out;
+}
+
+// ---------------------------------------------------------------- portadas
+const thumb = (sys, name, tipo) => 'https://thumbnails.libretro.com/' + encodeURIComponent(sys) + '/' + tipo + '/' +
+  encodeURIComponent(name.replace(/[&*\/:`<>?\\|"]/g, '_')) + '.png';
+// Juegos de PC: la carátula vertical de Steam y, si no la tiene, su cabecera.
+const steamImg = (id, f) => `https://cdn.cloudflare.steamstatic.com/steam/apps/${encodeURIComponent(id)}/${f}`;
+// La que has puesto tú (una imagen copiada a la carpeta de datos o un enlace).
+const propia = gr => {
+  const m = gr && propias[gr.k];
+  return m ? m.url || T.core.convertFileSrc(m.ruta) : '';
+};
+// La portada del juego: la tuya, la elegida a mano para el catálogo (va dentro del programa, en
+// portadas\) o la de cualquiera de sus fichas que la tenga (libretro, Steam o LaunchBox).
+function portada(r, done) {
+  const c = r.gr ? r.gr.portada : r;
+  const sysLib = c.x.ps || centro.sistemas[c.s];
+  const tipo = c.x.pt || 'Named_Boxarts', alt = tipo === 'Named_Boxarts' ? 'Named_Titles' : 'Named_Snaps';
+  // El título queda debajo mientras la portada se descarga (y si no existe).
+  // Se prueban en orden hasta que una carga: la tuya, la del catálogo, la de libretro o Steam, la de
+  // LaunchBox y la pantalla de título.
+  const urls = [propia(r.gr), c.x.pm, ...(c.x.steam ? [steamImg(c.x.steam, 'library_600x900.jpg'), c.x.pu, steamImg(c.x.steam, 'header.jpg')]
+    : c.x.p && sysLib ? [thumb(sysLib, c.x.p, tipo), c.x.pu, thumb(sysLib, c.x.p, alt)] : [c.x.pu])];
+  const [primera, ...resto] = urls.filter(Boolean);
+  let img = `<div class="ph">${esc(r.gr ? r.gr.titulo : r.a[F.juego])}</div>`;
+  if (primera) img += `<img loading="lazy" alt="" src="${esc(primera)}" data-alt="${esc(resto.join(' '))}">`;
+  return `<div class="cover">${img}<span class="sys">${esc(SYS[r.s] || r.s)}</span>${done ? '<span class="done">Traducido</span>' : ''}<span class="soltar">Suelta la imagen para usarla de portada</span></div>`;
+}
+
+// Poner tu portada: eligiendo una imagen, con un enlace, pegándola (Ctrl+V) o soltándola sobre el juego.
+async function ponerPortada(gr, cmd, args) {
+  try {
+    propias = await api(cmd, {clave: gr.k, ...args});
+    refrescarPortadas(gr);
+    aviso(cmd === 'quitar_portada' ? 'Vuelve a salir la portada automática.' : 'Portada cambiada.', 'ok');
+  } catch (e) { aviso(e.message, 'bad'); }
+}
+async function pegarPortada(gr, fichero) {
+  try {
+    const datos = new Uint8Array(await fichero.arrayBuffer());
+    propias = await api('pegar_portada', datos, {headers: {clave: encodeURIComponent(gr.k)}});
+    refrescarPortadas(gr);
+    aviso('Portada cambiada.', 'ok');
+  } catch (e) { aviso(e.message, 'bad'); }
+}
+// Cambia la portada en las tarjetas que se ven y en la ficha, sin volver a pintar la lista.
+function refrescarPortadas(gr) {
+  main.querySelectorAll('.card').forEach(card => {
+    const t = tarjetas[+card.dataset.n];
+    if (t && t.gr === gr) card.querySelector('.cover').outerHTML = portada(t.r, hecha(t.r, t.p && t.p.g));
+  });
+  if ($('ficha').open && fichaActual && fichaActual.gr === gr) abrirFicha(fichaActual.r, fichaActual.p);
+}
+// Las imágenes que se sueltan en la ventana llegan por Tauri (con su ruta), no como un «drop» de la página.
+const IMAGEN = /\.(png|jpe?g|webp|gif|bmp|avif)$/i;
+let arrastre = null;
+function grupoBajo(pos) {
+  const el = document.elementFromPoint(pos.x / devicePixelRatio, pos.y / devicePixelRatio);
+  const card = el && !$('ficha').open && el.closest('.card');
+  if (card) return {gr: tarjetas[+card.dataset.n].gr, cover: card.querySelector('.cover')};
+  if ($('ficha').open && fichaActual) return {gr: fichaActual.gr, cover: $('f-body').querySelector('.f-cover .cover')};
+  return null;
+}
+T.webview.getCurrentWebview().onDragDropEvent(({payload: d}) => {
+  document.querySelectorAll('.cover.soltando').forEach(c => c.classList.remove('soltando'));
+  if (d.type === 'leave') return;
+  if (d.type === 'enter') arrastre = (d.paths || []).find(p => IMAGEN.test(p)) || null;
+  if (!arrastre) return;
+  const bajo = grupoBajo(d.position);
+  if (!bajo) return;
+  if (d.type === 'drop') { arrastre = null; return ponerPortada(bajo.gr, 'poner_portada', {origen: (d.paths || []).find(p => IMAGEN.test(p))}); }
+  if (bajo.cover) bajo.cover.classList.add('soltando');
+});
+document.addEventListener('paste', e => {
+  if (!$('ficha').open || !fichaActual || e.target.closest('input, textarea')) return;
+  const img = [...e.clipboardData.items].find(i => i.kind === 'file' && i.type.startsWith('image/'));
+  if (img) { e.preventDefault(); return pegarPortada(fichaActual.gr, img.getAsFile()); }
+  const texto = e.clipboardData.getData('text').trim();
+  if (/^https?:\/\/\S+$/i.test(texto)) { e.preventDefault(); return ponerPortada(fichaActual.gr, 'poner_portada', {origen: texto}); }
+});
+// La política de seguridad no deja poner onload/onerror en el HTML: se escuchan aquí.
+document.addEventListener('load', e => { if (e.target.tagName === 'IMG') e.target.classList.add('ok'); }, true);
+document.addEventListener('error', e => {
+  const img = e.target;
+  if (img.tagName !== 'IMG' || !img.closest('.cover')) return;
+  const [siguiente, ...resto] = (img.dataset.alt || '').split(' ').filter(Boolean);
+  if (siguiente) { img.dataset.alt = resto.join(' '); img.src = siguiente; } else img.remove();
+}, true);
+
+// ---------------------------------------------------------------- tarjetas
+function badges(r, p) {
+  const b = [];
+  if (p) b.push(p.tipo === 'exacto' ? '<span class="badge ok">Tu versión vale</span>'
+    : p.tipo === 'posible' ? '<span class="badge warn">Sin comprobar</span>' : '<span class="badge bad">Pide otra versión</span>');
+  if (PC.has(r.s)) b.push('<span class="badge">Instalación manual</span>');
+  else if (directa(r)) b.push('<span class="badge acc">Un clic</span>');
+  if (esIA(r)) b.push('<span class="badge warn">IA</span>');
+  return `<div class="badges">${b.join('')}</div>`;
+}
+
+function boton(r, p) {
+  const g = p && p.g;
+  if (hecha(r, g)) return `<button class="btn primary" data-act="jugar">Jugar</button>`;
+  if (!p || p.tipo === 'otra' || PC.has(r.s)) return `<button class="btn" data-act="ficha">Ver ficha</button>`;
+  return directa(r) ? `<button class="btn primary" data-act="traducir">Traducir</button>` : `<button class="btn" data-act="ficha">Conseguir parche</button>`;
+}
+
+const versionDe = r => r.a[F.version] ? 'v' + r.a[F.version].replace(/^v\s*/i, '') : '';
+let tarjetas = [];
+function tarjeta({gr, r, p}) {
+  const n = tarjetas.push({gr, r, p}) - 1;
+  const varias = gr.filas.length > 1;
+  return `<article class="card" data-n="${n}">
+    ${portada(r, hecha(r, p && p.g))}
+    <div class="body">
+      <div class="title">${esc(gr.titulo)}</div>
+      <div class="meta">${varias ? `<b>${gr.filas.length} traducciones</b> · ` : ''}${esc(r.a[F.grupo] || 'Grupo desconocido')}${versionDe(r) ? ' · ' + esc(versionDe(r)) : ''}</div>
+      ${badges(r, p)}
+      <div class="actions">${boton(r, p)}</div>
+    </div>
+  </article>`;
+}
+
+// ---------------------------------------------------------------- vistas
+function ir(v) {
+  vista = v; limit = 60;
+  try { localStorage.setItem('vista', v); } catch (e) { }
+  pintar();
+  main.scrollTop = 0;
+}
+
+function contadores() {
+  const mios = new Set(pares.filter(p => p.tipo !== 'otra').map(p => p.r.gr)).size;
+  $('n-mios').textContent = mios || '';
+  $('n-hechas').textContent = gruposDe('hechas').length || '';
+  const activos = trabajos.filter(t => !['hecho', 'error'].includes(t.estado)).length;
+  $('n-dl').textContent = activos || '';
+  return mios;
+}
+
+function pintar() {
+  document.querySelectorAll('.nav[data-go]').forEach(b => b.toggleAttribute('aria-current', b.dataset.go === vista) && b.setAttribute('aria-current', 'page'));
+  contadores();
+  tarjetas = [];
+  if (vista === 'inicio') return pintarInicio();
+  if (vista === 'descargas') return pintarDescargas();
+  if (vista === 'ajustes') return pintarAjustes();
+  pintarRejilla();
+}
+
+function pintarInicio() {
+  const mios = contadores();
+  const hechas = itemsDe('hechas');
+  const listas = itemsDe('mios').filter(({r, p}) => p && p.tipo !== 'otra' && !hecha(r, p.g) && !PC.has(r.s))
+    .sort((x, y) => directa(y.r) - directa(x.r));
+  const recientes = filas.filter(r => /^\d{4}-\d{2}-\d{2}/.test(r.a[F.fecha])).sort((x, y) => y.a[F.fecha].localeCompare(x.a[F.fecha]));
+  const nuevas = [...new Set(recientes.map(r => r.gr))].slice(0, 18).map(gr => elegida(gr));
+  const fila = (titulo, items, v) => items.length ? `<div class="row-h"><h2>${titulo}</h2>${v ? `<button class="more" data-go="${v}">Ver todo</button>` : ''}</div>
+    <div class="row">${items.slice(0, 18).map(tarjeta).join('')}</div>` : '';
+  main.innerHTML = `
+    <section class="hero">
+      <h1>Tus juegos, en español</h1>
+      <p>La biblioteca busca tus ROMs en tus carpetas de juegos y tus juegos de PC en Steam, GOG y Epic, te dice cuáles tienen traducción y aplica el parche. Nunca descarga juegos: solo parches para tu propia copia.</p>
+      <div class="stats">
+        <div class="stat" data-go="mios"><b>${mios}</b><span>de tus juegos tienen traducción</span></div>
+        <div class="stat" data-go="hechas"><b>${hechas.length}</b><span>ya traducidos</span></div>
+        <div class="stat" data-go="todas"><b>${grupos.length.toLocaleString('es')}</b><span>juegos traducidos en el catálogo (${filas.length.toLocaleString('es')} traducciones)</span></div>
+      </div>
+    </section>
+    ${fila('Listas para tus juegos', listas, 'mios')}
+    ${fila('Ya traducidos', hechas, 'hechas')}
+    ${fila('Novedades del catálogo', nuevas, 'todas')}
+    ${!juegos.length && !escaneando ? `<p class="empty">No hay juegos tuyos todavía. Pon tus ROMs en <code>${esc((ajustes.carpetas || [])[0] || 'C:\\Juegos')}</code> (mejor en una subcarpeta por sistema, como <code>snes</code> o <code>psx</code>) y pulsa <b>Buscar mis juegos</b>.</p>` : ''}`;
+}
+
+function pintarRejilla() {
+  lista = filtrar(gruposDe(vista));
+  const sistemas = [...new Set(gruposDe(vista).map(gr => gr.s))].sort((x, y) => (SYS[x] || x).localeCompare(SYS[y] || y));
+  const nTrad = lista.reduce((n, it) => n + it.gr.filas.length, 0);
+  const chip = (k, t) => `<button class="chip" data-f="${k}" aria-pressed="${filtro[k]}">${t}</button>`;
+  let vacio = 'No hay resultados con estos filtros.';
+  if (vista === 'mios' && !juegos.length) vacio = escaneando ? 'Buscando tus juegos…' : `No hay juegos tuyos todavía. Pon tus ROMs en <code>${esc((ajustes.carpetas || [])[0] || 'C:\\Juegos')}</code> y pulsa <b>Buscar mis juegos</b>.`;
+  else if (vista === 'mios') vacio = 'Ninguno de tus juegos tiene traducción en el catálogo con estos filtros.';
+  else if (vista === 'hechas') vacio = 'Todavía no has traducido ningún juego.';
+  main.innerHTML = `<h1>${VISTAS[vista]}</h1>
+    <div class="filters">
+      <select id="sys"><option value="">Todos los sistemas</option>${sistemas.map(s => `<option value="${esc(s)}" ${s === filtro.sys ? 'selected' : ''}>${esc(SYS[s] || s)}</option>`).join('')}</select>
+      ${chip('directa', 'Traducción de un clic')}${chip('completa', 'Completas')}${chip('sinia', 'Sin IA')}
+      <span class="count">${lista.length.toLocaleString('es')} ${lista.length === 1 ? 'juego' : 'juegos'} · ${nTrad.toLocaleString('es')} ${nTrad === 1 ? 'traducción' : 'traducciones'}</span>
+    </div>
+    ${lista.length ? `<div class="grid">${lista.slice(0, limit).map(tarjeta).join('')}</div><div id="more" style="height:1px"></div>` : `<div class="empty">${vacio}</div>`}`;
+  $('sys').onchange = e => { filtro.sys = e.target.value; limit = 60; pintar(); };
+  if ($('more')) masAlFinal.observe($('more'));
+}
+
+const masAlFinal = new IntersectionObserver(es => {
+  if (!es.some(e => e.isIntersecting) || limit >= lista.length) return;
+  const desde = limit;
+  limit += 60;
+  const g = main.querySelector('.grid');
+  if (g) g.insertAdjacentHTML('beforeend', lista.slice(desde, limit).map(tarjeta).join(''));
+}, {root: main, rootMargin: '800px'});
+
+const ETQ = {'en-cola': 'En espera', descargando: 'Descargando', parcheando: 'Aplicando', hecho: 'Traducido', error: 'No se pudo'};
+function pintarDescargas() {
+  const lineas = trabajos.slice().reverse().map(t => {
+    const r = porClave.get(t.clave);
+    const fin = t.estado === 'hecho' && t.final;
+    return `<div class="job ${esc(t.estado)}"><span class="dot"></span>
+      <div><div class="t">${esc(r ? r.a[F.juego] : 'Traducción')}</div><div class="m">${esc(ETQ[t.estado] || t.estado)}: ${esc(t.mensaje || '')}</div></div>
+      <div class="acts">${fin ? `<button class="btn primary" data-jugar="${esc(t.final)}" data-sis="${esc((t.clave || '').split('|')[0])}">Jugar</button><button class="btn" data-ruta="${esc(t.final)}">Ver en la carpeta</button>` : ''}</div>
+    </div>`;
+  }).join('');
+  const r = espera && porClave.get(espera.clave);
+  main.innerHTML = `<h1>Descargas</h1><p class="lead">Lo que has traducido en las últimas 12 horas.</p>
+    ${espera ? `<div class="banner"><span>Esperando el parche de <b>${esc(r ? r.a[F.juego] : '')}</b> en <code>${esc(espera.dir)}</code>. Descárgalo de la página que se ha abierto y se aplicará solo.</span><button class="btn" id="cancelar-espera">Cancelar</button></div>` : ''}
+    <div class="jobs">${lineas || '<div class="empty">Nada por ahora. Elige un juego en <b>Mis juegos</b> y pulsa <b>Traducir</b>.</div>'}</div>`;
+  if ($('cancelar-espera')) $('cancelar-espera').onclick = async () => { await api('cancelar_espera'); sondear(); };
+}
+
+// Ajustes: se editan en una copia y se guardan todos juntos.
+let borrador = null;
+function pintarAjustes() {
+  if (!borrador) borrador = {carpetas: [...(ajustes.carpetas || [])], salida: ajustes.salida || 'junto', retrobat: ajustes.retrobat || '', tiendas: ajustes.tiendas !== false};
+  const b = borrador, aparte = b.salida !== 'junto';
+  main.innerHTML = `<h1>Ajustes</h1>
+    <div class="set">
+      <section><h2>Tus carpetas de juegos</h2>
+        <p>Aquí busca la biblioteca tus ROMs y discos, también en sus subcarpetas. Si los tienes en una subcarpeta por sistema (<code>snes</code>, <code>psx</code>, <code>megadrive</code>…), los empareja mejor.</p>
+        <div class="dirs">${b.carpetas.map((c, i) => `<div class="dir"><code>${esc(c)}</code><button class="btn ghost" data-abrir-dir="${i}">Abrir</button><button class="btn ghost" data-quitar="${i}">Quitar</button></div>`).join('') || '<p class="muted">Ninguna.</p>'}</div>
+        <div class="line"><button class="btn" id="anyadir">Añadir carpeta…</button></div>
+      </section>
+      <section><h2>Dónde dejar los juegos traducidos</h2>
+        <label class="opt"><input type="radio" name="salida" value="junto" ${aparte ? '' : 'checked'}> Junto al juego original, con la etiqueta [T-Es] en el nombre</label>
+        <label class="opt"><input type="radio" name="salida" value="aparte" ${aparte ? 'checked' : ''}> En una carpeta aparte, en una subcarpeta por sistema</label>
+        <div class="line" ${aparte ? '' : 'hidden'}><input type="text" id="salida" value="${esc(aparte ? b.salida : '')}" placeholder="C:\\Juegos\\Traducidos"><button class="btn" id="elegir-salida">Elegir…</button></div>
+      </section>
+      <section><h2>Juegos de PC</h2>
+        <label class="opt"><input type="checkbox" id="tiendas" ${b.tiendas ? 'checked' : ''}> Buscar los juegos instalados con Steam, GOG y Epic</label>
+        <p>Las traducciones de PC se instalan a mano sobre la carpeta del juego; la biblioteca te dice cuáles tienes y te lleva a su página y a la carpeta del juego.</p>
+      </section>
+      <section><h2>RetroBat (opcional)</h2>
+        <p>Si usas RetroBat, el botón <b>Jugar</b> abre el juego con su lanzador y el emulador que tengas elegido. Si no, se abre con el programa que Windows tenga asociado.</p>
+        <div class="line"><input type="text" id="retrobat" value="${esc(b.retrobat)}" placeholder="Sin RetroBat"><button class="btn" id="elegir-rb">Elegir…</button></div>
+      </section>
+      <div class="line"><button class="btn primary" id="guardar">Guardar y buscar mis juegos</button></div>
+      <section><h2>Parches que bajas tú</h2>
+        <p>Cuando una traducción no tiene descarga de un clic, la biblioteca vigila tu carpeta <b>Descargas</b> y aplica el parche en cuanto termina de bajar.</p>
+      </section>
+      <section><h2>Acerca de</h2>
+        <p>Biblioteca de traducciones ${esc(ajustes.version || '')}. Nunca descarga juegos: solo parches de traducción para tu propia copia. Guarda sus datos (trabajos y parches descargados) en tu carpeta de usuario.</p>
+        <div class="line"><button class="btn" data-ruta="${esc(ajustes.datos || '')}">Abrir la carpeta de datos</button></div>
+      </section>
+    </div>`;
+  const elegir = async titulo => api('elegir_carpeta', {titulo}).catch(e => { aviso(e.message, 'bad'); return null; });
+  $('anyadir').onclick = async () => {
+    const c = await elegir('Elige una carpeta con tus juegos');
+    if (c && !b.carpetas.includes(c)) { b.carpetas.push(c); pintarAjustes(); }
+  };
+  main.querySelectorAll('[data-quitar]').forEach(x => x.onclick = () => { b.carpetas.splice(+x.dataset.quitar, 1); pintarAjustes(); });
+  main.querySelectorAll('[data-abrir-dir]').forEach(x => x.onclick = () => verCarpeta(b.carpetas[+x.dataset.abrirDir]));
+  main.querySelectorAll('input[name="salida"]').forEach(x => x.onchange = () => { b.salida = x.value === 'junto' ? 'junto' : ($('salida').value || ''); pintarAjustes(); });
+  $('salida').oninput = e => { b.salida = e.target.value; };
+  $('elegir-salida').onclick = async () => { const c = await elegir('Elige dónde dejar los juegos traducidos'); if (c) { b.salida = c; pintarAjustes(); } };
+  $('tiendas').onchange = e => { b.tiendas = e.target.checked; };
+  $('retrobat').oninput = e => { b.retrobat = e.target.value; };
+  $('elegir-rb').onclick = async () => { const c = await elegir('Elige la carpeta de RetroBat'); if (c) { b.retrobat = c; pintarAjustes(); } };
+  $('guardar').onclick = async () => {
+    if (b.salida !== 'junto' && !b.salida.trim()) return aviso('Elige la carpeta para los traducidos.', 'bad');
+    try {
+      ajustes = await api('guardar_ajustes', {carpetas: b.carpetas, salida: b.salida, retrobat: b.retrobat.trim() || null, tiendas: b.tiendas});
+      borrador = null;
+      aviso('Guardado. Buscando tus juegos…', 'ok');
+      escaneando = true; pintarEscaneo(''); sondear();
+      pintarAjustes();
+    } catch (e) { aviso(e.message, 'bad'); }
+  };
+}
+
+// ---------------------------------------------------------------- bienvenida
+// La primera vez (sin ajustes guardados): qué hace el programa y dónde están tus juegos. No se crea ni
+// se guarda nada hasta que pulsas Empezar; con «Ahora no» vuelve a salir la próxima vez.
+function bienvenida() {
+  const d = $('bienvenida'), elegidas = [];
+  let tiendas = true;
+  const pinta = () => {
+    const sug = (ajustes.sugeridas || []).filter(s => !elegidas.includes(s.ruta));
+    $('b-body').innerHTML = `<img class="logo" src="icono.svg" alt="" width="52" height="52">
+      <h2 id="b-title">Te damos la bienvenida a la Biblioteca de traducciones</h2>
+      <p>Busca tus juegos, te dice cuáles tienen traducción al español y la aplica. Nunca descarga juegos: solo los parches de traducción para tu propia copia, que queda intacta.</p>
+      <h3>¿Dónde tienes tus juegos?</h3>
+      <p>Elige las carpetas con tus ROMs y discos; también se miran sus subcarpetas. Si los tienes en una subcarpeta por sistema (<code>snes</code>, <code>psx</code>, <code>megadrive</code>…), los reconoce mejor.</p>
+      <div class="dirs">${elegidas.map((c, i) => `<div class="dir"><code>${esc(c)}</code><button type="button" class="btn ghost" data-b-quitar="${i}">Quitar</button></div>`).join('')}</div>
+      <div class="line">${sug.map(s => `<button type="button" class="btn" data-b-usar="${esc(s.ruta)}">Usar ${esc(s.ruta)}${s.existe ? '' : ' (se creará)'}</button>`).join('')}
+        <button type="button" class="btn" id="b-elegir">Elegir otra carpeta…</button></div>
+      <h3>Juegos de PC</h3>
+      <label class="opt"><input type="checkbox" id="b-tiendas" ${tiendas ? 'checked' : ''}> Buscar también los juegos que tengo instalados con Steam, GOG y Epic</label>
+      ${ajustes.retrobat ? `<p>Tienes RetroBat en <code>${esc(ajustes.retrobat)}</code>: el botón Jugar abrirá tus juegos con él.</p>` : ''}
+      <div class="f-actions"><button type="button" class="btn primary" id="b-empezar" ${elegidas.length ? '' : 'disabled'}>Empezar</button>
+        <button type="button" class="btn ghost" id="b-luego">Ahora no</button></div>
+      <p>Todo esto se puede cambiar después en Ajustes.</p>`;
+  };
+  $('b-body').onclick = async e => {
+    const t = e.target.closest('button');
+    if (!t) return;
+    if (t.dataset.bUsar) elegidas.push(t.dataset.bUsar);
+    else if (t.dataset.bQuitar) elegidas.splice(+t.dataset.bQuitar, 1);
+    else if (t.id === 'b-elegir') {
+      const c = await api('elegir_carpeta', {titulo: 'Elige una carpeta con tus juegos'}).catch(() => null);
+      if (c && !elegidas.includes(c)) elegidas.push(c);
+    } else if (t.id === 'b-luego') return d.close();
+    else if (t.id === 'b-empezar') {
+      try {
+        ajustes = await api('guardar_ajustes', {carpetas: elegidas, salida: 'junto', retrobat: ajustes.retrobat || null, tiendas});
+        d.close();
+        aviso('Buscando tus juegos…', 'ok');
+        escaneando = true; pintarEscaneo(''); sondear();
+      } catch (err) { aviso(err.message, 'bad'); }
+      return;
+    } else return;
+    pinta();
+  };
+  $('b-body').onchange = e => { if (e.target.id === 'b-tiendas') tiendas = e.target.checked; };
+  pinta();
+  d.showModal();
+}
+
+// ---------------------------------------------------------------- ficha
+let fichaActual = null;
+function abrirFicha(r, p) {
+  const gr = r.gr, todas = ordenadas(gr);
+  fichaActual = {gr, r, p, todas};
+  const a = r.a, opciones = paresPorFila.get(r.key) || [];
+  const elegido = p || opciones.find(o => o.tipo !== 'otra') || opciones[0] || null;
+  $('f-title').textContent = gr.titulo;
+  $('f-sub').textContent = (SYS[r.s] || r.s) + (todas.length > 1 ? ` · ${todas.length} traducciones` : a[F.grupo] ? ' · traducción de ' + a[F.grupo] : '');
+  const dl = pares => '<dl class="f-grid">' + pares.filter(x => x[1]).map(x => `<dt>${x[0]}</dt><dd>${x[1]}</dd>`).join('') + '</dl>';
+  const d0 = (r.x.d || [])[0];
+  // Con varias traducciones, primero se elige cuál; debajo va la ficha de la elegida.
+  let html = todas.length > 1 ? '<div class="f-trads">' + todas.map((t, i) => {
+    const tp = mejorPar(t);
+    const extra = [versionDe(t), t.a[F.estado], esIA(t) ? 'IA' : '', hecha(t, tp && tp.g) ? 'aplicada' : tp && tp.tipo === 'exacto' ? 'vale para tu copia' : '']
+      .filter(Boolean).join(' · ');
+    return `<button type="button" class="f-trad" data-fila="${i}" aria-pressed="${t === r}"><b>${esc(t.a[F.grupo] || 'Grupo desconocido')}</b>${extra ? `<span>${esc(extra)}</span>` : ''}</button>`;
+  }).join('') + '</div>' : '';
+  const buscarImg = 'https://www.google.com/search?tbm=isch&q=' + encodeURIComponent(gr.titulo + ' ' + (SYS[r.s] || r.s) + ' cover');
+  html += `<div class="f-layout"><div class="f-cover">${portada(r, hecha(r, elegido && elegido.g))}
+    <div class="f-portada">
+      <button type="button" class="btn" data-portada="elegir">Elegir portada…</button>
+      <button type="button" class="btn" data-portada="enlace">Pegar un enlace…</button>
+      <div class="f-enlace" hidden><input type="text" id="f-url" placeholder="https://…/portada.jpg" spellcheck="false"><button type="button" class="btn" data-portada="usar">Usar</button></div>
+      ${propias[gr.k] ? '<button type="button" class="btn ghost" data-portada="quitar">Volver a la automática</button>' : ''}
+      <a class="btn ghost" href="${esc(buscarImg)}" target="_blank" rel="noopener">Buscar en Google Imágenes</a>
+      <p class="hint">También puedes copiar una imagen en el navegador y pulsar <kbd>Ctrl</kbd>+<kbd>V</kbd> aquí, o arrastrarla desde una carpeta.</p>
+    </div></div><div>`
+    + (todas.length > 1 ? `<h3 class="f-cual">Traducción de ${esc(a[F.grupo] || 'grupo desconocido')}${a[F.juego] !== gr.titulo ? ` <span class="muted">(${esc(a[F.juego])})</span>` : ''}</h3>` : '')
+    + dl([['Título original', esc(a[F.orig])], ['Versión', esc(a[F.version])], ['Fecha', esc(a[F.fecha])], ['Estado', esc(a[F.estado])],
+          ['Formato', esc(a[F.fmt].toUpperCase())], ['Juego que necesitas', esc(a[F.rom]).split(' | ').join('<br>')],
+          ['CRC32', a[F.crc] ? `<code>${esc(a[F.crc].toUpperCase())}</code>` : '']])
+    + (a[F.notas] ? `<p class="f-note">${esc(a[F.notas])}</p>` : '');
+
+  html += '<div class="f-sec">Tu juego</div>';
+  if (PC.has(r.s)) {
+    html += '<p class="muted">Las traducciones de PC se instalan sobre la carpeta del juego siguiendo las instrucciones del traductor (normalmente, copiar sus ficheros o ejecutar su instalador). Haz antes una copia de lo que vaya a sustituir.</p>';
+    if (opciones.length) {
+      html += '<div class="f-games">' + opciones.map(o => `<div class="f-pc"><span>${esc(o.g.n)} ${o.g.k && TIENDA[o.g.k] ? `<span class="badge">${TIENDA[o.g.k]}</span>` : ''} <span class="badge ${o.tipo === 'exacto' ? 'ok' : 'warn'}">${o.tipo === 'exacto' ? 'es este juego' : 'por el nombre'}</span></span>
+        <button class="btn" data-carpeta-juego="${esc(o.g.f)}">Abrir la carpeta del juego</button></div>`).join('') + '</div>';
+    } else if (r.s === 'pc') {
+      html += '<p class="muted">No lo encuentro entre tus juegos de Steam, GOG o Epic.</p>';
+    }
+  } else if (!opciones.length) {
+    html += `<p class="muted">No tienes este juego. Pon tu copia en una de tus carpetas de juegos (${esc((ajustes.carpetas || []).join(', '))}) y pulsa <b>Buscar mis juegos</b>.</p>`;
+  } else {
+    html += '<div class="f-games">' + opciones.map((o, i) => `<label><input type="radio" name="juego" value="${i}" ${o === elegido ? 'checked' : ''} ${o.tipo === 'otra' ? 'disabled' : ''}>
+      <span>${esc(o.g.n)} <span class="badge ${o.tipo === 'exacto' ? 'ok' : o.tipo === 'posible' ? 'warn' : 'bad'}">${o.tipo === 'exacto' ? 'versión correcta' : o.tipo === 'posible' ? 'versión sin comprobar' : 'es otra versión'}</span></span></label>`).join('') + '</div>';
+    if (opciones.every(o => o.tipo === 'otra')) {
+      html += `<p class="f-note warn">Tu copia no es la versión que pide esta traducción. Necesitas: ${esc(a[F.rom] || 'CRC32 ' + a[F.crc].toUpperCase())}.</p>`;
+    }
+  }
+
+  html += '<div class="f-sec">Descarga</div>';
+  if (d0) {
+    html += `<p>Se descarga directamente de ${esc(FUENTE[d0.t] || d0.t)}.</p>`;
+    if (d0.t === 'rhdn2021' && d0.v && a[F.version] && tokens(d0.v).join() !== tokens(a[F.version]).join()) {
+      html += `<p class="f-note warn">Esa copia es de 2021 y trae la versión ${esc(d0.v)}; la más reciente es la ${esc(a[F.version])}. Si la quieres, usa «Abrir página y esperar la descarga».</p>`;
+    }
+    if (d0.t === 'ra' && d0.v && a[F.version] && tokens(d0.v).join() !== tokens(a[F.version]).join()) {
+      html += `<p class="f-note warn">RetroAchievements guarda la versión ${esc(d0.v)}, no la ${esc(a[F.version])} de esta ficha. Si quieres la de la ficha, usa «Abrir página y esperar la descarga».</p>`;
+    }
+    const otras = [...new Set((r.x.d || []).slice(1).map(d => FUENTE[d.t] || d.t))];
+    if (otras.length) html += `<p class="muted">Si esa no vale para tu copia, se prueba después con ${esc(otras.join(' y '))}.</p>`;
+  } else if (!PC.has(r.s)) {
+    html += '<p>No hay descarga directa. Abre la página, descarga el parche y la biblioteca lo recogerá de tu carpeta Descargas y lo aplicará sola.</p>';
+  }
+  const puede = elegido && elegido.tipo !== 'otra' && !PC.has(r.s);
+  const salida = salidaDe(r, elegido && elegido.g);
+  html += '<div class="f-actions">';
+  if (salida) html += '<button class="btn primary" data-act="jugar">Jugar</button><button class="btn" data-act="carpeta">Ver en la carpeta</button>';
+  if (puede && d0) html += `<button class="btn${salida ? '' : ' primary'}" data-act="traducir">${salida ? 'Volver a traducir' : 'Traducir'}</button>`;
+  if (puede) html += '<button class="btn" data-act="esperar">Abrir página y esperar la descarga</button>';
+  if (a[F.url]) html += `<a class="btn" href="${esc(a[F.url])}" target="_blank" rel="noopener">Abrir página</a>`;
+  html += `<a class="btn" href="https://www.google.com/search?q=${encodeURIComponent('traducción español ' + (a[F.orig] || a[F.juego]) + ' ' + (SYS[r.s] || r.s) + ' ' + a[F.grupo])}" target="_blank" rel="noopener">Buscar en Google</a>`;
+  html += '</div></div></div>';
+  $('f-body').innerHTML = html;
+  if (!$('ficha').open) $('ficha').showModal();
+}
+
+async function portadaFicha(que, gr) {
+  if (que === 'elegir') {
+    const origen = await api('elegir_imagen').catch(e => { aviso(e.message, 'bad'); return null; });
+    if (origen) ponerPortada(gr, 'poner_portada', {origen});
+  } else if (que === 'enlace') {
+    const fila = $('f-body').querySelector('.f-enlace');
+    fila.hidden = !fila.hidden;
+    if (!fila.hidden) $('f-url').focus();
+  } else if (que === 'usar') {
+    const url = $('f-url').value.trim().replace(/ /g, '%20');
+    if (!/^https?:\/\/\S+$/i.test(url)) return aviso('Pega el enlace de una imagen (empieza por https://).', 'bad');
+    ponerPortada(gr, 'poner_portada', {origen: url});
+  } else if (que === 'quitar') ponerPortada(gr, 'quitar_portada', {});
+}
+
+function juegoElegido() {
+  const {r, p} = fichaActual, opciones = paresPorFila.get(r.key) || [];
+  const radio = document.querySelector('#f-body input[name="juego"]:checked');
+  return radio ? opciones[+radio.value] : p;
+}
+
+// ---------------------------------------------------------------- acciones
+async function traducir(r, p) {
+  try {
+    await api('traducir', {clave: r.key, juego: p.g.f});
+    aviso('Traduciendo ' + r.a[F.juego] + '…');
+    sondear();
+  } catch (e) { aviso(e.message, 'bad'); }
+}
+
+async function esperar(r, p) {
+  const a = r.a;
+  const url = a[F.url] || 'https://www.google.com/search?q=' + encodeURIComponent('traducción español ' + (a[F.orig] || a[F.juego]) + ' ' + (SYS[r.s] || r.s));
+  try {
+    await api('abrir_web', {url});
+    await api('esperar', {clave: r.key, juego: p.g.f});
+    sondear();
+    ir('descargas');
+  } catch (e) { aviso(e.message, 'bad'); }
+}
+
+const verCarpeta = ruta => api('ver_carpeta', {ruta}).catch(e => aviso(e.message, 'bad'));
+const jugar = (ruta, sistema) => api('jugar', {ruta, sistema}).then(con => aviso(`Abriendo el juego con ${con}…`, 'ok')).catch(e => aviso(e.message, 'bad'));
+
+function accion(act, r, p) {
+  if (act === 'ficha') return abrirFicha(r, p);
+  if (act === 'traducir') return traducir(r, p);
+  if (act === 'esperar') return esperar(r, p);
+  if (act === 'carpeta') return verCarpeta(salidaDe(r, p && p.g));
+  if (act === 'jugar') return jugar(salidaDe(r, p && p.g), r.s);
+}
+
+main.addEventListener('click', e => {
+  const go = e.target.closest('[data-go]');
+  if (go) return ir(go.dataset.go);
+  const f = e.target.closest('.chip[data-f]');
+  if (f) { filtro[f.dataset.f] = !filtro[f.dataset.f]; limit = 60; return pintar(); }
+  if (e.target.dataset.jugar) return jugar(e.target.dataset.jugar, e.target.dataset.sis || '');
+  if (e.target.dataset.ruta) return verCarpeta(e.target.dataset.ruta);
+  const card = e.target.closest('.card');
+  if (!card) return;
+  const {r, p} = tarjetas[+card.dataset.n];   // r es la traducción que enseña la tarjeta; r.gr, su juego
+  const btn = e.target.closest('button[data-act]');
+  if (btn) accion(btn.dataset.act, r, p);
+  else abrirFicha(r, p);
+});
+$('f-body').addEventListener('click', e => {
+  if (e.target.dataset.carpetaJuego) return verCarpeta(e.target.dataset.carpetaJuego);
+  const pt = e.target.closest('[data-portada]');
+  if (pt && fichaActual) return portadaFicha(pt.dataset.portada, fichaActual.gr);
+  const otra = e.target.closest('.f-trad');
+  if (otra && fichaActual) { const t = fichaActual.todas[+otra.dataset.fila]; return abrirFicha(t, mejorPar(t)); }
+  const btn = e.target.closest('button[data-act]');
+  if (!btn || !fichaActual) return;
+  const p = juegoElegido(), act = btn.dataset.act;
+  if (act !== 'carpeta' && act !== 'jugar' && !p) return;
+  if (act !== 'carpeta') $('ficha').close();
+  accion(act, fichaActual.r, p);
+});
+$('f-body').addEventListener('keydown', e => {
+  if (e.target.id === 'f-url' && e.key === 'Enter' && fichaActual) portadaFicha('usar', fichaActual.gr);
+});
+$('f-close').addEventListener('click', () => $('ficha').close());
+$('ficha').addEventListener('click', e => { if (e.target.id === 'ficha') e.target.close(); });
+// Los enlaces se abren en el navegador, no dentro de la ventana.
+document.addEventListener('click', e => {
+  const a = e.target.closest('a[href^="http"]');
+  if (!a) return;
+  e.preventDefault();
+  api('abrir_web', {url: a.href}).catch(err => aviso(err.message, 'bad'));
+});
+
+document.querySelectorAll('.nav[data-go]').forEach(b => b.addEventListener('click', () => ir(b.dataset.go)));
+let tq;
+$('q').addEventListener('input', () => {
+  clearTimeout(tq);
+  tq = setTimeout(() => { if (!['mios', 'todas', 'hechas'].includes(vista)) vista = 'todas'; limit = 60; pintar(); }, 150);
+});
+$('scan').addEventListener('click', async () => {
+  try { await api('escanear'); escaneando = true; pintarEscaneo(''); sondear(); } catch (e) { aviso(e.message, 'bad'); }
+});
+
+const ventana = T.window.getCurrentWindow();
+$('w-min').onclick = () => ventana.minimize();
+$('w-max').onclick = () => ventana.toggleMaximize();
+$('w-close').onclick = () => ventana.close();
+
+// ---------------------------------------------------------------- estado (trabajos, búsqueda, espera)
+function pintarEscaneo(prog) {
+  $('scan').disabled = escaneando;
+  let t = '';
+  if (escaneando) t = prog ? prog + '…' : 'Buscando tus juegos…';
+  else if (juegos.length) {
+    const pc = juegos.filter(g => g.s === 'pc').length;
+    t = `${(juegos.length - pc).toLocaleString('es')} ROMs y ${pc.toLocaleString('es')} juegos de PC`;
+  }
+  $('scan-text').textContent = t;
+}
+
+let sondeo = null;
+async function sondear() {
+  clearTimeout(sondeo);
+  let activo = false;
+  try {
+    const st = await api('estado');
+    const antes = new Map(trabajos.map(t => [t.id, t.estado]));
+    trabajos = st.trabajos || [];
+    let cambio = false;
+    for (const t of trabajos) {
+      if (antes.get(t.id) !== t.estado) cambio = true;
+      if (t.estado === 'hecho' && antes.get(t.id) && antes.get(t.id) !== 'hecho') {
+        traducidos[t.clave] = t.final;
+        const r = porClave.get(t.clave);
+        aviso((r ? r.a[F.juego] : 'El juego') + ' ya está en español.', 'ok');
+      }
+      if (t.estado === 'error' && antes.get(t.id) && antes.get(t.id) !== 'error') aviso(t.mensaje || 'No se pudo traducir.', 'bad');
+      if (!['hecho', 'error'].includes(t.estado)) activo = true;
+    }
+    const eraEscaneo = escaneando;
+    escaneando = !!(st.escaneo && st.escaneo.activo);
+    pintarEscaneo(st.escaneo && st.escaneo.progreso);
+    if (eraEscaneo && !escaneando) await cargarJuegos();
+    const habiaEspera = !!espera;
+    espera = st.espera;
+    activo = activo || escaneando || !!espera;
+    if (cambio || habiaEspera !== !!espera) { if (vista === 'descargas') pintar(); else contadores(); }
+  } catch (e) {
+    $('scan-text').textContent = e.message;
+  }
+  sondeo = setTimeout(sondear, activo ? 1500 : 10000);
+}
+
+async function cargarJuegos() {
+  const mj = await api('mis_juegos');
+  juegos = mj.juegos || [];
+  tes = new Map();
+  for (const t of mj.tes || []) { const [s, n, p] = t.split('|'); tes.set(s + '|' + n, p); }
+  emparejar();
+  pintarEscaneo('');
+  if (vista !== 'ajustes' && vista !== 'descargas') pintar(); else contadores();
+}
+
+async function cargarTodo() {
+  cargarDatos(await api('datos'));
+  propias = await api('portadas_propias').catch(() => ({}));
+  await cargarJuegos();
+  pintar();
+}
+
+// Al acabar una búsqueda se recarga la lista aunque la ventana no supiera que había empezado.
+T.event.listen('juegos', async () => { escaneando = false; await cargarJuegos(); sondear(); });
+T.event.listen('trabajo', () => sondear());
+
+(async function inicio() {
+  try { vista = localStorage.getItem('vista') || 'inicio'; } catch (e) { }
+  if (!VISTAS[vista]) vista = 'inicio';
+  ajustes = await api('ajustes').catch(() => ({}));
+  try {
+    await cargarTodo();
+  } catch (e) {
+    vista = 'ajustes';
+    pintar();
+    aviso(e.message, 'bad');
+  }
+  if (ajustes.nuevo) bienvenida();
+  sondear();
+  // ¿Hay una versión más nueva en GitHub? Sale un botón abajo a la izquierda para ir a descargarla.
+  setTimeout(async () => {
+    const v = await api('version_nueva').catch(() => null);
+    if (!v || !v.url) return;
+    const b = $('nueva');
+    b.textContent = `Versión ${v.version} disponible: descárgala`;
+    b.onclick = () => api('abrir_web', {url: v.url}).catch(e => aviso(e.message, 'bad'));
+    b.hidden = false;
+  }, 4000);
+})();

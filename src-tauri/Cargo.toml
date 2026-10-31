@@ -1,0 +1,48 @@
+[package]
+name = "biblioteca-traducciones"
+version = "0.5.0"
+description = "Biblioteca de traducciones al español para juegos clásicos y de PC"
+license = "GPL-3.0-or-later"
+repository = "https://github.com/alucardog-dotcom/biblioteca-traducciones"
+edition = "2021"
+rust-version = "1.80"
+
+[lib]
+name = "biblioteca_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["protocol-asset"] }
+tauri-plugin-opener = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-single-instance = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+csv = "1"
+roxmltree = "0.20"
+dirs = "5"
+crc32fast = "1"
+zip = { version = "2", default-features = false }
+# Descargas de los parches, con el TLS de Windows (schannel).
+ureq = { version = "2", default-features = false, features = ["native-tls", "json"] }
+native-tls = "0.2"
+url = "2"
+percent-encoding = "2"
+
+[target.'cfg(windows)'.dependencies]
+winreg = "0.52"
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true
+# Las rutas de la máquina donde se compila (C:\Users\<usuario>\.cargo\...) se quitan del .exe con
+# tools\compilar.ps1, que es como hay que compilar.
+
+# Compilaciones de prueba más rápidas: sin información de depuración en las dependencias.
+[profile.dev.package."*"]
+debug = false

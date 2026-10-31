@@ -1,0 +1,17 @@
+Herramientas de terceros que lleva la Biblioteca de traducciones
+=================================================================
+
+Se distribuyen sin cambios, tal como las publican sus autores. Cada una tiene su propia licencia.
+
+7z.exe y 7z.dll - 7-Zip 24.09, de Igor Pavlov (https://www.7-zip.org).
+  Licencia GNU LGPL 2.1 o posterior; algunas partes, BSD-3-Clause. El código de descompresión de RAR
+  tiene además la restricción de unRAR: no se puede usar para crear un compresor de RAR.
+  Código fuente: https://www.7-zip.org/download.html (7z2409-src.7z).
+
+xdelta3.exe - xdelta 3.1.0, de Joshua MacDonald (https://github.com/jmacd/xdelta).
+  Licencia Apache 2.0.
+  Código fuente: https://github.com/jmacd/xdelta/releases/tag/v3.1.0
+
+chdman.exe - chdman de MAME 0.287 (https://www.mamedev.org).
+  Licencia GNU GPL 2.0 o posterior (el conjunto de MAME); algunas partes, BSD-3-Clause.
+  Código fuente: https://github.com/mamedev/mame/releases/tag/mame0287

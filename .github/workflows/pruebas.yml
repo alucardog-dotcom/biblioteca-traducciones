@@ -1,0 +1,19 @@
+# Las pruebas del motor de parches y del parcheo, en cada cambio de main y en cada pull request.
+name: Pruebas
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  pruebas:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - name: Pruebas
+        run: cargo test --lib --manifest-path src-tauri/Cargo.toml

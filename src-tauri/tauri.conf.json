@@ -1,0 +1,56 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Biblioteca de traducciones",
+  "version": "0.5.0",
+  "identifier": "es.traducciones.biblioteca",
+  "build": {
+    "frontendDist": "../ui"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "label": "main",
+        "title": "Biblioteca de traducciones",
+        "width": 1360,
+        "height": 860,
+        "minWidth": 1024,
+        "minHeight": 640,
+        "decorations": false,
+        "center": true,
+        "backgroundColor": "#0E1116"
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; img-src 'self' data: asset: http://asset.localhost https: http:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' ipc: http://ipc.localhost",
+      "assetProtocol": {
+        "enable": true,
+        "scope": ["$APPLOCALDATA/portadas/**"]
+      }
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "category": "Game",
+    "shortDescription": "Traducciones al español para tus juegos",
+    "longDescription": "Busca tus juegos (ROMs en tus carpetas y juegos de PC de Steam, GOG y Epic), encuentra su traducción al español en el catálogo y aplica el parche con un clic. No incluye ni descarga juegos: solo parches.",
+    "resources": {
+      "recursos/catalogo/*": "catalogo/",
+      "recursos/herramientas/*": "herramientas/"
+    },
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser",
+        "languages": ["Spanish"],
+        "displayLanguageSelector": false
+      }
+    }
+  }
+}
