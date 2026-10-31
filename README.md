@@ -1,6 +1,21 @@
-# Biblioteca de traducciones
+<p align="center"><img src="icono.svg" alt="" width="96" height="96"></p>
 
-Programa para Windows que busca tus juegos, te dice cuáles tienen traducción al español hecha por aficionados y la aplica con un clic. **Nunca descarga juegos**: solo los parches de traducción, que se aplican sobre tu propia copia, y tu copia queda intacta.
+<h1 align="center">Biblioteca de traducciones</h1>
+
+<p align="center"><b>Juega en español a juegos que nunca salieron traducidos.</b><br>
+Más de 6.000 traducciones hechas por aficionados, de la NES a los juegos de PC de hoy, a un clic.</p>
+
+<p align="center">
+  <a href="https://github.com/alucardog-dotcom/biblioteca-traducciones/releases/latest"><img alt="Última versión" src="https://img.shields.io/github/v/release/alucardog-dotcom/biblioteca-traducciones?label=versi%C3%B3n&color=f2a93b"></a>
+  <a href="https://github.com/alucardog-dotcom/biblioteca-traducciones/releases"><img alt="Descargas" src="https://img.shields.io/github/downloads/alucardog-dotcom/biblioteca-traducciones/total?label=descargas"></a>
+  <img alt="Windows 10 y 11" src="https://img.shields.io/badge/Windows-10%20y%2011-0078D6">
+  <a href="LICENSE"><img alt="Licencia GPL-3.0" src="https://img.shields.io/badge/licencia-GPL--3.0-blue"></a>
+  <a href="https://www.paypal.com/donate/?business=alucardj%40gmail.com&currency_code=EUR"><img alt="Invítame a un café con PayPal" src="https://img.shields.io/badge/PayPal-Inv%C3%ADtame%20a%20un%20caf%C3%A9-00457C?logo=paypal"></a>
+</p>
+
+<p align="center"><a href="https://github.com/alucardog-dotcom/biblioteca-traducciones/releases/latest"><b>⬇️ Descargar para Windows</b></a></p>
+
+¿Tienes un juego japonés de Super Nintendo, un RPG de PlayStation que nunca llegó a España o un juego de Steam que solo está en inglés? Hay muchas probabilidades de que alguien lo haya traducido. La Biblioteca de traducciones busca tus juegos, te dice cuáles tienen traducción al español y la aplica con un clic. **Nunca descarga juegos**: solo los parches de traducción, que se aplican sobre tu propia copia, y tu copia queda intacta.
 
 ![Descubrir: el catálogo con sus portadas](docs/captura-descubrir.png)
 
@@ -42,6 +57,14 @@ El programa no envía datos tuyos a ningún sitio. Solo se conecta para:
 - **Versión y catálogo nuevos:** api.github.com y raw.githubusercontent.com, para ver si hay una versión nueva del programa y para traer el catálogo más reciente.
 
 Tus ajustes y tus datos se guardan en tu equipo: `%APPDATA%\es.traducciones.biblioteca` y `%LOCALAPPDATA%\es.traducciones.biblioteca`.
+
+## ¿Te gusta?
+
+La Biblioteca de traducciones es gratuita y la hago en mi tiempo libre. Si te resulta útil y quieres echar una mano, puedes **[invitarme a un café por PayPal](https://www.paypal.com/donate/?business=alucardj%40gmail.com&currency_code=EUR)**. ¡Gracias! ☕
+
+Las donaciones son para el desarrollo de este programa. Las traducciones son de sus autores: si quieres apoyarlos a ellos, mira en la página de cada traducción si aceptan donaciones.
+
+También ayuda mucho avisar de traducciones que falten o que no funcionen ([incidencias](https://github.com/alucardog-dotcom/biblioteca-traducciones/issues)) y compartir el programa.
 
 ## Compilar
 

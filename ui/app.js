@@ -202,6 +202,7 @@ const thumb = (sys, name, tipo) => 'https://thumbnails.libretro.com/' + encodeUR
 // Juegos de PC: la carátula vertical de Steam y, si no la tiene, su cabecera.
 const steamImg = (id, f) => `https://cdn.cloudflare.steamstatic.com/steam/apps/${encodeURIComponent(id)}/${f}`;
 const REPO_UI = 'https://raw.githubusercontent.com/alucardog-dotcom/biblioteca-traducciones/main/ui/';
+const DONAR = 'https://www.paypal.com/donate/?business=alucardj%40gmail.com&currency_code=EUR';
 // La que has puesto tú (una imagen copiada a la carpeta de datos o un enlace).
 const propia = gr => {
   const m = gr && propias[gr.k];
@@ -448,7 +449,8 @@ function pintarAjustes() {
       </section>
       <section><h2>Acerca de</h2>
         <p>Biblioteca de traducciones ${esc(ajustes.version || '')}. Nunca descarga juegos: solo parches de traducción para tu propia copia. Guarda sus datos (trabajos y parches descargados) en tu carpeta de usuario.</p>
-        <div class="line"><button class="btn" data-ruta="${esc(ajustes.datos || '')}">Abrir la carpeta de datos</button></div>
+        <p>Es gratuita y de código abierto. Si te resulta útil, puedes invitarme a un café: las donaciones son para el desarrollo del programa (las traducciones son de sus autores).</p>
+        <div class="line"><a class="btn primary" href="${DONAR}">Invitar a un café (PayPal)</a><a class="btn" href="https://github.com/alucardog-dotcom/biblioteca-traducciones">El proyecto en GitHub</a><button class="btn" data-ruta="${esc(ajustes.datos || '')}">Abrir la carpeta de datos</button></div>
       </section>
     </div>`;
   const elegir = async titulo => api('elegir_carpeta', {titulo}).catch(e => { aviso(e.message, 'bad'); return null; });
