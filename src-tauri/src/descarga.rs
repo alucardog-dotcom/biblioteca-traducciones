@@ -52,8 +52,9 @@ fn nombre_de_cabecera(cd: &str) -> Option<String> {
     (!n.is_empty()).then(|| n.to_string())
 }
 
-/// Baja `url` a la carpeta `dest`. Si ya estaba (mismo nombre y tamaño), no la vuelve a bajar.
-pub fn descargar(url: &str, dest: &Path, log: &mut Vec<String>) -> Result<PathBuf, String> {
+/// Pide `url` siguiendo las redirecciones a mano: todas tienen que ir a sitios permitidos. Devuelve la
+/// respuesta (ya con 200) y la dirección final.
+fn pedir(url: &str) -> Result<(ureq::Response, Url), String> {
     let ag = agente()?;
     let mut u = Url::parse(url).map_err(|_| "La dirección de la descarga no es válida.".to_string())?;
     for _ in 0..8 {
@@ -75,62 +76,95 @@ pub fn descargar(url: &str, dest: &Path, log: &mut Vec<String>) -> Result<PathBu
         if code != 200 {
             return Err(format!("El servidor respondió {code} ({host})."));
         }
-        let largo: Option<u64> = resp.header("Content-Length").and_then(|x| x.trim().parse().ok());
-        if largo.is_some_and(|l| l > MAX_BYTES) {
+        if resp.header("Content-Length").and_then(|x| x.trim().parse::<u64>().ok()).is_some_and(|l| l > MAX_BYTES) {
             return Err("El fichero es demasiado grande.".into());
         }
-        let nombre = resp
-            .header("Content-Disposition")
-            .and_then(nombre_de_cabecera)
-            .or_else(|| u.path_segments().and_then(|mut s| s.next_back()).map(str::to_string))
-            .map(|n| nombre_seguro(&n))
-            .unwrap_or_else(|| "parche.bin".into());
-        fs::create_dir_all(dest).map_err(|e| e.to_string())?;
-        let fin = dest.join(&nombre);
-        if let (Some(l), Ok(m)) = (largo, fs::metadata(&fin)) {
-            if l > 0 && m.len() == l {
-                log.push(format!("Ya estaba descargado: {nombre}"));
-                return Ok(fin);
-            }
-        }
-        let tmp = dest.join(format!("{nombre}.descargando"));
-        let res = (|| -> Result<u64, String> {
-            let mut r = resp.into_reader();
-            let mut f = fs::File::create(&tmp).map_err(|e| e.to_string())?;
-            let mut buf = vec![0u8; 1 << 18];
-            let mut total = 0u64;
-            loop {
-                let n = r.read(&mut buf).map_err(|_| format!("Se cortó la descarga desde {host}."))?;
-                if n == 0 {
-                    return Ok(total);
-                }
-                total += n as u64;
-                if total > MAX_BYTES {
-                    return Err("El fichero es demasiado grande.".into());
-                }
-                f.write_all(&buf[..n]).map_err(|e| e.to_string())?;
-            }
-        })();
-        let total = match res {
-            Ok(t) => t,
-            Err(m) => {
-                let _ = fs::remove_file(&tmp);
-                return Err(m);
-            }
-        };
-        let mut inicio = Vec::new();
-        let _ = fs::File::open(&tmp).and_then(|f| f.take(512).read_to_end(&mut inicio));
-        let cab = String::from_utf8_lossy(&inicio).trim_start().to_lowercase();
-        if ["<!doctype", "<html", "<?xml", "{"].iter().any(|x| cab.starts_with(x)) {
-            let _ = fs::remove_file(&tmp);
-            return Err("Se descargó una página web en lugar del parche.".into());
-        }
-        let _ = fs::remove_file(&fin);
-        mover(&tmp, &fin)?;
-        log.push(format!("Descargado: {nombre} ({} KB)", total.div_ceil(1024)));
-        return Ok(fin);
+        return Ok((resp, u));
     }
     Err("Demasiadas redirecciones.".into())
+}
+
+/// Guarda la respuesta en `tmp` (sin pasar de MAX_BYTES). Devuelve los bytes escritos.
+fn volcar(resp: ureq::Response, tmp: &Path, host: &str) -> Result<u64, String> {
+    let res = (|| -> Result<u64, String> {
+        let mut r = resp.into_reader();
+        let mut f = fs::File::create(tmp).map_err(|e| e.to_string())?;
+        let mut buf = vec![0u8; 1 << 18];
+        let mut total = 0u64;
+        loop {
+            let n = r.read(&mut buf).map_err(|_| format!("Se cortó la descarga desde {host}."))?;
+            if n == 0 {
+                return Ok(total);
+            }
+            total += n as u64;
+            if total > MAX_BYTES {
+                return Err("El fichero es demasiado grande.".into());
+            }
+            f.write_all(&buf[..n]).map_err(|e| e.to_string())?;
+        }
+    })();
+    if res.is_err() {
+        let _ = fs::remove_file(tmp);
+    }
+    res
+}
+
+/// Baja `url` a la carpeta `dest`. Si ya estaba (mismo nombre y tamaño), no la vuelve a bajar.
+pub fn descargar(url: &str, dest: &Path, log: &mut Vec<String>) -> Result<PathBuf, String> {
+    let (resp, u) = pedir(url)?;
+    let host = u.host_str().unwrap_or("").to_string();
+    let largo: Option<u64> = resp.header("Content-Length").and_then(|x| x.trim().parse().ok());
+    let nombre = resp
+        .header("Content-Disposition")
+        .and_then(nombre_de_cabecera)
+        .or_else(|| u.path_segments().and_then(|mut s| s.next_back()).map(str::to_string))
+        .map(|n| nombre_seguro(&n))
+        .unwrap_or_else(|| "parche.bin".into());
+    fs::create_dir_all(dest).map_err(|e| e.to_string())?;
+    let fin = dest.join(&nombre);
+    if let (Some(l), Ok(m)) = (largo, fs::metadata(&fin)) {
+        if l > 0 && m.len() == l {
+            log.push(format!("Ya estaba descargado: {nombre}"));
+            return Ok(fin);
+        }
+    }
+    let tmp = dest.join(format!("{nombre}.descargando"));
+    let total = volcar(resp, &tmp, &host)?;
+    let mut inicio = Vec::new();
+    let _ = fs::File::open(&tmp).and_then(|f| f.take(512).read_to_end(&mut inicio));
+    let cab = String::from_utf8_lossy(&inicio).trim_start().to_lowercase();
+    if ["<!doctype", "<html", "<?xml", "{"].iter().any(|x| cab.starts_with(x)) {
+        let _ = fs::remove_file(&tmp);
+        return Err("Se descargó una página web en lugar del parche.".into());
+    }
+    let _ = fs::remove_file(&fin);
+    mover(&tmp, &fin)?;
+    log.push(format!("Descargado: {nombre} ({} KB)", total.div_ceil(1024)));
+    Ok(fin)
+}
+
+/// Baja `url` tal cual al fichero `destino` (para el catálogo, que es JSON y CSV).
+pub fn bajar_a(url: &str, destino: &Path) -> Result<(), String> {
+    let (resp, u) = pedir(url)?;
+    volcar(resp, destino, u.host_str().unwrap_or("")).map(|_| ())
+}
+
+/// Los ficheros de una carpeta del repositorio del programa en GitHub: nombre -> (sha de git, dirección).
+pub fn carpeta_repositorio(ruta: &str) -> Result<std::collections::HashMap<String, (String, String)>, String> {
+    let api = format!("https://api.github.com/repos/{REPOSITORIO}/contents/{ruta}?ref=main");
+    let lista: Value = agente()?
+        .get(&api)
+        .set("Accept", "application/vnd.github+json")
+        .call()
+        .map_err(|_| "No se pudo consultar GitHub.".to_string())?
+        .into_json()
+        .map_err(|_| "GitHub respondió algo inesperado.".to_string())?;
+    Ok(lista
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(|f| Some((f["name"].as_str()?.to_string(), (f["sha"].as_str()?.to_string(), f["download_url"].as_str()?.to_string()))))
+        .collect())
 }
 
 /// GitHub: el parche está en los ficheros de la última versión publicada (o de la etiqueta indicada).

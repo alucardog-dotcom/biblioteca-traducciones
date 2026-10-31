@@ -23,7 +23,7 @@ Descarga el instalador (`…_x64-setup.exe`) de la [última versión](../../rele
 
 El instalador no está firmado, así que Windows puede avisar con «Windows protegió su PC». Para instalarlo, pulsa **Más información** y luego **Ejecutar de todas formas**.
 
-Al abrirlo por primera vez te pregunta en qué carpetas tienes tus juegos. Cuando sale una versión nueva, aparece un aviso abajo a la izquierda.
+Al abrirlo por primera vez te pregunta en qué carpetas tienes tus juegos. El catálogo se pone al día solo cada vez que lo abres, sin reinstalar nada. Cuando sale una versión nueva del programa, aparece un aviso abajo a la izquierda.
 
 ## De dónde salen las traducciones
 
@@ -39,7 +39,7 @@ El programa no envía datos tuyos a ningún sitio. Solo se conecta para:
 
 - **Portadas:** thumbnails.libretro.com, la CDN de Steam e images.launchbox-app.com.
 - **Parches:** traduccioneswave.top, archive.org y github.com.
-- **Versión nueva:** api.github.com, para ver si hay una versión nueva.
+- **Versión y catálogo nuevos:** api.github.com y raw.githubusercontent.com, para ver si hay una versión nueva del programa y para traer el catálogo más reciente.
 
 Tus ajustes y tus datos se guardan en tu equipo: `%APPDATA%\es.traducciones.biblioteca` y `%LOCALAPPDATA%\es.traducciones.biblioteca`.
 

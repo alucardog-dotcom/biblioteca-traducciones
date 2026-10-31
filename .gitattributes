@@ -1,0 +1,5 @@
+# El catálogo se compara byte a byte con el de GitHub (catalogo.rs): git no debe cambiarle los saltos de
+# línea al bajarlo ni al compilar en GitHub Actions.
+src-tauri/recursos/catalogo/* -text
+*.exe binary
+*.dll binary

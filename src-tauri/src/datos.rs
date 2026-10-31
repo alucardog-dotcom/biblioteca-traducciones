@@ -50,11 +50,13 @@ pub fn clave(a: &[String]) -> String {
 impl Datos {
     /// Vuelve a leer el catálogo solo si ha cambiado desde la última vez.
     pub fn cargar(&mut self, r: &Rutas) -> Result<(), String> {
-        let firma = (mtime(&r.csv), mtime(&r.centro));
+        // El que lleva dentro el programa o uno más nuevo descargado de GitHub (catalogo.rs).
+        let (csv_, centro) = crate::catalogo::activo(r);
+        let firma = (mtime(&csv_), mtime(&centro));
         if firma == self.firma && !self.base.is_empty() {
             return Ok(());
         }
-        let txt = leer_texto(&r.csv).map_err(|e| format!("No puedo leer el catálogo ({}): {e}", r.csv.display()))?;
+        let txt = leer_texto(&csv_).map_err(|e| format!("No puedo leer el catálogo ({}): {e}", csv_.display()))?;
         let mut rd = csv::ReaderBuilder::new().flexible(true).from_reader(txt.as_bytes());
         let cab: Vec<String> = rd.headers().map_err(|e| e.to_string())?.iter().map(str::to_string).collect();
         let pos: Vec<Option<usize>> = CAMPOS.iter().map(|c| cab.iter().position(|h| h == c)).collect();
@@ -66,7 +68,7 @@ impl Datos {
             filas.insert(clave(&a), a.clone());
             lista.push(a);
         }
-        self.centro = leer_texto(&r.centro)
+        self.centro = leer_texto(&centro)
             .ok()
             .and_then(|t| serde_json::from_str(&t).ok())
             .unwrap_or_else(|| serde_json::json!({"sistemas": {}, "filas": {}}));

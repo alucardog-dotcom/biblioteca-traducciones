@@ -3,6 +3,7 @@
 //! parcheo lo hace él mismo (motor.rs, parcheo.rs y descarga.rs, con 7-Zip, chdman y xdelta3); tus juegos
 //! están en las carpetas que elijas (C:\Juegos si no dices otra).
 
+mod catalogo;
 mod datos;
 mod descarga;
 mod escaneo;
@@ -235,6 +236,16 @@ fn vigilante(h: AppHandle, app: Arc<App>) {
     });
 }
 
+/// Al poco de abrir, mira si hay un catálogo más nuevo en GitHub; si lo descarga, la ventana lo recarga.
+fn catalogo_al_dia(h: AppHandle, app: Arc<App>) {
+    std::thread::spawn(move || {
+        std::thread::sleep(Duration::from_secs(5));
+        if let Ok(true) = catalogo::actualizar(&app.rutas) {
+            let _ = h.emit("catalogo", ());
+        }
+    });
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -264,6 +275,7 @@ pub fn run() {
             estado.cola.escanear();
             trabajador(app.handle().clone(), estado.clone());
             vigilante(app.handle().clone(), estado.clone());
+            catalogo_al_dia(app.handle().clone(), estado.clone());
             app.manage(estado);
             Ok(())
         })

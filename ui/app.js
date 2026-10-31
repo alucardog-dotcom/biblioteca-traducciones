@@ -201,6 +201,7 @@ const thumb = (sys, name, tipo) => 'https://thumbnails.libretro.com/' + encodeUR
   encodeURIComponent(name.replace(/[&*\/:`<>?\\|"]/g, '_')) + '.png';
 // Juegos de PC: la carátula vertical de Steam y, si no la tiene, su cabecera.
 const steamImg = (id, f) => `https://cdn.cloudflare.steamstatic.com/steam/apps/${encodeURIComponent(id)}/${f}`;
+const REPO_UI = 'https://raw.githubusercontent.com/alucardog-dotcom/biblioteca-traducciones/main/ui/';
 // La que has puesto tú (una imagen copiada a la carpeta de datos o un enlace).
 const propia = gr => {
   const m = gr && propias[gr.k];
@@ -215,7 +216,9 @@ function portada(r, done) {
   // El título queda debajo mientras la portada se descarga (y si no existe).
   // Se prueban en orden hasta que una carga: la tuya, la del catálogo, la de libretro o Steam, la de
   // LaunchBox y la pantalla de título.
-  const urls = [propia(r.gr), c.x.pm, ...(c.x.steam ? [steamImg(c.x.steam, 'library_600x900.jpg'), c.x.pu, steamImg(c.x.steam, 'header.jpg')]
+  // La del catálogo va dentro del programa; si es más nueva que el programa (llegó con un catálogo
+  // descargado), se trae del repositorio.
+  const urls = [propia(r.gr), c.x.pm, c.x.pm && REPO_UI + c.x.pm, ...(c.x.steam ? [steamImg(c.x.steam, 'library_600x900.jpg'), c.x.pu, steamImg(c.x.steam, 'header.jpg')]
     : c.x.p && sysLib ? [thumb(sysLib, c.x.p, tipo), c.x.pu, thumb(sysLib, c.x.p, alt)] : [c.x.pu])];
   const [primera, ...resto] = urls.filter(Boolean);
   let img = `<div class="ph">${esc(r.gr ? r.gr.titulo : r.a[F.juego])}</div>`;
@@ -773,6 +776,17 @@ async function cargarTodo() {
 // Al acabar una búsqueda se recarga la lista aunque la ventana no supiera que había empezado.
 T.event.listen('juegos', async () => { escaneando = false; await cargarJuegos(); sondear(); });
 T.event.listen('trabajo', () => sondear());
+// Ha llegado un catálogo más nuevo de GitHub: se vuelve a cargar sin cerrar nada.
+T.event.listen('catalogo', async () => {
+  try {
+    const antes = filas.length;
+    cargarDatos(await api('datos'));
+    emparejar();
+    if (!$('ficha').open && vista !== 'ajustes') pintar(); else contadores();
+    const mas = filas.length - antes;
+    aviso(`Catálogo actualizado${mas > 0 ? `: ${mas} traducciones nuevas` : ''}.`, 'ok');
+  } catch (e) { aviso(e.message, 'bad'); }
+});
 
 (async function inicio() {
   try { vista = localStorage.getItem('vista') || 'inicio'; } catch (e) { }
