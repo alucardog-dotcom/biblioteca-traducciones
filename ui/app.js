@@ -152,7 +152,8 @@ function emparejar() {
 const esIA = r => r.a[F.notas].startsWith('[IA]');
 const directa = r => (r.x.d || []).length > 0;
 const completa = r => /complet/i.test(r.a[F.estado]);
-const salidaDe = (r, g) => traducidos[r.key] || (g && tes.get(g.s + '|' + g.n + ' [T-Es]')) || '';
+// Un traducido con la extensión de su sistema (.gg) sale con ese sistema aunque el original (.bin) no lo diga.
+const salidaDe = (r, g) => traducidos[r.key] || (g && (tes.get(g.s + '|' + g.n + ' [T-Es]') || tes.get(r.s + '|' + g.n + ' [T-Es]'))) || '';
 const hecha = (r, g) => !!salidaDe(r, g);
 const mejorPar = r => (paresPorFila.get(r.key) || [])[0] || null;
 const ORDEN = {exacto: 0, posible: 1, otra: 2};
@@ -800,7 +801,14 @@ async function esperar(r, p) {
 }
 
 const verCarpeta = ruta => api('ver_carpeta', {ruta}).catch(e => aviso(e.message, 'bad'));
-const jugar = (ruta, sistema) => api('jugar', {ruta, sistema}).then(con => aviso(`Abriendo el juego con ${con}…`, 'ok')).catch(e => aviso(e.message, 'bad'));
+const jugar = (ruta, sistema) => api('jugar', {ruta, sistema}).then(j => {
+  // Si se ha renombrado (un .bin de Game Gear pasa a .gg), la ficha apunta ya al nombre nuevo.
+  if (j.ruta !== ruta) {
+    for (const k in traducidos) if (traducidos[k] === ruta) traducidos[k] = j.ruta;
+    for (const [k, v] of tes) if (v === ruta) tes.set(k, j.ruta);
+  }
+  aviso(`Abriendo el juego con ${j.con}…`, 'ok');
+}).catch(e => aviso(e.message, 'bad'));
 
 function accion(act, r, p) {
   if (act === 'ficha') return abrirFicha(r, p);

@@ -114,9 +114,19 @@ fn cancelar_espera(app: Estado) {
 }
 
 #[tauri::command]
-fn jugar(app: Estado, ruta: PathBuf, sistema: String) -> Result<String, String> {
+fn jugar(app: Estado, ruta: PathBuf, sistema: String) -> Result<Value, String> {
     let a = app.ajustes();
-    jugar::abrir(a.retrobat.as_deref(), &ruta, &sistema, &mut app.partida.lock().unwrap())
+    // Un traducido de antes con .bin (Game Gear y otros) se renombra, y se apunta la ruta nueva.
+    let ruta = match parcheo::corregir_extension(&ruta, &sistema) {
+        Some(nueva) => {
+            datos::cambiar_ruta(&app.rutas.traducidos, &ruta, &nueva);
+            datos::cambiar_ruta(&app.rutas.hechos, &ruta, &nueva);
+            nueva
+        }
+        None => ruta,
+    };
+    let con = jugar::abrir(a.retrobat.as_deref(), &ruta, &sistema, &mut app.partida.lock().unwrap())?;
+    Ok(json!({"con": con, "ruta": ruta.display().to_string()}))
 }
 
 #[tauri::command]

@@ -503,6 +503,34 @@ fn nombre_salida(nombre: &str, dir: &Path) -> String {
     base
 }
 
+/// Con .bin, el emulador no sabe que es de Game Gear, Master System, SG-1000 o 32X: lo abre como si fuera
+/// de otra consola y la pantalla se queda en negro. El traducido lleva la extensión de su sistema.
+fn ext_final(sis: &str, ext: &str) -> String {
+    let propia = match sis {
+        "gamegear" => ".gg",
+        "mastersystem" => ".sms",
+        "sg1000" => ".sg",
+        "sega32x" => ".32x",
+        _ => "",
+    };
+    if ext.eq_ignore_ascii_case(".bin") && !propia.is_empty() { propia.into() } else { ext.into() }
+}
+
+/// Un traducido de antes que se quedó con .bin: se renombra con la extensión de su sistema. Devuelve la
+/// ruta nueva si lo ha renombrado. Solo toca los traducidos (con la etiqueta), nunca un original.
+pub fn corregir_extension(ruta: &Path, sis: &str) -> Option<PathBuf> {
+    if !nombre_de(ruta).contains(ETIQUETA) || !ruta.is_file() {
+        return None;
+    }
+    let ext = format!(".{}", ext_de(ruta));
+    let buena = ext_final(sis, &ext);
+    if buena == ext {
+        return None;
+    }
+    let nueva = ruta.with_extension(&buena[1..]);
+    (!nueva.exists() && fs::rename(ruta, &nueva).is_ok()).then_some(nueva)
+}
+
 fn carpeta_destino(e: &Entorno, sis: &str, original: &Path) -> PathBuf {
     if e.salida.trim().is_empty() || e.salida == "junto" {
         original.parent().unwrap_or(Path::new(".")).to_path_buf()
@@ -549,7 +577,7 @@ fn aplicar_uno(e: &Entorno, p: &Parche, c: &mut Candidato, sis: &str, salto: u64
         Origen::Rom { fichero, salto, ext } => {
             let tmp = trabajo.join(format!("salida{ext}"));
             let msg = aplicar_rom(e, p, &fichero, &tmp, salto, sis)?;
-            let fin = dest.join(format!("{base}{ext}"));
+            let fin = dest.join(format!("{base}{}", ext_final(sis, &ext)));
             mover(&tmp, &fin)?;
             Ok((fin, msg))
         }
@@ -643,8 +671,15 @@ pub fn traducir(e: &Entorno, sis: &str, archivo: &Path, juego: &Path, crc_base: 
             Emparejado::Si { salto, entrada, como } => {
                 let clave = clave_hecho(sis, p, juego);
                 if let Some(f) = previos.get(&clave).filter(|f| f.is_file()) {
-                    log.push(format!("= {nombre}: ya aplicado antes -> {}", nombre_de(f)));
-                    return Ok(f.clone());
+                    let f = match corregir_extension(f, sis) {
+                        Some(nueva) => {
+                            apuntar_hecho(e, &clave, &nueva);
+                            nueva
+                        }
+                        None => f.clone(),
+                    };
+                    log.push(format!("= {nombre}: ya aplicado antes -> {}", nombre_de(&f)));
+                    return Ok(f);
                 }
                 log.push(format!("+ {nombre} [{}] -> {} ({como})", p.formato.nombre(), nombre_de(juego)));
                 let paso = Temporal::nueva(&trabajo.0)?;
@@ -729,6 +764,29 @@ mod pruebas {
         let (r4, _) = t.traducir("gba", &parche, &otra, &[]);
         assert!(r4.unwrap_err().contains("no es la versión"));
         assert!(!t.dir.join("juegos/gba/Otra [T-Es].gba").exists());
+    }
+
+    #[test]
+    fn game_gear_en_bin_sale_en_gg() {
+        let t = Prueba::nueva("parcheo-gg");
+        let src = ruido(65536, 4);
+        let tgt = traducido(&src);
+        let juego = t.fichero("juegos/GG Aleste (1991)(Compile)(JP)(en).bin", &src);
+        let parche = t.fichero("parche.bps", &bps_de(&src, &tgt));
+        let (r, log) = t.traducir("gamegear", &parche, &juego, &[]);
+        let fin = r.unwrap_or_else(|e| panic!("{e}\n{log:?}"));
+        assert_eq!(nombre_de(&fin), "GG Aleste (1991)(Compile)(JP)(en) [T-Es].gg");
+        // Un traducido de antes con .bin se renombra al volver a traducir, y queda apuntado.
+        let viejo = fin.with_extension("bin");
+        fs::rename(&fin, &viejo).unwrap();
+        apuntar_hecho(&t.entorno(), &clave_hecho("gamegear", &parches_de(&t.entorno(), &parche, &t.dir).unwrap()[0], &juego), &viejo);
+        let (r2, _) = t.traducir("gamegear", &parche, &juego, &[]);
+        assert_eq!(r2.unwrap(), fin);
+        assert!(fin.is_file() && !viejo.exists());
+        // Los originales y los de Mega Drive no se tocan.
+        assert_eq!(corregir_extension(&juego, "gamegear"), None);
+        let md = t.fichero("juegos/Otro [T-Es].bin", &src);
+        assert_eq!(corregir_extension(&md, "megadrive"), None);
     }
 
     #[test]

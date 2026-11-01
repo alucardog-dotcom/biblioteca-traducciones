@@ -108,6 +108,26 @@ fn traducidos(r: &Rutas) -> BTreeMap<String, String> {
     out
 }
 
+/// Un traducido renombrado: en traducidos.tsv o hechos.tsv, la ruta vieja pasa a ser la nueva.
+pub fn cambiar_ruta(fichero: &Path, vieja: &Path, nueva: &Path) {
+    let Ok(t) = leer_texto(fichero) else { return };
+    let (vieja, nueva) = (vieja.display().to_string(), nueva.display().to_string());
+    let lineas: Vec<String> = t
+        .lines()
+        .map(|l| {
+            let mut f: Vec<&str> = l.split('\t').collect();
+            if f.get(1) == Some(&vieja.as_str()) {
+                f[1] = &nueva;
+            }
+            f.join("\t")
+        })
+        .collect();
+    let nuevo = fichero.with_extension("tsv.nuevo");
+    if fs::write(&nuevo, lineas.join("\n") + "\n").is_ok() {
+        let _ = fs::rename(&nuevo, fichero);
+    }
+}
+
 /// Algunos gestores de juegos dejan en las carpetas de ROMs, en lugar del juego, un fichero de texto de
 /// ~180 bytes con un enlace. No son juegos.
 pub fn marcador_enlace(p: &Path, len: u64) -> bool {
@@ -117,4 +137,18 @@ pub fn marcador_enlace(p: &Path, len: u64) -> bool {
     let mut b = [0u8; 8];
     let n = fs::File::open(p).and_then(|mut f| f.read(&mut b)).unwrap_or(0);
     b[..n].starts_with(b"http://") || b[..n].starts_with(b"https://")
+}
+
+#[cfg(test)]
+mod pruebas {
+    use super::*;
+
+    #[test]
+    fn cambia_solo_la_ruta_vieja() {
+        let d = crate::motor::pruebas::carpeta("datos-cambiar-ruta");
+        let f = d.join("traducidos.tsv");
+        fs::write(&f, "gamegear|A\tC:\\J\\A [T-Es].bin\t1\nsnes|B\tC:\\J\\B [T-Es].smc\t2\n").unwrap();
+        cambiar_ruta(&f, Path::new("C:\\J\\A [T-Es].bin"), Path::new("C:\\J\\A [T-Es].gg"));
+        assert_eq!(fs::read_to_string(&f).unwrap(), "gamegear|A\tC:\\J\\A [T-Es].gg\t1\nsnes|B\tC:\\J\\B [T-Es].smc\t2\n");
+    }
 }
