@@ -303,7 +303,7 @@ const thumb = (sys, name, tipo) => 'https://thumbnails.libretro.com/' + encodeUR
 // Juegos de PC: la carátula vertical de Steam y, si no la tiene, su cabecera.
 const steamImg = (id, f) => `https://cdn.cloudflare.steamstatic.com/steam/apps/${encodeURIComponent(id)}/${f}`;
 const REPO_UI = 'https://raw.githubusercontent.com/alucardog-dotcom/biblioteca-traducciones/main/ui/';
-const DONAR = 'https://www.paypal.com/donate/?business=alucardj%40gmail.com&currency_code=EUR';
+const DONAR = 'https://paypal.me/btraducciones';
 // La que has puesto tú (una imagen copiada a la carpeta de datos o un enlace).
 const propia = gr => {
   const m = gr && propias[gr.k];
@@ -921,6 +921,29 @@ function pintarEscaneo(prog) {
   $('scan-text').textContent = t;
 }
 
+// Una sola vez, al traducir el tercer juego, un aviso discreto para invitar a un café. Si hay una ventana
+// abierta (la ficha), sale al cerrarla.
+const CAFE_TRAS = 3;
+function contarCafe() {
+  let c = {};
+  try { c = JSON.parse(localStorage.getItem('cafe') || '{}'); } catch (e) { }
+  if (c.visto) return;
+  c.n = (c.n || 0) + 1;
+  if (c.n >= CAFE_TRAS) {
+    c.visto = true;
+    $('cafe-n').textContent = c.n;
+    setTimeout(mostrarCafe, 1500);
+  }
+  try { localStorage.setItem('cafe', JSON.stringify(c)); } catch (e) { }
+}
+function mostrarCafe() {
+  const abierta = document.querySelector('dialog[open]');
+  if (abierta) abierta.addEventListener('close', mostrarCafe, {once: true});
+  else $('cafe').hidden = false;
+}
+$('cafe-si').href = DONAR;
+for (const id of ['cafe-si', 'cafe-no', 'cafe-x']) $(id).addEventListener('click', () => { $('cafe').hidden = true; });
+
 let sondeo = null;
 async function sondear() {
   clearTimeout(sondeo);
@@ -936,6 +959,7 @@ async function sondear() {
         traducidos[t.clave] = t.final;
         const r = porClave.get(t.clave);
         aviso((r ? r.a[F.juego] : 'El juego') + ' ya está en español.', 'ok');
+        contarCafe();
       }
       if (t.estado === 'error' && antes.get(t.id) && antes.get(t.id) !== 'error') aviso(t.mensaje || 'No se pudo traducir.', 'bad');
       if (!['hecho', 'error'].includes(t.estado)) activo = true;

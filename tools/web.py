@@ -12,7 +12,7 @@ WEB = os.path.join(RAIZ, 'web')
 REPO = 'https://github.com/alucardog-dotcom/biblioteca-traducciones'
 DESCARGA = REPO + '/releases/latest'
 INCIDENCIAS = REPO + '/issues'
-DONAR = 'https://www.paypal.com/donate/?business=alucardj%40gmail.com&currency_code=EUR'
+DONAR = 'https://paypal.me/btraducciones'
 PC = {'dos', 'windows', 'scummvm', 'easyrpg', 'pc'}
 e = html.escape
 
