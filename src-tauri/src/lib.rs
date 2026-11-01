@@ -8,6 +8,7 @@ mod datos;
 mod descarga;
 mod escaneo;
 mod jugar;
+mod listas;
 mod motor;
 mod parcheo;
 mod portadas;
@@ -194,6 +195,16 @@ fn poner_portada(app: Estado, clave: String, origen: String) -> Result<Value, St
 }
 
 #[tauri::command]
+fn mis_listas(app: Estado) -> Value {
+    listas::leer(&app.rutas)
+}
+
+#[tauri::command]
+fn guardar_listas(app: Estado, listas: Value) -> Result<Value, String> {
+    listas::guardar(&app.rutas, &listas)
+}
+
+#[tauri::command]
 fn quitar_portada(app: Estado, clave: String) -> Result<Value, String> {
     portadas::quitar(&app.rutas, &clave)
 }
@@ -281,7 +292,8 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             datos, mis_juegos, estado, escanear, traducir, esperar, cancelar_espera, jugar, ver_carpeta, abrir_web, ajustes,
-            guardar_ajustes, elegir_carpeta, elegir_imagen, portadas_propias, poner_portada, quitar_portada, pegar_portada, version_nueva
+            guardar_ajustes, elegir_carpeta, elegir_imagen, portadas_propias, poner_portada, quitar_portada, pegar_portada, version_nueva,
+            mis_listas, guardar_listas
         ])
         .run(tauri::generate_context!())
         .expect("no se pudo abrir la Biblioteca de traducciones");

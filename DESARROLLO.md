@@ -16,7 +16,8 @@ Está hecha con [Tauri 2](https://tauri.app): el motor en Rust (`src-tauri/`) y 
 | Aplicar el parche | `parcheo.rs` y `motor.rs`. Comprueba por CRC32 que tu juego es la versión que pide la traducción, también sin la cabecera de NES o de SNES. Saca el juego de su .zip/.7z/.rar o de su .chd y monta el disco traducido en un .chd. IPS, BPS, UPS, PPF y APS los aplica el propio programa; xdelta, el `xdelta3.exe` que lleva dentro, igual que 7-Zip y chdman |
 | Trabajos | `trabajos.rs`. Una cola: buscar juegos y traducir, de uno en uno. Vigila la carpeta Descargas cuando una traducción no tiene descarga directa |
 | Portadas propias | `portadas.rs`. Las imágenes se copian a `portadas\` en tus datos y se apuntan en `portadas_propias.json`; la ventana las ve con el protocolo `asset` de Tauri |
-| Tus datos | `%LOCALAPPDATA%\es.traducciones.biblioteca`: trabajos y su registro, parches descargados, la lista de tus juegos y tus portadas |
+| Favoritos y listas | `listas.rs`. Se guardan en `listas.json` en tus datos: cada juego con su clave de juego (la misma con la que la ventana junta sus traducciones) y la traducción que tenías elegida. La ventana manda siempre todas las listas juntas y aquí se limpian (Favoritos siempre existe y va la primera) |
+| Tus datos | `%LOCALAPPDATA%\es.traducciones.biblioteca`: trabajos y su registro, parches descargados, la lista de tus juegos, tus portadas y tus listas |
 | Ajustes | `%APPDATA%\es.traducciones.biblioteca\ajustes.json`. Si no existe, la ventana da la bienvenida y pregunta dónde están los juegos |
 
 Las portadas se prueban en orden hasta que una carga: la tuya, la elegida a mano para el catálogo (va dentro del programa, en `ui/portadas`), la de libretro-thumbnails (por el nombre No-Intro o Redump) o la de Steam, la de la base de datos pública de LaunchBox y la pantalla de título.

@@ -12,11 +12,14 @@ const FUENTE = {wave: 'Traducciones Wave', rhdn2021: 'la copia de romhacking.net
                 ra: 'la copia de parches de RetroAchievements en GitHub'};
 const VISTAS = {inicio: 'Inicio', mios: 'Mis juegos', todas: 'Descubrir', hechas: 'Traducidos', descargas: 'Descargas', ajustes: 'Ajustes'};
 
-let filas = [], grupos = [], porClave = new Map(), centro = {sistemas: {}, filas: {}}, traducidos = {}, tes = new Map();
+let filas = [], grupos = [], porClave = new Map(), porJuego = new Map(), centro = {sistemas: {}, filas: {}}, traducidos = {}, tes = new Map();
 let juegos = [], pares = [], paresPorFila = new Map();
 let vista = 'inicio', limit = 60, lista = [];
 let filtro = {sys: '', directa: false, completa: false, sinia: false};
 let escaneando = false, trabajos = [], espera = null, ajustes = {}, propias = {};
+let misListas = [{id: 'fav', nombre: 'Favoritos', juegos: []}];
+const ICONO_FAV = '<svg viewBox="0 0 24 24" class="i-fav"><path d="M12 20s-7.5-4.6-9.3-9.2C1.4 7.4 3.6 4 7 4c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.4 0 5.6 3.4 4.3 6.8C19.5 15.4 12 20 12 20z"/></svg>';
+const ICONO_LISTA = '<svg viewBox="0 0 24 24"><path d="M4 6h2v2H4zm4 0h12v2H8zM4 11h2v2H4zm4 0h12v2H8zM4 16h2v2H4zm4 0h12v2H8z"/></svg>';
 const $ = id => document.getElementById(id);
 const main = $('main');
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
@@ -94,7 +97,7 @@ function claveJuego(r) {
 }
 function agrupar() {
   grupos = [];
-  const porJuego = new Map();
+  porJuego = new Map();
   for (const r of filas) {
     const k = claveJuego(r);
     let gr = porJuego.get(k);
@@ -163,9 +166,10 @@ function puntos(r) {
 }
 const ordenadas = gr => gr.filas.slice().sort((x, y) => puntos(y) - puntos(x) || (y.a[F.fecha] || '').localeCompare(x.a[F.fecha] || ''));
 
-// La traducción que sale en la tarjeta del juego (entre las que pasan los filtros).
-function elegida(gr, vale = () => true) {
-  const r = ordenadas(gr).find(vale);
+// La traducción que sale en la tarjeta del juego (entre las que pasan los filtros): en una lista, la
+// que tenías elegida al guardarlo.
+function elegida(gr, vale = () => true, pref = null) {
+  const r = pref && pref.gr === gr && vale(pref) ? pref : ordenadas(gr).find(vale);
   return r ? {gr, r, p: mejorPar(r)} : null;
 }
 
@@ -176,13 +180,16 @@ function gruposDe(v) {
     return [...new Set(conPar.map(p => p.r.gr))];
   }
   if (v === 'hechas') return grupos.filter(gr => gr.filas.some(r => hecha(r, (mejorPar(r) || {}).g)));
+  const l = listaDe(v);
+  if (l) return l.juegos.map(j => porJuego.get(j.k)).filter(Boolean);
   return grupos;
 }
-const itemsDe = v => gruposDe(v).map(gr => elegida(gr));
+const itemsDe = v => gruposDe(v).map(gr => elegida(gr, undefined, guardada(listaDe(v), gr)));
 
 function filtrar(grs) {
   const q = tokens($('q').value);
   const vale = r => (!filtro.directa || directa(r)) && (!filtro.completa || completa(r)) && (!filtro.sinia || !esIA(r));
+  const l = listaDe(vista);
   const out = [];
   for (const gr of grs) {
     if (filtro.sys && gr.s !== filtro.sys) continue;
@@ -190,10 +197,103 @@ function filtrar(grs) {
       const t = tokens(gr.filas.map(r => [r.a[F.juego], r.a[F.orig], r.a[F.grupo], (mejorPar(r) || {g: {n: ''}}).g.n].join(' ')).join(' '));
       if (!q.every(w => t.some(x => x.startsWith(w)))) continue;
     }
-    const it = elegida(gr, vale);
+    const it = elegida(gr, vale, guardada(l, gr));
     if (it) out.push(it);
   }
   return out;
+}
+
+// ---------------------------------------------------------------- listas
+// Favoritos y las listas que crees, para volver a esos juegos más tarde. Se guardan en listas.json (en
+// la carpeta de datos) con la clave del juego y la traducción que estabas viendo al guardarlo.
+const listaDe = v => typeof v === 'string' && v.startsWith('lista:') ? misListas.find(l => l.id === v.slice(6)) || null : null;
+const enLista = (l, gr) => !!l && l.juegos.some(j => j.k === gr.k);
+const favorito = gr => enLista(listaDe('lista:fav'), gr);
+const guardada = (l, gr) => l ? porClave.get((l.juegos.find(j => j.k === gr.k) || {}).t) || null : null;
+
+let listasCambiadas = false;
+async function guardarListas() {
+  listasCambiadas = true;
+  pintarListas();
+  try { await api('guardar_listas', {listas: {listas: misListas}}); } catch (e) { aviso(e.message, 'bad'); }
+}
+// Mete el juego en la lista o lo saca. Devuelve si ha quedado dentro.
+function alternar(l, gr, r) {
+  const i = l.juegos.findIndex(j => j.k === gr.k);
+  if (i >= 0) l.juegos.splice(i, 1);
+  else l.juegos.unshift({k: gr.k, t: r ? r.key : '', f: Math.floor(Date.now() / 1000)});
+  guardarListas();
+  return i < 0;
+}
+function nuevaLista(nombre) {
+  nombre = (nombre || '').trim().slice(0, 80);
+  if (!nombre) return null;
+  const igual = misListas.find(l => l.nombre.toLowerCase() === nombre.toLowerCase());
+  if (igual) return igual;
+  const l = {id: 'l' + Date.now().toString(36), nombre, juegos: []};
+  misListas.push(l);
+  return l;
+}
+
+function pintarListas() {
+  $('listas-nav').innerHTML = misListas.map(l => `<button type="button" class="nav" data-go="lista:${esc(l.id)}">${l.id === 'fav' ? ICONO_FAV : ICONO_LISTA}<span>${esc(l.nombre)}</span><b class="n">${l.juegos.length || ''}</b></button>`).join('');
+  marcarNav();
+}
+
+// Corazón de una tarjeta: añade el juego a Favoritos o lo quita.
+function alternarFav({gr, r}) {
+  const dentro = alternar(listaDe('lista:fav'), gr, r);
+  aviso(dentro ? `${gr.titulo}: añadido a Favoritos.` : `${gr.titulo}: quitado de Favoritos.`, 'ok');
+  // En Favoritos (o en la fila de Inicio) el juego aparece o desaparece; en el resto solo cambia el corazón.
+  if (vista === 'lista:fav' || vista === 'inicio') return pintar();
+  main.querySelectorAll('.card').forEach(card => {
+    const t = tarjetas[+card.dataset.n];
+    if (t && t.gr === gr) marcarFav(card.querySelector('.fav'), dentro);
+  });
+}
+function marcarFav(btn, dentro) {
+  btn.setAttribute('aria-pressed', dentro);
+  btn.title = btn.ariaLabel = dentro ? 'Quitar de Favoritos' : 'Añadir a Favoritos';
+}
+
+// Una pregunta en una ventanita: un nombre (con su campo de texto) o una confirmación. Devuelve el texto
+// escrito, true si se confirma o null si se cancela.
+function preguntar({titulo, texto = '', valor = null, boton}) {
+  const d = $('pregunta');
+  $('p-title').textContent = titulo;
+  $('p-texto').textContent = texto;
+  $('p-texto').hidden = !texto;
+  $('p-valor').hidden = valor === null;
+  $('p-valor').value = valor || '';
+  $('p-si').textContent = boton;
+  d.returnValue = '';
+  d.showModal();
+  if (valor !== null) $('p-valor').select();
+  return new Promise(res => d.addEventListener('close', () =>
+    res(d.returnValue !== 'si' ? null : valor === null ? true : $('p-valor').value.trim() || null), {once: true}));
+}
+
+async function crearLista() {
+  const nombre = await preguntar({titulo: 'Lista nueva', texto: 'Ponle un nombre, como «Para este verano» o «RPG japoneses».', valor: '', boton: 'Crear la lista'});
+  const l = nuevaLista(nombre);
+  if (!l) return;
+  await guardarListas();
+  ir('lista:' + l.id);
+}
+async function accionLista(que) {
+  const l = listaDe(vista);
+  if (!l || l.id === 'fav') return;
+  if (que === 'renombrar') {
+    const nombre = await preguntar({titulo: 'Cambiar el nombre', valor: l.nombre, boton: 'Guardar'});
+    if (!nombre) return;
+    l.nombre = nombre.slice(0, 80);
+  } else if (que === 'borrar') {
+    const si = await preguntar({titulo: `¿Borrar la lista «${l.nombre}»?`, texto: 'Solo se borra la lista: los juegos y sus traducciones siguen en el catálogo.', boton: 'Borrar la lista'});
+    if (!si) return;
+    misListas = misListas.filter(x => x !== l);
+  } else return;
+  await guardarListas();
+  if (que === 'borrar') ir('inicio'); else pintar();
 }
 
 // ---------------------------------------------------------------- portadas
@@ -309,8 +409,9 @@ const versionDe = r => r.a[F.version] ? 'v' + r.a[F.version].replace(/^v\s*/i, '
 let tarjetas = [];
 function tarjeta({gr, r, p}) {
   const n = tarjetas.push({gr, r, p}) - 1;
-  const varias = gr.filas.length > 1;
+  const varias = gr.filas.length > 1, fv = favorito(gr), ftxt = fv ? 'Quitar de Favoritos' : 'Añadir a Favoritos';
   return `<article class="card" data-n="${n}">
+    <button type="button" class="fav" aria-pressed="${fv}" aria-label="${ftxt}" title="${ftxt}">${ICONO_FAV}</button>
     ${portada(r, hecha(r, p && p.g))}
     <div class="body">
       <div class="title">${esc(gr.titulo)}</div>
@@ -338,8 +439,12 @@ function contadores() {
   return mios;
 }
 
+const marcarNav = () => document.querySelectorAll('.nav[data-go]').forEach(b => b.toggleAttribute('aria-current', b.dataset.go === vista) && b.setAttribute('aria-current', 'page'));
+
 function pintar() {
-  document.querySelectorAll('.nav[data-go]').forEach(b => b.toggleAttribute('aria-current', b.dataset.go === vista) && b.setAttribute('aria-current', 'page'));
+  // Una lista que ya no existe (borrada, o recordada de la última vez): se vuelve a Inicio.
+  if (vista.startsWith('lista:') && !listaDe(vista)) vista = 'inicio';
+  marcarNav();
   contadores();
   tarjetas = [];
   if (vista === 'inicio') return pintarInicio();
@@ -368,6 +473,7 @@ function pintarInicio() {
       </div>
     </section>
     ${fila('Listas para tus juegos', listas, 'mios')}
+    ${fila('Tus favoritos', itemsDe('lista:fav'), 'lista:fav')}
     ${fila('Ya traducidos', hechas, 'hechas')}
     ${fila('Novedades del catálogo', nuevas, 'todas')}
     ${!juegos.length && !escaneando ? `<p class="empty">No hay juegos tuyos todavía. Pon tus ROMs en <code>${esc((ajustes.carpetas || [])[0] || 'C:\\Juegos')}</code> (mejor en una subcarpeta por sistema, como <code>snes</code> o <code>psx</code>) y pulsa <b>Buscar mis juegos</b>.</p>` : ''}`;
@@ -378,11 +484,20 @@ function pintarRejilla() {
   const sistemas = [...new Set(gruposDe(vista).map(gr => gr.s))].sort((x, y) => (SYS[x] || x).localeCompare(SYS[y] || y));
   const nTrad = lista.reduce((n, it) => n + it.gr.filas.length, 0);
   const chip = (k, t) => `<button class="chip" data-f="${k}" aria-pressed="${filtro[k]}">${t}</button>`;
+  const l = listaDe(vista);
   let vacio = 'No hay resultados con estos filtros.';
   if (vista === 'mios' && !juegos.length) vacio = escaneando ? 'Buscando tus juegos…' : `No hay juegos tuyos todavía. Pon tus ROMs en <code>${esc((ajustes.carpetas || [])[0] || 'C:\\Juegos')}</code> y pulsa <b>Buscar mis juegos</b>.`;
   else if (vista === 'mios') vacio = 'Ninguno de tus juegos tiene traducción en el catálogo con estos filtros.';
   else if (vista === 'hechas') vacio = 'Todavía no has traducido ningún juego.';
-  main.innerHTML = `<h1>${VISTAS[vista]}</h1>
+  else if (l && !l.juegos.length) vacio = l.id === 'fav' ? 'Todavía no tienes favoritos. Pulsa el corazón de la portada de un juego para guardarlo aquí.'
+    : 'Esta lista está vacía. Abre la ficha de un juego y pulsa <b>Guardar en una lista</b>.';
+  // Un juego guardado puede faltar si una actualización del catálogo lo ha cambiado de nombre o quitado.
+  const faltan = l ? l.juegos.length - gruposDe(vista).length : 0;
+  const cabecera = l ? `<div class="lista-h"><h1>${esc(l.nombre)}</h1>${l.id === 'fav' ? ''
+    : '<button class="btn ghost" data-lista="renombrar">Cambiar el nombre</button><button class="btn ghost" data-lista="borrar">Borrar la lista</button>'}</div>`
+    + (faltan > 0 ? `<p class="lead">${faltan === 1 ? 'Un juego de esta lista ya no está' : faltan + ' juegos de esta lista ya no están'} en el catálogo.</p>` : '')
+    : `<h1>${VISTAS[vista]}</h1>`;
+  main.innerHTML = `${cabecera}
     <div class="filters">
       <select id="sys"><option value="">Todos los sistemas</option>${sistemas.map(s => `<option value="${esc(s)}" ${s === filtro.sys ? 'selected' : ''}>${esc(SYS[s] || s)}</option>`).join('')}</select>
       ${chip('directa', 'Traducción de un clic')}${chip('completa', 'Completas')}${chip('sinia', 'Sin IA')}
@@ -535,7 +650,8 @@ function abrirFicha(r, p) {
   const elegido = p || opciones.find(o => o.tipo !== 'otra') || opciones[0] || null;
   $('f-title').textContent = gr.titulo;
   $('f-sub').textContent = (SYS[r.s] || r.s) + (todas.length > 1 ? ` · ${todas.length} traducciones` : a[F.grupo] ? ' · traducción de ' + a[F.grupo] : '');
-  const dl = pares => '<dl class="f-grid">' + pares.filter(x => x[1]).map(x => `<dt>${x[0]}</dt><dd>${x[1]}</dd>`).join('') + '</dl>';
+  pintarGuardar(false);
+  const dl =pares => '<dl class="f-grid">' + pares.filter(x => x[1]).map(x => `<dt>${x[0]}</dt><dd>${x[1]}</dd>`).join('') + '</dl>';
   const d0 = (r.x.d || [])[0];
   // Con varias traducciones, primero se elige cuál; debajo va la ficha de la elegida.
   let html = todas.length > 1 ? '<div class="f-trads">' + todas.map((t, i) => {
@@ -603,7 +719,43 @@ function abrirFicha(r, p) {
   html += `<a class="btn" href="https://www.google.com/search?q=${encodeURIComponent('traducción español ' + (a[F.orig] || a[F.juego]) + ' ' + (SYS[r.s] || r.s) + ' ' + a[F.grupo])}" target="_blank" rel="noopener">Buscar en Google</a>`;
   html += '</div></div></div>';
   $('f-body').innerHTML = html;
-  if (!$('ficha').open) $('ficha').showModal();
+  if (!$('ficha').open) { listasCambiadas = false; $('ficha').showModal(); }
+}
+
+// Arriba de la ficha: Favoritos y el menú para guardar el juego en tus listas (o en una nueva).
+function pintarGuardar(abierto) {
+  const {gr} = fichaActual, fv = favorito(gr);
+  const otras = misListas.filter(l => l.id !== 'fav' && enLista(l, gr)).length;
+  $('f-guardar').innerHTML = `<button type="button" class="btn" data-g="fav" aria-pressed="${fv}">${ICONO_FAV}${fv ? 'En Favoritos' : 'Favoritos'}</button>
+    <button type="button" class="btn" data-g="menu" aria-expanded="${abierto}">${ICONO_LISTA}${otras ? `En ${otras} ${otras === 1 ? 'lista' : 'listas'}` : 'Guardar en una lista'}</button>
+    <div class="menu-listas" ${abierto ? '' : 'hidden'}>
+      <div class="m-h">Guardar en…</div>
+      ${misListas.map(l => `<label class="opt"><input type="checkbox" data-l="${esc(l.id)}" ${enLista(l, gr) ? 'checked' : ''}><span>${esc(l.nombre)}</span></label>`).join('')}
+      <div class="m-nueva"><input type="text" id="m-nombre" placeholder="Lista nueva…" maxlength="80" spellcheck="false"><button type="button" class="btn" data-g="crear">Crear</button></div>
+    </div>`;
+}
+function guardarFicha(que, l) {
+  const {gr, r} = fichaActual;
+  if (que === 'fav') {
+    aviso(alternar(listaDe('lista:fav'), gr, r) ? 'Añadido a Favoritos.' : 'Quitado de Favoritos.', 'ok');
+    return pintarGuardar(false);
+  }
+  if (que === 'menu') {
+    pintarGuardar($('f-guardar').querySelector('.menu-listas').hidden);
+    if (!$('f-guardar').querySelector('.menu-listas').hidden) $('m-nombre').focus();
+    return;
+  }
+  if (que === 'crear') {
+    l = nuevaLista($('m-nombre').value);
+    if (!l) return $('m-nombre').focus();
+    if (!enLista(l, gr)) alternar(l, gr, r); else guardarListas();
+    aviso(`Guardado en «${l.nombre}».`, 'ok');
+    return pintarGuardar(true);
+  }
+  if (que === 'lista' && l) {
+    aviso(alternar(l, gr, r) ? `Guardado en «${l.nombre}».` : `Quitado de «${l.nombre}».`, 'ok');
+    pintarGuardar(true);
+  }
 }
 
 async function portadaFicha(que, gr) {
@@ -665,8 +817,10 @@ main.addEventListener('click', e => {
   if (f) { filtro[f.dataset.f] = !filtro[f.dataset.f]; limit = 60; return pintar(); }
   if (e.target.dataset.jugar) return jugar(e.target.dataset.jugar, e.target.dataset.sis || '');
   if (e.target.dataset.ruta) return verCarpeta(e.target.dataset.ruta);
+  if (e.target.dataset.lista) return accionLista(e.target.dataset.lista);
   const card = e.target.closest('.card');
   if (!card) return;
+  if (e.target.closest('.fav')) return alternarFav(tarjetas[+card.dataset.n]);
   const {r, p} = tarjetas[+card.dataset.n];   // r es la traducción que enseña la tarjeta; r.gr, su juego
   const btn = e.target.closest('button[data-act]');
   if (btn) accion(btn.dataset.act, r, p);
@@ -688,8 +842,39 @@ $('f-body').addEventListener('click', e => {
 $('f-body').addEventListener('keydown', e => {
   if (e.target.id === 'f-url' && e.key === 'Enter' && fichaActual) portadaFicha('usar', fichaActual.gr);
 });
+$('f-guardar').addEventListener('click', e => {
+  // El menú se vuelve a pintar con cada clic: que el clic no llegue a la ficha, que lo tomaría por uno de fuera.
+  e.stopPropagation();
+  const b = e.target.closest('button[data-g]');
+  if (b && fichaActual) guardarFicha(b.dataset.g);
+});
+$('f-guardar').addEventListener('change', e => {
+  if (e.target.dataset.l && fichaActual) guardarFicha('lista', misListas.find(l => l.id === e.target.dataset.l));
+});
+$('f-guardar').addEventListener('keydown', e => {
+  if (e.target.id === 'm-nombre' && e.key === 'Enter' && fichaActual) guardarFicha('crear');
+});
 $('f-close').addEventListener('click', () => $('ficha').close());
-$('ficha').addEventListener('click', e => { if (e.target.id === 'ficha') e.target.close(); });
+$('ficha').addEventListener('click', e => {
+  if (e.target.id === 'ficha') return e.target.close();
+  // El menú de las listas se cierra al pulsar fuera de él.
+  const menu = $('f-guardar').querySelector('.menu-listas');
+  if (menu && !menu.hidden && !e.target.closest('#f-guardar')) pintarGuardar(false);
+});
+// Si has cambiado tus listas desde la ficha, al cerrarla las tarjetas lo reflejan.
+$('ficha').addEventListener('close', () => {
+  if (!listasCambiadas) return;
+  listasCambiadas = false;
+  if (vista === 'inicio' || listaDe(vista)) pintar(); else refrescarFavs();
+});
+function refrescarFavs() {
+  main.querySelectorAll('.card').forEach(card => {
+    const t = tarjetas[+card.dataset.n];
+    if (t) marcarFav(card.querySelector('.fav'), favorito(t.gr));
+  });
+}
+$('nueva-lista').addEventListener('click', crearLista);
+$('listas-nav').addEventListener('click', e => { const b = e.target.closest('[data-go]'); if (b) ir(b.dataset.go); });
 // Los enlaces se abren en el navegador, no dentro de la ventana.
 document.addEventListener('click', e => {
   const a = e.target.closest('a[href^="http"]');
@@ -702,7 +887,7 @@ document.querySelectorAll('.nav[data-go]').forEach(b => b.addEventListener('clic
 let tq;
 $('q').addEventListener('input', () => {
   clearTimeout(tq);
-  tq = setTimeout(() => { if (!['mios', 'todas', 'hechas'].includes(vista)) vista = 'todas'; limit = 60; pintar(); }, 150);
+  tq = setTimeout(() => { if (!['mios', 'todas', 'hechas'].includes(vista) && !listaDe(vista)) vista = 'todas'; limit = 60; pintar(); }, 150);
 });
 $('scan').addEventListener('click', async () => {
   try { await api('escanear'); escaneando = true; pintarEscaneo(''); sondear(); } catch (e) { aviso(e.message, 'bad'); }
@@ -771,6 +956,9 @@ async function cargarJuegos() {
 async function cargarTodo() {
   cargarDatos(await api('datos'));
   propias = await api('portadas_propias').catch(() => ({}));
+  const ml = await api('mis_listas').catch(() => null);
+  if (ml && ml.listas) misListas = ml.listas;
+  pintarListas();
   await cargarJuegos();
   pintar();
 }
@@ -792,7 +980,7 @@ T.event.listen('catalogo', async () => {
 
 (async function inicio() {
   try { vista = localStorage.getItem('vista') || 'inicio'; } catch (e) { }
-  if (!VISTAS[vista]) vista = 'inicio';
+  if (!VISTAS[vista] && !vista.startsWith('lista:')) vista = 'inicio';
   ajustes = await api('ajustes').catch(() => ({}));
   try {
     await cargarTodo();

@@ -20,6 +20,8 @@
         <button type="button" class="nav" data-go="hechas"><svg viewBox="0 0 24 24"><path d="M9 16.2l-3.5-3.5L4 14.2l5 5 11-11-1.5-1.5z"/></svg><span>Traducidos</span><b class="n" id="n-hechas"></b></button>
         <button type="button" class="nav" data-go="descargas"><svg viewBox="0 0 24 24"><path d="M11 3h2v9.2l3.3-3.3 1.4 1.4L12 16l-5.7-5.7 1.4-1.4 3.3 3.3zM4 18h16v2H4z"/></svg><span>Descargas</span><b class="n acc" id="n-dl"></b></button>
       </nav>
+      <div class="side-h"><span>Mis listas</span><button type="button" class="mas" id="nueva-lista" aria-label="Nueva lista" title="Nueva lista">+</button></div>
+      <nav class="navs listas" id="listas-nav" aria-label="Mis listas"></nav>
       <div class="side-foot">
         <button type="button" class="nueva" id="nueva" hidden></button>
         <div class="scan-text" id="scan-text"></div>
@@ -47,6 +49,7 @@
   <dialog id="ficha" aria-labelledby="f-title">
     <div class="f-head">
       <div><h2 id="f-title"></h2><div class="f-sub" id="f-sub"></div></div>
+      <div class="f-guardar" id="f-guardar"></div>
       <button type="button" class="btn ghost" id="f-close" aria-label="Cerrar">✕</button>
     </div>
     <div id="f-body"></div>
@@ -56,6 +59,16 @@
 
   <!-- La primera vez: qué hace el programa y dónde están tus juegos. -->
   <dialog id="bienvenida" aria-labelledby="b-title"><div id="b-body"></div></dialog>
+
+  <!-- Un nombre (lista nueva, cambiar el nombre) o una confirmación (borrar una lista). -->
+  <dialog id="pregunta" aria-labelledby="p-title">
+    <form method="dialog">
+      <h2 id="p-title"></h2>
+      <p id="p-texto"></p>
+      <input type="text" id="p-valor" maxlength="80" spellcheck="false" autocomplete="off">
+      <div class="f-actions"><button class="btn primary" value="si" id="p-si"></button><button class="btn ghost" value="no">Cancelar</button></div>
+    </form>
+  </dialog>
 
   <div class="toasts" id="toasts" aria-live="polite"></div>
   <script src="app.js"></script>

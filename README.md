@@ -17,7 +17,7 @@ Más de 6.000 traducciones hechas por aficionados, de la NES a los juegos de PC 
 
 ¿Tienes un juego japonés de Super Nintendo, un RPG de PlayStation que nunca llegó a España o un juego de Steam que solo está en inglés? Hay muchas probabilidades de que alguien lo haya traducido. La Biblioteca de traducciones busca tus juegos, te dice cuáles tienen traducción al español y la aplica con un clic. **Nunca descarga juegos**: solo los parches de traducción, que se aplican sobre tu propia copia, y tu copia queda intacta.
 
-![Descubrir: el catálogo con sus portadas](docs/captura-descubrir.png)
+![Una lista con juegos de diez plataformas: Game Boy Advance, PlayStation, Super Nintendo, Mega CD, Dreamcast, Saturn, Nintendo DS, PlayStation 2, Nintendo 64 y PC](docs/captura-listas.png)
 
 ## Qué hace
 
@@ -28,9 +28,12 @@ Más de 6.000 traducciones hechas por aficionados, de la NES a los juegos de PC 
 - **Sin descarga directa**: abre la página de la traducción y, en cuanto bajas el parche, lo aplica él solo.
 - **Juegos de PC**: sus traducciones se instalan a mano. La biblioteca te dice cuáles tienes y te lleva a la página de la traducción y a la carpeta del juego.
 - **Portadas** de libretro-thumbnails, Steam y LaunchBox. Si falta alguna, puedes poner la tuya: elegir una imagen, pegarla con Ctrl+V o soltarla sobre el juego.
+- **Favoritos y listas**: pulsa el corazón de un juego para tenerlo en Favoritos, o guárdalo en tus propias listas («Pendientes», «RPG japoneses»…) para volver a él más tarde.
 - **Con RetroBat**, el botón Jugar abre el juego traducido con su emulador.
 
-![La ficha de un juego con varias traducciones](docs/captura-ficha.png)
+![Descubrir: buscando «zelda» salen sus juegos de NES, Famicom Disk System, Game Boy, Game Boy Color, Nintendo 64 y GameCube](docs/captura-descubrir.png)
+
+![La ficha de un juego con sus tres traducciones y el menú para guardarlo en una lista](docs/captura-ficha.png)
 
 ## Instalar
 
@@ -56,7 +59,7 @@ El programa no envía datos tuyos a ningún sitio. Solo se conecta para:
 - **Parches:** traduccioneswave.top, archive.org y github.com.
 - **Versión y catálogo nuevos:** api.github.com y raw.githubusercontent.com, para ver si hay una versión nueva del programa y para traer el catálogo más reciente.
 
-Tus ajustes y tus datos se guardan en tu equipo: `%APPDATA%\es.traducciones.biblioteca` y `%LOCALAPPDATA%\es.traducciones.biblioteca`.
+Tus ajustes, tus listas y tus datos se guardan en tu equipo: `%APPDATA%\es.traducciones.biblioteca` y `%LOCALAPPDATA%\es.traducciones.biblioteca`.
 
 ## ¿Te gusta?
 

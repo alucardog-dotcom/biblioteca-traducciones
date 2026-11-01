@@ -11,6 +11,7 @@
   --ok: #3FB97A;
   --warn: #E6B450;
   --bad: #E5534B;
+  --fav: #F2667A;
   --radius: 14px;
   color-scheme: dark;
 }
@@ -51,6 +52,15 @@ svg { width: 20px; height: 20px; fill: currentColor; flex: none; }
 .n { font-size: 11px; font-weight: 600; color: var(--muted); background: var(--panel-2); border-radius: 999px; padding: 1px 8px; }
 .n:empty { display: none; }
 .n.acc { background: var(--acc); color: #1A1206; }
+.side > * { flex: none; }
+.side-h { display: flex; align-items: center; justify-content: space-between; padding: 16px 8px 4px 12px; font-size: 11px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; color: var(--muted); }
+.side-h .mas { width: 24px; height: 24px; background: none; border: 0; border-radius: 6px; color: var(--muted); font-size: 18px; line-height: 1; cursor: pointer; }
+.side-h .mas:hover { background: var(--panel); color: var(--text); }
+.side .listas { flex: 0 1 auto; min-height: 0; overflow-y: auto; }
+.listas .nav { padding: 8px 12px; }
+.listas .nav span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.listas::-webkit-scrollbar { width: 6px; }
+.listas::-webkit-scrollbar-thumb { background: var(--panel-2); border-radius: 3px; }
 .side-foot { margin-top: auto; display: flex; flex-direction: column; gap: 2px; }
 .scan-text { font-size: 12px; color: var(--muted); padding: 0 12px 6px; min-height: 18px; }
 
@@ -218,6 +228,37 @@ kbd { font: inherit; font-size: 11px; background: var(--panel-2); border: 1px so
 .f-trad[aria-pressed="true"] { border-color: var(--acc); background: rgba(242,169,59,.12); }
 .f-cual { margin: 0 0 10px; font-size: 16px; }
 .card .meta b { color: var(--acc); font-weight: 600; }
+
+/* ---------------------------------------------------------------- favoritos y listas */
+.card { position: relative; }
+.fav { position: absolute; left: 8px; top: 8px; z-index: 2; width: 30px; height: 30px; border: 0; border-radius: 50%; background: rgba(10,13,18,.78); color: var(--text); display: grid; place-items: center; cursor: pointer; opacity: 0; transition: opacity .12s, transform .12s; }
+.card:hover .fav, .fav:focus-visible, .fav[aria-pressed="true"] { opacity: 1; }
+.fav:hover { transform: scale(1.1); }
+.fav svg { width: 16px; height: 16px; }
+.i-fav { fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; }
+.fav[aria-pressed="true"], .f-guardar [aria-pressed="true"] { color: var(--fav); }
+[aria-pressed="true"] > .i-fav, .nav > .i-fav { fill: currentColor; }
+.nav > .i-fav { stroke: none; }
+.nav[aria-current="page"] > .i-fav { color: var(--fav); }
+.lista-h { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.lista-h h1 { margin-right: 8px; }
+.f-guardar { position: relative; display: flex; gap: 8px; align-items: center; }
+.f-guardar > .btn svg { width: 16px; height: 16px; }
+.menu-listas { position: absolute; right: 0; top: calc(100% + 6px); width: 270px; max-height: 340px; overflow-y: auto; z-index: 3; background: var(--panel-2); border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px 10px; box-shadow: 0 14px 34px rgba(0,0,0,.5); }
+.menu-listas[hidden] { display: none; }
+.menu-listas .m-h { font-size: 12px; color: var(--muted); margin: 2px 0 4px; }
+.menu-listas .opt { margin: 2px 0; padding: 4px 2px; }
+.menu-listas input[type="checkbox"] { accent-color: var(--acc); width: 15px; height: 15px; }
+.menu-listas .opt span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.m-nueva { display: flex; gap: 6px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); }
+.m-nueva input, #pregunta input { flex: 1; min-width: 0; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 6px 8px; user-select: text; }
+#pregunta { width: min(440px, 92vw); }
+#pregunta form { padding: 22px 24px 20px; }
+#pregunta h2 { margin-bottom: 8px; }
+#pregunta p { color: var(--muted); margin: 0 0 12px; }
+#pregunta input { width: 100%; padding: 9px 10px; }
+#pregunta input[hidden], #pregunta p[hidden] { display: none; }
+#pregunta .f-actions { margin-top: 18px; }
 
 /* ---------------------------------------------------------------- avisos */
 .toasts { position: fixed; right: 20px; bottom: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 10; }
