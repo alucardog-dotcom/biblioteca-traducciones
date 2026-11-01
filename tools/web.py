@@ -477,6 +477,10 @@ def main():
     for c in ('captura-listas.png', 'captura-ficha.png', 'captura-descubrir.png'):
         shutil.copy(os.path.join(RAIZ, 'docs', c), os.path.join(salida, 'img', c))
     shutil.copytree(os.path.join(RAIZ, 'ui', 'portadas'), os.path.join(salida, 'portadas'))
+    # Copias reducidas de las portadas de internet que pesan mucho (las hace miniaturas.py); el catálogo
+    # apunta a ellas en "pu", también para el programa.
+    if os.path.isdir(os.path.join(WEB, 'miniaturas')):
+        shutil.copytree(os.path.join(WEB, 'miniaturas'), os.path.join(salida, 'miniaturas'))
     shutil.copy(os.path.join(RAIZ, 'ui', 'icono.svg'), os.path.join(salida, 'icono.svg'))
     shutil.copy(os.path.join(WEB, 'estilo.css'), os.path.join(salida, 'estilo.css'))
     os.makedirs(os.path.join(salida, 'catalogo'))
