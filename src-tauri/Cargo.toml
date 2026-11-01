@@ -1,6 +1,6 @@
 [package]
 name = "biblioteca-traducciones"
-version = "0.7.0"
+version = "0.7.1"
 description = "Biblioteca de traducciones al español para juegos clásicos y de PC"
 license = "GPL-3.0-or-later"
 repository = "https://github.com/alucardog-dotcom/biblioteca-traducciones"

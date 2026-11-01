@@ -6,7 +6,7 @@
 Más de 6.000 traducciones hechas por aficionados, de la NES a los juegos de PC de hoy, a un clic.</p>
 
 <p align="center">
-  <a href="https://github.com/alucardog-dotcom/biblioteca-traducciones/releases/latest"><img alt="Última versión" src="https://img.shields.io/github/v/release/alucardog-dotcom/biblioteca-traducciones?label=versi%C3%B3n&color=f2a93b"></a>
+  <a href="https://github.com/alucardog-dotcom/biblioteca-traducciones/releases/latest"><img alt="Última versión" src="https://img.shields.io/github/v/release/alucardog-dotcom/biblioteca-traducciones?label=versi%C3%B3n&color=c60b1e"></a>
   <a href="https://github.com/alucardog-dotcom/biblioteca-traducciones/releases"><img alt="Descargas" src="https://img.shields.io/github/downloads/alucardog-dotcom/biblioteca-traducciones/total?label=descargas"></a>
   <img alt="Windows 10 y 11" src="https://img.shields.io/badge/Windows-10%20y%2011-0078D6">
   <a href="LICENSE"><img alt="Licencia GPL-3.0" src="https://img.shields.io/badge/licencia-GPL--3.0-blue"></a>
