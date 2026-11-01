@@ -1,6 +1,6 @@
 {
   "name": "biblioteca-traducciones",
-  "version": "0.7.2",
+  "version": "0.7.3",
   "private": true,
   "license": "GPL-3.0-or-later",
   "description": "Biblioteca de traducciones al español: busca tus juegos, descarga su traducción de aficionados y la aplica.",

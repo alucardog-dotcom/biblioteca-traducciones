@@ -183,6 +183,49 @@ fn parches_de(e: &Entorno, archivo: &Path, trabajo: &Path) -> Result<Vec<Parche>
     Ok(motor::detectar(archivo).map(|formato| Parche { fichero: archivo.to_path_buf(), formato, original: archivo.to_path_buf() }).into_iter().collect())
 }
 
+/// Muchos léame dicen el CRC32 de la ROM que pide el parche («CRC32: b78c09a2»). Sirve para comprobar tu
+/// copia cuando la ficha del catálogo no lo trae: un IPS no lleva ninguno.
+fn crcs_leeme(dir: &Path) -> Vec<String> {
+    let mut out = vec![];
+    for f in ficheros(dir) {
+        let texto = matches!(ext_de(&f).as_str(), "txt" | "nfo" | "diz" | "md" | "");
+        if !texto || fs::metadata(&f).map_or(true, |m| m.len() > 256 * 1024) {
+            continue;
+        }
+        let Ok(b) = fs::read(&f) else { continue };
+        for l in String::from_utf8_lossy(&b).to_lowercase().lines() {
+            if let Some(c) = crc_de_linea(l).filter(|c| !out.contains(c)) {
+                out.push(c);
+            }
+        }
+    }
+    out
+}
+
+/// «CRC32: B78C09A2», «CRC-32 = 0xb78c09a2», «CRC (sin cabecera): …» → "B78C09A2". El del juego ya
+/// parcheado, que algunos léame también ponen, no vale.
+fn crc_de_linea(l: &str) -> Option<String> {
+    let i = l.find("crc")?;
+    if ["parchead", "patched", "traducid", "translated", "resultado", "result", "output"].iter().any(|x| l.contains(x)) {
+        return None;
+    }
+    let b = &l.as_bytes()[i + 3..];
+    let mut j = 0;
+    while j < b.len().min(60) {
+        let suelto = j == 0 || !b[j - 1].is_ascii_alphanumeric() || (j >= 2 && &b[j - 2..j] == b"0x");
+        if b[j].is_ascii_hexdigit() && suelto {
+            let fin = j + b[j..].iter().take_while(|c| c.is_ascii_hexdigit()).count();
+            if fin - j == 8 && !b.get(fin).is_some_and(|c| c.is_ascii_alphanumeric()) {
+                return Some(String::from_utf8_lossy(&b[j..fin]).to_uppercase());
+            }
+            j = fin;
+        } else {
+            j += 1;
+        }
+    }
+    None
+}
+
 // ---------------------------------------------------------------- tu juego
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -656,10 +699,17 @@ pub fn traducir(e: &Entorno, sis: &str, archivo: &Path, juego: &Path, crc_base: 
     }
     let mut c = Candidato::de(juego);
     let previos = hechos(e);
+    let mut crc_base = crc_base.to_vec();
+    for x in crcs_leeme(&trabajo.0.join("parches")) {
+        if !crc_base.iter().any(|y| y.trim().eq_ignore_ascii_case(&x)) {
+            log.push(format!("· El léame pide la ROM con CRC32 {x}."));
+            crc_base.push(x);
+        }
+    }
     let mut motivo = String::from("No se pudo aplicar la traducción.");
     for p in &parches {
         let nombre = nombre_de(&p.fichero);
-        match emparejar(e, p, &mut c, sis, crc_base, &trabajo.0) {
+        match emparejar(e, p, &mut c, sis, &crc_base, &trabajo.0) {
             Emparejado::YaTraducido => {
                 log.push(format!("= {nombre}: tu juego ya tiene aplicada esta traducción."));
                 motivo = "Tu juego ya tiene aplicada esta traducción.".into();
@@ -682,6 +732,9 @@ pub fn traducir(e: &Entorno, sis: &str, archivo: &Path, juego: &Path, crc_base: 
                     return Ok(f);
                 }
                 log.push(format!("+ {nombre} [{}] -> {} ({como})", p.formato.nombre(), nombre_de(juego)));
+                if como == "elegido por ti" && p.formato == Formato::Ips {
+                    log.push("  Aviso: ni la ficha ni el léame dicen qué versión pide, así que no se ha podido comprobar tu copia. Si el juego no arranca, es otra versión.".into());
+                }
                 let paso = Temporal::nueva(&trabajo.0)?;
                 match aplicar_uno(e, p, &mut c, sis, salto, entrada.as_deref(), &paso.0) {
                     Ok((fin, m)) => {
@@ -764,6 +817,37 @@ mod pruebas {
         let (r4, _) = t.traducir("gba", &parche, &otra, &[]);
         assert!(r4.unwrap_err().contains("no es la versión"));
         assert!(!t.dir.join("juegos/gba/Otra [T-Es].gba").exists());
+    }
+
+    #[test]
+    fn crc_del_leeme() {
+        assert_eq!(crc_de_linea("crc32: b78c09a2"), Some("B78C09A2".into()));
+        assert_eq!(crc_de_linea("crc-32 = 0xb78c09a2"), Some("B78C09A2".into()));
+        assert_eq!(crc_de_linea("crc32 (sin cabecera): 1234abcd"), Some("1234ABCD".into()));
+        assert_eq!(crc_de_linea("crc32 del juego parcheado: 1234abcd"), None);
+        assert_eq!(crc_de_linea("md5: be07098de1de3dc2512b6aa93f23ae3a"), None);
+        assert_eq!(crc_de_linea("crc32: be07098de1de3dc2"), None);
+    }
+
+    #[test]
+    fn ips_con_leeme_comprueba_la_version() {
+        let t = Prueba::nueva("parcheo-leeme");
+        let src = ruido(65536, 5);
+        let tgt = traducido(&src);
+        let crc = motor::hex(crc32fast::hash(&src));
+        let ips = t.fichero("tmp/juego.ips", &ips_de(&src, &tgt));
+        let leeme = t.fichero("tmp/juego_readme.txt", format!("Instrucciones de Parcheo\r\nCRC32: {}\r\n", crc.to_lowercase()).as_bytes());
+        let zip = t.dir.join("juego.zip");
+        assert!(herramienta(&t.her.join("7z.exe"), [OsStr::new("a"), zip.as_os_str(), ips.as_os_str(), leeme.as_os_str()]).unwrap().0);
+        // Otra versión del juego: el IPS no lo sabría, pero el léame sí.
+        let otra = t.fichero("juegos/Juego (Europe).nes", &ruido(65536, 6));
+        let (r, log) = t.traducir("nes", &zip, &otra, &[]);
+        assert!(r.unwrap_err().contains(&format!("no es la versión que pide la traducción (CRC32 {crc})")), "{log:?}");
+        assert!(!t.dir.join("juegos/Juego (Europe) [T-Es].nes").exists());
+        // La buena: se aplica.
+        let buena = t.fichero("juegos/Juego (USA).nes", &src);
+        let (r, log) = t.traducir("nes", &zip, &buena, &[]);
+        assert_eq!(fs::read(r.unwrap_or_else(|e| panic!("{e}\n{log:?}"))).unwrap(), tgt);
     }
 
     #[test]

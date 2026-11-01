@@ -708,16 +708,19 @@ function abrirFicha(r, p) {
     const otras = [...new Set((r.x.d || []).slice(1).map(d => FUENTE[d.t] || d.t))];
     if (otras.length) html += `<p class="muted">Si esa no vale para tu copia, se prueba después con ${esc(otras.join(' y '))}.</p>`;
   } else if (!PC.has(r.s)) {
-    html += '<p>No hay descarga directa. Abre la página, descarga el parche y la biblioteca lo recogerá de tu carpeta Descargas y lo aplicará sola.</p>';
+    html += a[F.url]
+      ? '<p>No hay descarga directa. Abre la página, descarga el parche y la biblioteca lo recogerá de tu carpeta Descargas y lo aplicará sola.</p>'
+      : '<p>De esta traducción no se conoce la página, así que se busca en Google. Si encuentras el parche, descárgalo y la biblioteca lo recogerá de tu carpeta Descargas y lo aplicará sola.</p>';
   }
   const puede = elegido && elegido.tipo !== 'otra' && !PC.has(r.s);
   const salida = salidaDe(r, elegido && elegido.g);
   html += '<div class="f-actions">';
   if (salida) html += '<button class="btn primary" data-act="jugar">Jugar</button><button class="btn" data-act="carpeta">Ver en la carpeta</button>';
   if (puede && d0) html += `<button class="btn${salida ? '' : ' primary'}" data-act="traducir">${salida ? 'Volver a traducir' : 'Traducir'}</button>`;
-  if (puede) html += '<button class="btn" data-act="esperar">Abrir página y esperar la descarga</button>';
+  if (puede) html += `<button class="btn" data-act="esperar">${a[F.url] ? 'Abrir página' : 'Buscar en Google'} y esperar la descarga</button>`;
   if (a[F.url]) html += `<a class="btn" href="${esc(a[F.url])}" target="_blank" rel="noopener">Abrir página</a>`;
-  html += `<a class="btn" href="https://www.google.com/search?q=${encodeURIComponent('traducción español ' + (a[F.orig] || a[F.juego]) + ' ' + (SYS[r.s] || r.s) + ' ' + a[F.grupo])}" target="_blank" rel="noopener">Buscar en Google</a>`;
+  // Sin página, el botón de esperar ya busca en Google.
+  if (a[F.url] || !puede) html += `<a class="btn" href="https://www.google.com/search?q=${encodeURIComponent('traducción español ' + (a[F.orig] || a[F.juego]) + ' ' + (SYS[r.s] || r.s) + ' ' + a[F.grupo])}" target="_blank" rel="noopener">Buscar en Google</a>`;
   html += '</div></div></div>';
   $('f-body').innerHTML = html;
   if (!$('ficha').open) { listasCambiadas = false; $('ficha').showModal(); }
