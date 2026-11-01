@@ -27,9 +27,13 @@ const POR_EXTENSION: &[(&str, &str)] = &[
     ("gg", "gamegear"), ("sg", "sg1000"), ("md", "megadrive"), ("gen", "megadrive"), ("smd", "megadrive"), ("32x", "sega32x"),
     ("pce", "pcengine"), ("sgx", "supergrafx"), ("ngp", "ngp"), ("ngc", "ngpc"), ("ws", "wswan"), ("wsc", "wswanc"),
     ("col", "colecovision"), ("lnx", "lynx"), ("mx1", "msx1"), ("mx2", "msx2"), ("dsk", ""), ("rom", ""), ("bin", ""),
+    ("nsp", "switch"), ("xci", "switch"), ("nsz", "switch"), ("xcz", "switch"), ("wua", "wiiu"), ("wux", "wiiu"),
+    ("wud", "wiiu"), ("xex", "xbox360"),
 ];
+/// Juegos de las consolas de hoy: pesan mucho y sus traducciones son mods, así que van por el nombre, sin CRC.
+const SIN_CRC: &[&str] = &["nsp", "xci", "nsz", "xcz", "wua", "wux", "wud", "xex", "pkg"];
 /// Discos y formatos que se emparejan por nombre (los .cue y .gdi, además, por el CRC de sus pistas).
-const DISCOS: &[&str] = &["cue", "gdi", "chd", "iso", "cso", "pbp", "ccd", "cdi", "rvz", "gcm", "wbfs", "ciso", "wia", "gcz"];
+const DISCOS: &[&str] = &["cue", "gdi", "chd", "iso", "cso", "pbp", "ccd", "cdi", "rvz", "gcm", "wbfs", "ciso", "wia", "gcz", "pkg"];
 const ARCHIVOS: &[&str] = &["zip", "7z", "rar"];
 
 /// Nombres de carpeta que dicen el sistema (en minúsculas, sin acentos).
@@ -53,7 +57,9 @@ const POR_CARPETA: &[(&str, &str)] = &[
     ("wswanc", "wswanc"), ("wonderswan color", "wswanc"), ("msx", "msx1"), ("msx1", "msx1"), ("msx2", "msx2"),
     ("zxspectrum", "zxspectrum"), ("zx spectrum", "zxspectrum"), ("spectrum", "zxspectrum"), ("amstradcpc", "amstradcpc"),
     ("amstrad cpc", "amstradcpc"), ("colecovision", "colecovision"), ("lynx", "lynx"), ("3do", "3do"), ("xbox", "xbox"),
-    ("pc98", "pc98"), ("pc-98", "pc98"),
+    ("pc98", "pc98"), ("pc-98", "pc98"), ("switch", "switch"), ("nintendo switch", "switch"), ("ps3", "ps3"),
+    ("playstation 3", "ps3"), ("ps4", "ps4"), ("playstation 4", "ps4"), ("ps5", "ps5"), ("playstation 5", "ps5"),
+    ("wiiu", "wiiu"), ("wii u", "wiiu"), ("xbox360", "xbox360"), ("xbox 360", "xbox360"),
 ];
 pub(crate) const NO_JUEGO: &[&str] = &[
     "txt", "nfo", "diz", "doc", "docx", "pdf", "htm", "html", "url", "lnk", "xml", "cfg", "ini", "json", "png", "jpg",
@@ -278,7 +284,7 @@ impl<'a> Escaner<'a> {
                     ("sheet", c)
                 }
                 "chd" => ("chd", vec![]),
-                _ if len > MAX_CRC => ("file", vec![]),
+                _ if len > MAX_CRC || SIN_CRC.contains(&e.as_str()) => ("file", vec![]),
                 _ => {
                     let s = sis.clone();
                     ("file", self.crcs(&p, len, &sis, move |p| crcs_fichero(p, &s)))

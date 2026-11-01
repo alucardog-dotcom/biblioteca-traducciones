@@ -16,6 +16,8 @@ DONAR = 'https://paypal.me/btraducciones'
 # Enlace de afiliado: la búsqueda de Instant Gaming con el código del autor (igr).
 INSTANT_GAMING = 'https://www.instant-gaming.com/es/busquedas/?query={}&igr=gamer-d73144'
 PC = {'dos', 'windows', 'scummvm', 'easyrpg', 'pc'}
+# Consolas de hoy: sus traducciones son mods que se instalan a mano (como MODERNAS en ui/app.js).
+MODERNAS = {'switch', 'ps3', 'ps4', 'ps5', 'wiiu', 'xbox360', 'xboxone'}
 e = html.escape
 
 # ---------------------------------------------------------------- nombres (como tokens() en ui/app.js)
@@ -94,7 +96,8 @@ def es_ia(f):
 
 
 def directa(f):
-    return bool(f['x'].get('d'))
+    """Un clic: el programa la baja y la aplica. Las de PC y consolas de hoy se instalan a mano."""
+    return bool(f['x'].get('d')) and f['sistema'] not in PC | MODERNAS
 
 
 def orden(f):
@@ -241,8 +244,17 @@ def pagina_juego(gr, sysn, libretro, base):
         <p class="suave">Enlace de afiliado: si lo compras, me llevo una pequeña comisión sin que te cueste más.</p>
       </div>'''
     desc = (f'{"Traducción" if n == 1 else f"{n} traducciones"} al español de {titulo} para {nombre_sis}'
-            + (f', de {quien}' if quien else '') + '. Aplícala sobre tu copia con un clic con la Biblioteca de traducciones.')
-    if s in PC:
+            + (f', de {quien}' if quien else '')
+            + ('. Se instala a mano; la Biblioteca de traducciones te lleva a su página.' if s in PC | MODERNAS
+               else '. Aplícala sobre tu copia con un clic con la Biblioteca de traducciones.'))
+    if s in MODERNAS:
+        como = f'''<ol class="pasos">
+      <li>Abre la página de la traducción y comprueba qué versión o actualización del juego pide.</li>
+      <li>Copia el mod en la carpeta de mods de tu emulador (Ryujinx, RPCS3, shadPS4, Cemu, Xenia…) o de tu consola con firmware modificado, como explique el traductor.</li>
+      <li>Con la Biblioteca de traducciones puedes buscar «{e(titulo)}» entre tus juegos y abrir su ficha y la página de la traducción.</li>
+    </ol>
+    <p class="suave">Necesitas tu propia copia del juego: ni la web ni el programa descargan juegos.</p>'''
+    elif s in PC:
         como = '''<ol class="pasos">
       <li>Descarga la Biblioteca de traducciones e instálala.</li>
       <li>Si tienes el juego en Steam, GOG o Epic, la biblioteca lo encuentra sola.</li>
@@ -301,7 +313,9 @@ def pagina_sistema(s, juegos, sysn, base):
   <p class="lede">{n:,} {"traducción" if n == 1 else "traducciones"} de {len(juegos):,} {"juego" if len(juegos) == 1 else "juegos"}, hechas por aficionados. Elige un juego para ver sus traducciones.</p>
   {bloques}
 </main>'''
-    desc = f'{n:,} traducciones al español de juegos de {nombre} hechas por aficionados, listas para aplicar con un clic con la Biblioteca de traducciones.'
+    desc = (f'{n:,} traducciones al español de juegos de {nombre} hechas por aficionados, '
+            + ('reunidas en la Biblioteca de traducciones.' if s in PC | MODERNAS
+               else 'listas para aplicar con un clic con la Biblioteca de traducciones.'))
     return pagina(raiz, f'Juegos de {nombre} en español · Biblioteca de traducciones', desc, f'sistema/{s}/', cuerpo, base)
 
 
@@ -332,7 +346,7 @@ def pagina_catalogo(por_sis, sysn, base, n_trad, n_juegos):
 </main>
 <script>var SYS = {json.dumps(sysn, ensure_ascii=False)};</script>
 <script src="catalogo.js" defer></script>'''
-    desc = f'Busca entre {n_trad:,} traducciones al español de juegos hechas por aficionados, de la NES a los juegos de PC, y aplícalas con un clic.'
+    desc = f'Busca entre {n_trad:,} traducciones al español de juegos hechas por aficionados, de la NES a la Switch y los juegos de PC, y aplícalas con un clic.'
     return pagina(raiz, 'Catálogo de traducciones al español · Biblioteca de traducciones', desc, 'catalogo/', cuerpo, base)
 
 
@@ -342,7 +356,7 @@ def pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version):
   <section class="heroe">
     <div class="heroe-t">
       <h1>Juega en español a juegos que nunca salieron traducidos</h1>
-      <p class="lede">Más de {n_trad // 1000 * 1000:,} traducciones hechas por aficionados, de la NES a los juegos de PC de hoy. La Biblioteca de traducciones busca tus juegos, te dice cuáles tienen traducción y la aplica con un clic.</p>
+      <p class="lede">Más de {n_trad // 1000 * 1000:,} traducciones hechas por aficionados, de la NES a la Switch y los juegos de PC de hoy. La Biblioteca de traducciones busca tus juegos, te dice cuáles tienen traducción y la aplica con un clic.</p>
       <div class="acciones">
         <a class="btn primario grande" href="{DESCARGA}">Descargar para Windows</a>
         <a class="btn grande" href="catalogo/">Buscar mi juego</a>
@@ -409,7 +423,7 @@ def pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version):
     <a class="btn primario grande" href="{DESCARGA}">Descargar para Windows</a>
   </section>
 </main>'''
-    desc = (f'Juega en español a juegos que nunca salieron traducidos: {n_trad:,} traducciones de aficionados, de la NES al PC. '
+    desc = (f'Juega en español a juegos que nunca salieron traducidos: {n_trad:,} traducciones de aficionados, de la NES a la Switch y el PC. '
             'Programa gratuito para Windows que busca tus juegos y aplica la traducción con un clic.')
     return pagina(raiz, 'Biblioteca de traducciones: juega en español a juegos que nunca salieron traducidos', desc, '', cuerpo, base)
 

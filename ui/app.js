@@ -4,8 +4,11 @@
 // red lo hace el programa (src-tauri) con invoke().
 
 const T = window.__TAURI__;
-const SYS = {nes:'NES',fds:'Famicom Disk System',snes:'Super Nintendo',satellaview:'Satellaview',sufami:'SuFami Turbo',gb:'Game Boy',gbc:'Game Boy Color',gba:'Game Boy Advance',n64:'Nintendo 64',nds:'Nintendo DS','3ds':'Nintendo 3DS',virtualboy:'Virtual Boy',gamecube:'GameCube',wii:'Wii',sg1000:'SG-1000',mastersystem:'Master System',gamegear:'Game Gear',megadrive:'Mega Drive',sega32x:'32X',megacd:'Mega CD',saturn:'Saturn',dreamcast:'Dreamcast',psx:'PlayStation',ps2:'PlayStation 2',psp:'PSP',psvita:'PS Vita',pcengine:'PC Engine',supergrafx:'SuperGrafx',pcenginecd:'PC Engine CD',pcfx:'PC-FX',neogeo:'Neo Geo',neogeocd:'Neo Geo CD',ngp:'Neo Geo Pocket',ngpc:'Neo Geo Pocket Color',wswan:'WonderSwan',wswanc:'WonderSwan Color',msx1:'MSX',msx2:'MSX2',pc98:'PC-98',x68000:'X68000',zxspectrum:'ZX Spectrum',amstradcpc:'Amstrad CPC',c64:'Commodore 64','3do':'3DO',colecovision:'ColecoVision',dos:'MS-DOS',windows:'Windows clásico',scummvm:'ScummVM',easyrpg:'RPG Maker',arcade:'Arcade',lynx:'Atari Lynx',xbox:'Xbox',pc:'PC'};
+const SYS = {nes:'NES',fds:'Famicom Disk System',snes:'Super Nintendo',satellaview:'Satellaview',sufami:'SuFami Turbo',gb:'Game Boy',gbc:'Game Boy Color',gba:'Game Boy Advance',n64:'Nintendo 64',nds:'Nintendo DS','3ds':'Nintendo 3DS',virtualboy:'Virtual Boy',gamecube:'GameCube',wii:'Wii',sg1000:'SG-1000',mastersystem:'Master System',gamegear:'Game Gear',megadrive:'Mega Drive',sega32x:'32X',megacd:'Mega CD',saturn:'Saturn',dreamcast:'Dreamcast',psx:'PlayStation',ps2:'PlayStation 2',psp:'PSP',psvita:'PS Vita',pcengine:'PC Engine',supergrafx:'SuperGrafx',pcenginecd:'PC Engine CD',pcfx:'PC-FX',neogeo:'Neo Geo',neogeocd:'Neo Geo CD',ngp:'Neo Geo Pocket',ngpc:'Neo Geo Pocket Color',wswan:'WonderSwan',wswanc:'WonderSwan Color',msx1:'MSX',msx2:'MSX2',pc98:'PC-98',x68000:'X68000',zxspectrum:'ZX Spectrum',amstradcpc:'Amstrad CPC',c64:'Commodore 64','3do':'3DO',colecovision:'ColecoVision',dos:'MS-DOS',windows:'Windows clásico',scummvm:'ScummVM',easyrpg:'RPG Maker',arcade:'Arcade',lynx:'Atari Lynx',xbox:'Xbox',switch:'Nintendo Switch',ps3:'PlayStation 3',ps4:'PlayStation 4',ps5:'PlayStation 5',wiiu:'Wii U',xbox360:'Xbox 360',xboxone:'Xbox One',pc:'PC'};
 const PC = new Set(['dos', 'windows', 'scummvm', 'easyrpg', 'pc']);
+// Consolas de hoy: sus traducciones son mods que se instalan a mano, como las de PC.
+const MODERNAS = new Set(['switch', 'ps3', 'ps4', 'ps5', 'wiiu', 'xbox360', 'xboxone']);
+const A_MANO = new Set([...PC, ...MODERNAS]);
 const TIENDA = {steam: 'Steam', gog: 'GOG', epic: 'Epic Games'};
 const F = {sistema:0, juego:1, orig:2, grupo:3, version:4, fecha:5, estado:6, fmt:7, rom:8, crc:9, sha1:10, url:11, fuente:12, notas:13};
 const FUENTE = {wave: 'Traducciones Wave', rhdn2021: 'la copia de romhacking.net (2021) en archive.org', github: 'GitHub',
@@ -150,7 +153,8 @@ function emparejar() {
 }
 
 const esIA = r => r.a[F.notas].startsWith('[IA]');
-const directa = r => (r.x.d || []).length > 0;
+// Las de PC y consolas de hoy se instalan a mano aunque su descarga sea directa.
+const directa = r => !A_MANO.has(r.s) && (r.x.d || []).length > 0;
 const completa = r => /complet/i.test(r.a[F.estado]);
 // Un traducido con la extensión de su sistema (.gg) sale con ese sistema aunque el original (.bin) no lo diga.
 const salidaDe = (r, g) => traducidos[r.key] || (g && (tes.get(g.s + '|' + g.n + ' [T-Es]') || tes.get(r.s + '|' + g.n + ' [T-Es]'))) || '';
@@ -304,6 +308,9 @@ const thumb = (sys, name, tipo) => 'https://thumbnails.libretro.com/' + encodeUR
 const steamImg = (id, f) => `https://cdn.cloudflare.steamstatic.com/steam/apps/${encodeURIComponent(id)}/${f}`;
 const REPO_UI = 'https://raw.githubusercontent.com/alucardog-dotcom/biblioteca-traducciones/main/ui/';
 const DONAR = 'https://paypal.me/btraducciones';
+const WEB = 'https://alucardog-dotcom.github.io/biblioteca-traducciones/';
+// Enlace de afiliado de Instant Gaming: su búsqueda con el código del autor.
+const INSTANT_GAMING = 'https://www.instant-gaming.com/es/busquedas/?query=', AFILIADO = 'gamer-d73144';
 // La que has puesto tú (una imagen copiada a la carpeta de datos o un enlace).
 const propia = gr => {
   const m = gr && propias[gr.k];
@@ -393,7 +400,7 @@ function badges(r, p) {
   const b = [];
   if (p) b.push(p.tipo === 'exacto' ? '<span class="badge ok">Tu versión vale</span>'
     : p.tipo === 'posible' ? '<span class="badge warn">Sin comprobar</span>' : '<span class="badge bad">Pide otra versión</span>');
-  if (PC.has(r.s)) b.push('<span class="badge">Instalación manual</span>');
+  if (A_MANO.has(r.s)) b.push('<span class="badge">Instalación manual</span>');
   else if (directa(r)) b.push('<span class="badge acc">Un clic</span>');
   if (esIA(r)) b.push('<span class="badge warn">IA</span>');
   return `<div class="badges">${b.join('')}</div>`;
@@ -402,7 +409,7 @@ function badges(r, p) {
 function boton(r, p) {
   const g = p && p.g;
   if (hecha(r, g)) return `<button class="btn primary" data-act="jugar">Jugar</button>`;
-  if (!p || p.tipo === 'otra' || PC.has(r.s)) return `<button class="btn" data-act="ficha">Ver ficha</button>`;
+  if (!p || p.tipo === 'otra' || A_MANO.has(r.s)) return `<button class="btn" data-act="ficha">Ver ficha</button>`;
   return directa(r) ? `<button class="btn primary" data-act="traducir">Traducir</button>` : `<button class="btn" data-act="ficha">Conseguir parche</button>`;
 }
 
@@ -457,7 +464,7 @@ function pintar() {
 function pintarInicio() {
   const mios = contadores();
   const hechas = itemsDe('hechas');
-  const listas = itemsDe('mios').filter(({r, p}) => p && p.tipo !== 'otra' && !hecha(r, p.g) && !PC.has(r.s))
+  const listas = itemsDe('mios').filter(({r, p}) => p && p.tipo !== 'otra' && !hecha(r, p.g) && !A_MANO.has(r.s))
     .sort((x, y) => directa(y.r) - directa(x.r));
   const recientes = filas.filter(r => /^\d{4}-\d{2}-\d{2}/.test(r.a[F.fecha])).sort((x, y) => y.a[F.fecha].localeCompare(x.a[F.fecha]));
   const nuevas = [...new Set(recientes.map(r => r.gr))].slice(0, 18).map(gr => elegida(gr));
@@ -566,7 +573,7 @@ function pintarAjustes() {
       <section><h2>Acerca de</h2>
         <p>Biblioteca de traducciones ${esc(ajustes.version || '')}. Nunca descarga juegos: solo parches de traducción para tu propia copia. Guarda sus datos (trabajos y parches descargados) en tu carpeta de usuario.</p>
         <p>Es gratuita y de código abierto. Si te resulta útil, puedes invitarme a un café: las donaciones son para el desarrollo del programa (las traducciones son de sus autores).</p>
-        <div class="line"><a class="btn primary" href="${DONAR}">Invitar a un café (PayPal)</a><a class="btn" href="https://github.com/alucardog-dotcom/biblioteca-traducciones">El proyecto en GitHub</a><button class="btn" data-ruta="${esc(ajustes.datos || '')}">Abrir la carpeta de datos</button></div>
+        <div class="line"><a class="btn primary" href="${DONAR}">Invitar a un café (PayPal)</a><a class="btn" href="${WEB}">La web</a><a class="btn" href="https://github.com/alucardog-dotcom/biblioteca-traducciones">El proyecto en GitHub</a><button class="btn" data-ruta="${esc(ajustes.datos || '')}">Abrir la carpeta de datos</button></div>
       </section>
     </div>`;
   const elegir = async titulo => api('elegir_carpeta', {titulo}).catch(e => { aviso(e.message, 'bad'); return null; });
@@ -678,13 +685,24 @@ function abrirFicha(r, p) {
     + (a[F.notas] ? `<p class="f-note">${esc(a[F.notas])}</p>` : '');
 
   html += '<div class="f-sec">Tu juego</div>';
-  if (PC.has(r.s)) {
-    html += '<p class="muted">Las traducciones de PC se instalan sobre la carpeta del juego siguiendo las instrucciones del traductor (normalmente, copiar sus ficheros o ejecutar su instalador). Haz antes una copia de lo que vaya a sustituir.</p>';
+  if (A_MANO.has(r.s)) {
+    html += MODERNAS.has(r.s)
+      ? '<p class="muted">Las traducciones de las consolas de hoy son mods: se copian en la carpeta de mods del emulador (Ryujinx, RPCS3, shadPS4, Cemu, Xenia…) o de la consola con firmware modificado, siguiendo las instrucciones del traductor. Comprueba que tu juego tiene la versión o la actualización que pide.</p>'
+      : '<p class="muted">Las traducciones de PC se instalan sobre la carpeta del juego siguiendo las instrucciones del traductor (normalmente, copiar sus ficheros o ejecutar su instalador). Haz antes una copia de lo que vaya a sustituir.</p>';
     if (opciones.length) {
       html += '<div class="f-games">' + opciones.map(o => `<div class="f-pc"><span>${esc(o.g.n)} ${o.g.k && TIENDA[o.g.k] ? `<span class="badge">${TIENDA[o.g.k]}</span>` : ''} <span class="badge ${o.tipo === 'exacto' ? 'ok' : 'warn'}">${o.tipo === 'exacto' ? 'es este juego' : 'por el nombre'}</span></span>
         <button class="btn" data-carpeta-juego="${esc(o.g.f)}">Abrir la carpeta del juego</button></div>`).join('') + '</div>';
     } else if (r.s === 'pc') {
       html += '<p class="muted">No lo encuentro entre tus juegos de Steam, GOG o Epic.</p>';
+    } else if (MODERNAS.has(r.s)) {
+      html += '<p class="muted">No lo encuentro en tus carpetas de juegos.</p>';
+    }
+    // Los que están en Steam se venden en las tiendas de claves: si no lo tienes, el enlace de afiliado.
+    const enSteam = (r.gr ? r.gr.filas : [r]).find(f => f.x.steam);
+    if (enSteam && !opciones.length) {
+      const nombre = enSteam.a[F.juego].replace(/\s*[(\[][^)\]]*[)\]]/g, '').trim();
+      html += `<div class="f-compra"><a class="btn" href="${esc(INSTANT_GAMING + encodeURIComponent(nombre) + '&igr=' + AFILIADO)}" target="_blank" rel="noopener">¿No lo tienes? Búscalo en Instant Gaming</a>
+        <p class="hint">Enlace de afiliado: si lo compras, me llevo una pequeña comisión sin que te cueste más.</p></div>`;
     }
   } else if (!opciones.length) {
     html += `<p class="muted">No tienes este juego. Pon tu copia en una de tus carpetas de juegos (${esc((ajustes.carpetas || []).join(', '))}) y pulsa <b>Buscar mis juegos</b>.</p>`;
@@ -697,7 +715,11 @@ function abrirFicha(r, p) {
   }
 
   html += '<div class="f-sec">Descarga</div>';
-  if (d0) {
+  if (A_MANO.has(r.s)) {
+    html += a[F.url]
+      ? '<p>Descárgala desde la página de la traducción y sigue sus instrucciones.</p>'
+      : '<p>De esta traducción no se conoce la página: búscala en Google.</p>';
+  } else if (d0) {
     html += `<p>Se descarga directamente de ${esc(FUENTE[d0.t] || d0.t)}.</p>`;
     if (d0.t === 'rhdn2021' && d0.v && a[F.version] && tokens(d0.v).join() !== tokens(a[F.version]).join()) {
       html += `<p class="f-note warn">Esa copia es de 2021 y trae la versión ${esc(d0.v)}; la más reciente es la ${esc(a[F.version])}. Si la quieres, usa «Abrir página y esperar la descarga».</p>`;
@@ -707,12 +729,12 @@ function abrirFicha(r, p) {
     }
     const otras = [...new Set((r.x.d || []).slice(1).map(d => FUENTE[d.t] || d.t))];
     if (otras.length) html += `<p class="muted">Si esa no vale para tu copia, se prueba después con ${esc(otras.join(' y '))}.</p>`;
-  } else if (!PC.has(r.s)) {
+  } else {
     html += a[F.url]
       ? '<p>No hay descarga directa. Abre la página, descarga el parche y la biblioteca lo recogerá de tu carpeta Descargas y lo aplicará sola.</p>'
       : '<p>De esta traducción no se conoce la página, así que se busca en Google. Si encuentras el parche, descárgalo y la biblioteca lo recogerá de tu carpeta Descargas y lo aplicará sola.</p>';
   }
-  const puede = elegido && elegido.tipo !== 'otra' && !PC.has(r.s);
+  const puede = elegido && elegido.tipo !== 'otra' && !A_MANO.has(r.s);
   const salida = salidaDe(r, elegido && elegido.g);
   html += '<div class="f-actions">';
   if (salida) html += '<button class="btn primary" data-act="jugar">Jugar</button><button class="btn" data-act="carpeta">Ver en la carpeta</button>';

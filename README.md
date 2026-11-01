@@ -3,7 +3,7 @@
 <h1 align="center">Biblioteca de traducciones</h1>
 
 <p align="center"><b>Juega en español a juegos que nunca salieron traducidos.</b><br>
-Más de 6.000 traducciones hechas por aficionados, de la NES a los juegos de PC de hoy, a un clic.</p>
+Más de 6.000 traducciones hechas por aficionados, de la NES a la Switch y los juegos de PC de hoy.</p>
 
 <p align="center">
   <a href="https://github.com/alucardog-dotcom/biblioteca-traducciones/releases/latest"><img alt="Última versión" src="https://img.shields.io/github/v/release/alucardog-dotcom/biblioteca-traducciones?label=versi%C3%B3n&color=c60b1e"></a>
@@ -21,12 +21,13 @@ Más de 6.000 traducciones hechas por aficionados, de la NES a los juegos de PC 
 
 ## Qué hace
 
-- **Catálogo** de 6.109 traducciones al español de 5.323 juegos: consolas y ordenadores clásicos (NES, Super Nintendo, Mega Drive, Game Boy, PlayStation, PS2, Nintendo DS…), MS-DOS y PC. Cada juego tiene una sola ficha, y dentro eliges entre sus traducciones.
-- **Busca tus juegos** en las carpetas que elijas: ROMs sueltas o en .zip, .7z y .rar; discos .cue/.bin, .gdi y .chd. También encuentra los juegos de PC que tienes instalados con Steam, GOG y Epic.
+- **Catálogo** de 6.166 traducciones al español de 5.375 juegos: consolas y ordenadores clásicos (NES, Super Nintendo, Mega Drive, Game Boy, PlayStation, PS2, Nintendo DS…), MS-DOS, PC y consolas actuales (Switch, PS3, PS4 y Xbox 360). Cada juego tiene una sola ficha, y dentro eliges entre sus traducciones.
+- **Busca tus juegos** en las carpetas que elijas: ROMs sueltas o en .zip, .7z y .rar; discos .cue/.bin, .gdi y .chd; juegos de Switch, Wii U, PS3, PS4 y Xbox 360 (.nsp, .xci, .wua, .pkg, .xex…). También encuentra los juegos de PC que tienes instalados con Steam, GOG y Epic.
 - **Comprueba que tu copia es la buena**: por su CRC32 sabe si es la versión que pide la traducción, también sin la cabecera de NES o de SNES.
 - **Descarga el parche y lo aplica**: IPS, BPS, UPS, PPF, APS y xdelta. Saca el juego de su comprimido o de su .chd y devuelve los discos traducidos en .chd. El traducido queda junto al original con la etiqueta `[T-Es]`, o en la carpeta que elijas.
 - **Sin descarga directa**: abre la página de la traducción y, en cuanto bajas el parche, lo aplica él solo.
-- **Juegos de PC**: sus traducciones se instalan a mano. La biblioteca te dice cuáles tienes y te lleva a la página de la traducción y a la carpeta del juego.
+- **Juegos de PC y de consolas actuales**: sus traducciones se instalan a mano (en la carpeta del juego, o como mod en el emulador o en la consola). La biblioteca te dice cuáles tienes y te lleva a la página de la traducción y a la carpeta del juego.
+- **¿No tienes el juego?** En los que se venden en Steam, la ficha enlaza a su búsqueda en Instant Gaming (enlace de afiliado: si lo compras, el proyecto se lleva una pequeña comisión sin que te cueste más).
 - **Portadas** de libretro-thumbnails, Steam y LaunchBox. Si falta alguna, puedes poner la tuya: elegir una imagen, pegarla con Ctrl+V o soltarla sobre el juego.
 - **Favoritos y listas**: pulsa el corazón de un juego para tenerlo en Favoritos, o guárdalo en tus propias listas («Pendientes», «RPG japoneses»…) para volver a él más tarde.
 - **Con RetroBat**, el botón Jugar abre el juego traducido con su emulador.
