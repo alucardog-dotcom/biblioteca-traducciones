@@ -67,6 +67,11 @@ def cargar():
     return filas, centro['sistemas']
 
 
+def web_segura(u):
+    """Solo direcciones web en los href que vienen del catálogo (nunca javascript: ni file:)."""
+    return u if u.startswith(('https://', 'http://')) and ' ' not in u else ''
+
+
 def con_portada(f):
     return bool(f['x'].get('pm') or f['x'].get('p') or f['x'].get('steam') or f['x'].get('pu'))
 
@@ -213,7 +218,7 @@ def tarjeta_trad(f):
     dl = ''.join(f'<dt>{k}</dt><dd>{v}</dd>' for k, v in datos)
     nota = re.sub(r'^\[IA\]\s*', '', f['notas']).strip()
     enlace = (f'<a class="btn" href="{e(f["url"])}" target="_blank" rel="noopener">Página de la traducción</a>'
-              if f['url'] else '<p class="suave">No se conoce la página de esta traducción.</p>')
+              if web_segura(f['url']) else '<p class="suave">No se conoce la página de esta traducción.</p>')
     return f'''<article class="trad">
   <div class="trad-h"><h3>{e(f['grupo'] or 'Autor desconocido')}</h3><div class="chips">{chips_trad(f)}</div></div>
   {f'<dl>{dl}</dl>' if dl else ''}
@@ -243,6 +248,15 @@ def pagina_juego(gr, sysn, libretro, base):
         <a class="btn tienda" href="{e(INSTANT_GAMING.format(quote(nombre)))}" target="_blank" rel="sponsored noopener">¿No lo tienes? Búscalo en Instant Gaming</a>
         <p class="suave">Enlace de afiliado: si lo compras, me llevo una pequeña comisión sin que te cueste más.</p>
       </div>'''
+    # Los que no están en Steam: la página oficial del juego ("pj", itch.io o la web de su autor), si se conoce.
+    con_pagina = next((f for f in gr['filas'] if web_segura(f['x'].get('pj', ''))), None)
+    if con_pagina and not en_steam:
+        pj = con_pagina['x']['pj']
+        sitio = ('itch.io' if '.itch.io/' in pj else 'Game Jolt' if 'gamejolt.com/' in pj else 'Steam' if 'store.steampowered.com/' in pj
+                 else 'GOG' if '.gog.com/' in pj else 'la web oficial')
+        compra = f'''<div class="compra">
+        <a class="btn tienda" href="{e(pj)}" target="_blank" rel="noopener">¿No lo tienes? Página del juego en {sitio}{' (18+)' if con_pagina['x'].get('pj18') else ''}</a>
+      </div>'''
     desc = (f'{"Traducción" if n == 1 else f"{n} traducciones"} al español de {titulo} para {nombre_sis}'
             + (f', de {quien}' if quien else '')
             + ('. Se instala a mano; la Biblioteca de traducciones te lleva a su página.' if s in PC | MODERNAS
@@ -268,7 +282,7 @@ def pagina_juego(gr, sysn, libretro, base):
     </ol>
     <p class="suave">Necesitas tu propia copia del juego: el programa no descarga juegos, solo los parches de traducción.</p>'''
     cuerpo = f'''<main class="juego">
-  <nav class="migas" aria-label="Estás en"><a href="{raiz}">Inicio</a> › <a href="{raiz}catalogo/">Catálogo</a> › <a href="{raiz}sistema/{s}/">{e(nombre_sis)}</a></nav>
+  <nav class="migas" aria-label="Estás en"><a href="{raiz}">Inicio</a> › <a href="{raiz}catalogo/">Catálogo</a> › <a href="{raiz}sistema/{e(s)}/">{e(nombre_sis)}</a></nav>
   <div class="juego-h">
     <div class="portada{'' if img else ' sin'}">{img}<span class="ph">{e(titulo)}</span></div>
     <div class="juego-t">
@@ -320,7 +334,7 @@ def pagina_sistema(s, juegos, sysn, base):
 
 
 def chips_sistemas(por_sis, sysn, raiz):
-    return ''.join(f'<a class="sis" href="{raiz}sistema/{s}/">{e(sysn.get(s, s))} <span>{len(sum((g["filas"] for g in gs), []))}</span></a>'
+    return ''.join(f'<a class="sis" href="{raiz}sistema/{e(s)}/">{e(sysn.get(s, s))} <span>{len(sum((g["filas"] for g in gs), []))}</span></a>'
                    for s, gs in sorted(por_sis.items(), key=lambda kv: -sum(len(g['filas']) for g in kv[1])))
 
 
@@ -344,7 +358,7 @@ def pagina_catalogo(por_sis, sysn, base, n_trad, n_juegos):
     <div class="sistemas">{chips_sistemas(por_sis, sysn, raiz)}</div>
   </section>
 </main>
-<script>var SYS = {json.dumps(sysn, ensure_ascii=False)};</script>
+<script>var SYS = {json.dumps(sysn, ensure_ascii=False).replace('<', '\\u003c')};</script>
 <script src="catalogo.js" defer></script>'''
     desc = f'Busca entre {n_trad:,} traducciones al español de juegos hechas por aficionados, de la NES a la Switch y los juegos de PC, y aplícalas con un clic.'
     return pagina(raiz, 'Catálogo de traducciones al español · Biblioteca de traducciones', desc, 'catalogo/', cuerpo, base)

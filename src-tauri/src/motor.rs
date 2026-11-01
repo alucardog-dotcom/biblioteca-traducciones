@@ -8,6 +8,8 @@ use std::path::Path;
 
 /// Límite de los formatos que trabajan en memoria (BPS, UPS y APS de GBA).
 const MAX_EN_MEMORIA: u64 = 1800 * 1024 * 1024;
+/// Tamaño final máximo que se admite a un parche APS de N64 (el cartucho más grande tiene 64 MB).
+const MAX_N64: u64 = 128 * 1024 * 1024;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Formato {
@@ -465,6 +467,11 @@ fn ppf(parche: &Path, origen: &Path, salida: &Path, forzar: bool) -> Result<Stri
                 iguales += 1;
             }
         }
+        // Un PPF escribe dentro del disco (como mucho, justo al final): un desplazamiento mayor es un parche
+        // corrupto o de otra imagen, no una orden de agrandar el fichero gigabytes.
+        if desde > largo {
+            return Err("El parche PPF apunta fuera del disco: no es para esta imagen o está dañado.".into());
+        }
         escribir_en(&mut o, desde, nuevo)?;
         pos += n;
         if deshacer {
@@ -496,6 +503,10 @@ fn aps_n64(parche: &Path, origen: &Path, salida: &Path) -> Result<String, String
     fs::copy(origen, salida).map_err(es)?;
     let mut o = abrir_rw(salida)?;
     if let Some(t) = tam_final.filter(|&t| t > 0) {
+        // Ningún cartucho de N64 pasa de 64 MB: un tamaño final mayor es un parche dañado.
+        if t > MAX_N64 {
+            return Err("El parche APS pide un tamaño final imposible para un juego de N64.".into());
+        }
         o.set_len(t).map_err(es)?;
     }
     let truncado = || "Parche APS truncado.".to_string();

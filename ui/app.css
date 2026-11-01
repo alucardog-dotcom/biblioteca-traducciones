@@ -128,7 +128,9 @@ h2 { font-size: 18px; margin: 0; }
 .cover .sys { position: absolute; left: 8px; bottom: 8px; font-size: 11px; background: rgba(10,13,18,.8); border-radius: 6px; padding: 2px 7px; color: var(--muted); }
 .cover .done { position: absolute; right: 8px; top: 8px; font-size: 11px; font-weight: 600; background: var(--ok); color: #06150D; border-radius: 6px; padding: 2px 7px; }
 .card .body { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 4px; flex: 1; }
-.card .title { font-weight: 600; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+/* El título es un botón (abre la ficha también con el teclado), vestido como texto. */
+.card .title { display: block; width: 100%; margin: 0; padding: 0; background: none; border: 0; color: inherit; font: inherit; font-weight: 600; line-height: 1.25; text-align: left; cursor: pointer; }
+.card .title span { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .card .meta { color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .card .actions { margin-top: auto; padding-top: 8px; display: flex; }
 .card .actions .btn { flex: 1; }
@@ -147,7 +149,7 @@ h2 { font-size: 18px; margin: 0; }
 }
 .btn:hover { border-color: #3A4352; }
 .btn.primary { background: linear-gradient(135deg, #DA1B2E, var(--acc-2)); border-color: transparent; color: #fff; font-weight: 600; }
-.btn.primary:hover { filter: brightness(1.08); }
+.btn.primary:hover { filter: brightness(.92); }
 .btn.ghost { background: none; border-color: transparent; color: var(--muted); }
 .btn:disabled { opacity: .5; cursor: default; }
 
@@ -274,3 +276,10 @@ kbd { font: inherit; font-size: 11px; background: var(--panel-2); border: 1px so
 .cafe-x:hover { color: var(--text); }
 .toast.bad { border-left-color: var(--bad); }
 .toast.ok { border-left-color: var(--ok); }
+
+/* ---- accesibilidad: foco visible con el teclado (no con el ratón) y sin animaciones si el sistema lo pide */
+:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
+.card:focus-within .fav { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}

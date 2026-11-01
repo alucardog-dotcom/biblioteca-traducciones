@@ -64,6 +64,8 @@ python tools/web.py          (la deja en _web; para verla: python -m http.server
 
 Las páginas de los juegos de PC que están en Steam (los que tienen AppID) llevan un enlace de afiliado a la búsqueda de Instant Gaming (`INSTANT_GAMING` en `tools/web.py`), con su aviso. La ficha del programa lo enseña también cuando no tienes el juego (`INSTANT_GAMING` en `ui/app.js`).
 
+Los juegos de PC que no están en Steam pero tienen página oficial conocida (itch.io, Game Jolt o la web de su autor; campo `pj` del catálogo, con `pj18` si es para adultos) llevan en su lugar un enlace a esa página, sin afiliado, también en el programa cuando no tienes el juego.
+
 Las traducciones de PC y de las consolas actuales (Switch, PS3, PS4, Xbox 360…; `MODERNAS` en `ui/app.js` y en `tools/web.py`) se instalan a mano: ni la web ni el programa las marcan como «Un clic» aunque su descarga sea directa.
 
 El flujo `web.yml` la genera y la publica en GitHub Pages cada vez que cambia en `main` el catálogo, las portadas a mano, las capturas o la propia web. Para usar un dominio propio, pon el dominio en `web/CNAME` y en Settings › Pages del repositorio, y apunta el DNS del dominio a GitHub Pages.

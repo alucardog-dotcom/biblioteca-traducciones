@@ -108,6 +108,11 @@ fn traducidos(r: &Rutas) -> BTreeMap<String, String> {
     out
 }
 
+/// ¿Es `p` uno de los traducidos que hizo el programa?
+pub fn es_traducido(r: &Rutas, p: &Path) -> bool {
+    traducidos(r).values().any(|v| Rutas::dentro(p, Path::new(v)))
+}
+
 /// Un traducido renombrado: en traducidos.tsv o hechos.tsv, la ruta vieja pasa a ser la nueva.
 pub fn cambiar_ruta(fichero: &Path, vieja: &Path, nueva: &Path) {
     let Ok(t) = leer_texto(fichero) else { return };

@@ -57,6 +57,22 @@ impl App {
         let a = self.ajustes();
         juego.is_file() && a.carpetas.iter().any(|c| Rutas::dentro(juego, c))
     }
+
+    /// Lo que se puede abrir con Jugar: un traducido que hizo el programa, o un fichero de tus carpetas de
+    /// juegos o de la de traducidos. Así la ventana no puede lanzar cualquier ejecutable del disco.
+    fn traducido_valido(&self, ruta: &Path) -> bool {
+        let a = self.ajustes();
+        ruta.is_file()
+            && (a.carpetas.iter().any(|c| Rutas::dentro(ruta, c))
+                || (a.salida != "junto" && Rutas::dentro(ruta, Path::new(&a.salida)))
+                || datos::es_traducido(&self.rutas, ruta))
+    }
+}
+
+/// Una ruta de red (`\\servidor\...`): abrirla haría que Windows se conectara a ese servidor.
+fn es_ruta_de_red(p: &Path) -> bool {
+    let s = p.to_string_lossy();
+    s.starts_with(r"\\") && !s.starts_with(r"\\?\")
 }
 
 // ---------------------------------------------------------------- órdenes de la ventana
@@ -105,6 +121,10 @@ fn esperar(app: Estado, clave: String, juego: PathBuf) -> Result<String, String>
     if !app.juego_valido(&juego) {
         return Err("El juego tiene que estar en una de tus carpetas de juegos (Ajustes).".into());
     }
+    // La clave decide en qué carpeta de parches se guarda lo que llegue a Descargas: tiene que ser una ficha.
+    if !app.con_datos(|d| d.filas.contains_key(&clave))? {
+        return Err("No encuentro esa traducción en el catálogo.".into());
+    }
     Ok(trabajos::esperar(&app.cola, &clave, &juego).display().to_string())
 }
 
@@ -115,6 +135,9 @@ fn cancelar_espera(app: Estado) {
 
 #[tauri::command]
 fn jugar(app: Estado, ruta: PathBuf, sistema: String) -> Result<Value, String> {
+    if es_ruta_de_red(&ruta) || !app.traducido_valido(&ruta) {
+        return Err("Solo se abren los juegos traducidos por el programa o los de tus carpetas de juegos.".into());
+    }
     let a = app.ajustes();
     // Un traducido de antes con .bin (Game Gear y otros) se renombra, y se apunta la ruta nueva.
     let ruta = match parcheo::corregir_extension(&ruta, &sistema) {
@@ -131,6 +154,9 @@ fn jugar(app: Estado, ruta: PathBuf, sistema: String) -> Result<Value, String> {
 
 #[tauri::command]
 fn ver_carpeta(ruta: PathBuf) -> Result<(), String> {
+    if es_ruta_de_red(&ruta) {
+        return Err("No se abren carpetas de red.".into());
+    }
     if !ruta.exists() {
         return Err("Esa carpeta ya no existe.".into());
     }

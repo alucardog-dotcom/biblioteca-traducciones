@@ -26,6 +26,8 @@ const ICONO_LISTA = '<svg viewBox="0 0 24 24"><path d="M4 6h2v2H4zm4 0h12v2H8zM4
 const $ = id => document.getElementById(id);
 const main = $('main');
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+// Solo direcciones web en los enlaces que vienen del catálogo (nunca javascript: ni file:).
+const webSegura = u => /^https?:\/\/\S+$/i.test(u || '') ? u : '';
 
 async function api(cmd, args, opciones) {
   try {
@@ -40,11 +42,13 @@ function aviso(texto, tipo = '') {
   const t = document.createElement('div');
   t.className = 'toast ' + tipo;
   t.textContent = texto;
+  // Los errores se anuncian al momento al lector de pantalla y duran más; el resto, con calma.
+  t.setAttribute('role', tipo === 'bad' ? 'alert' : 'status');
   // Con una ventana abierta (la ficha, la bienvenida), el aviso va dentro: fuera quedaría detrás.
   const abierta = document.querySelector('dialog[open]');
   const caja = abierta ? abierta.querySelector('.toasts') || abierta.appendChild(Object.assign(document.createElement('div'), {className: 'toasts'})) : $('toasts');
   caja.append(t);
-  setTimeout(() => t.remove(), 6000);
+  setTimeout(() => t.remove(), tipo === 'bad' ? 10000 : 6000);
 }
 
 // ---------------------------------------------------------------- nombres (como Parchear.ps1)
@@ -311,6 +315,9 @@ const DONAR = 'https://paypal.me/btraducciones';
 const WEB = 'https://alucardog-dotcom.github.io/biblioteca-traducciones/';
 // Enlace de afiliado de Instant Gaming: su búsqueda con el código del autor.
 const INSTANT_GAMING = 'https://www.instant-gaming.com/es/busquedas/?query=', AFILIADO = 'gamer-d73144';
+// Los juegos de PC que no están en Steam suelen estar en itch.io o en la web de su autor ("pj" en el catálogo).
+const sitioPagina = u => /\.itch\.io\//.test(u) ? 'itch.io' : /gamejolt\.com\//.test(u) ? 'Game Jolt' : /store\.steampowered\.com\//.test(u) ? 'Steam'
+  : /\.gog\.com\//.test(u) ? 'GOG' : 'la web oficial';
 // La que has puesto tú (una imagen copiada a la carpeta de datos o un enlace).
 const propia = gr => {
   const m = gr && propias[gr.k];
@@ -422,7 +429,7 @@ function tarjeta({gr, r, p}) {
     <button type="button" class="fav" aria-pressed="${fv}" aria-label="${ftxt}" title="${ftxt}">${ICONO_FAV}</button>
     ${portada(r, hecha(r, p && p.g))}
     <div class="body">
-      <div class="title">${esc(gr.titulo)}</div>
+      <button type="button" class="title" data-act="ficha"><span>${esc(gr.titulo)}</span></button>
       <div class="meta">${varias ? `<b>${gr.filas.length} traducciones</b> · ` : ''}${esc(r.a[F.grupo] || 'Grupo desconocido')}${versionDe(r) ? ' · ' + esc(versionDe(r)) : ''}</div>
       ${badges(r, p)}
       <div class="actions">${boton(r, p)}</div>
@@ -488,8 +495,10 @@ function pintarInicio() {
 }
 
 function pintarRejilla() {
-  lista = filtrar(gruposDe(vista));
   const sistemas = [...new Set(gruposDe(vista).map(gr => gr.s))].sort((x, y) => (SYS[x] || x).localeCompare(SYS[y] || y));
+  // Un sistema elegido en otra sección que aquí no existe dejaría la rejilla vacía con el desplegable en «Todos».
+  if (filtro.sys && !sistemas.includes(filtro.sys)) filtro.sys = '';
+  lista = filtrar(gruposDe(vista));
   const nTrad = lista.reduce((n, it) => n + it.gr.filas.length, 0);
   const chip = (k, t) => `<button class="chip" data-f="${k}" aria-pressed="${filtro[k]}">${t}</button>`;
   const l = listaDe(vista);
@@ -507,7 +516,7 @@ function pintarRejilla() {
     : `<h1>${VISTAS[vista]}</h1>`;
   main.innerHTML = `${cabecera}
     <div class="filters">
-      <select id="sys"><option value="">Todos los sistemas</option>${sistemas.map(s => `<option value="${esc(s)}" ${s === filtro.sys ? 'selected' : ''}>${esc(SYS[s] || s)}</option>`).join('')}</select>
+      <select id="sys" aria-label="Sistema"><option value="">Todos los sistemas</option>${sistemas.map(s => `<option value="${esc(s)}" ${s === filtro.sys ? 'selected' : ''}>${esc(SYS[s] || s)}</option>`).join('')}</select>
       ${chip('directa', 'Traducción de un clic')}${chip('completa', 'Completas')}${chip('sinia', 'Sin IA')}
       <span class="count">${lista.length.toLocaleString('es')} ${lista.length === 1 ? 'juego' : 'juegos'} · ${nTrad.toLocaleString('es')} ${nTrad === 1 ? 'traducción' : 'traducciones'}</span>
     </div>
@@ -538,7 +547,7 @@ function pintarDescargas() {
   main.innerHTML = `<h1>Descargas</h1><p class="lead">Lo que has traducido en las últimas 12 horas.</p>
     ${espera ? `<div class="banner"><span>Esperando el parche de <b>${esc(r ? r.a[F.juego] : '')}</b> en <code>${esc(espera.dir)}</code>. Descárgalo de la página que se ha abierto y se aplicará solo.</span><button class="btn" id="cancelar-espera">Cancelar</button></div>` : ''}
     <div class="jobs">${lineas || '<div class="empty">Nada por ahora. Elige un juego en <b>Mis juegos</b> y pulsa <b>Traducir</b>.</div>'}</div>`;
-  if ($('cancelar-espera')) $('cancelar-espera').onclick = async () => { await api('cancelar_espera'); sondear(); };
+  if ($('cancelar-espera')) $('cancelar-espera').onclick = () => api('cancelar_espera').then(sondear).catch(e => aviso(e.message, 'bad'));
 }
 
 // Ajustes: se editan en una copia y se guardan todos juntos.
@@ -556,7 +565,7 @@ function pintarAjustes() {
       <section><h2>Dónde dejar los juegos traducidos</h2>
         <label class="opt"><input type="radio" name="salida" value="junto" ${aparte ? '' : 'checked'}> Junto al juego original, con la etiqueta [T-Es] en el nombre</label>
         <label class="opt"><input type="radio" name="salida" value="aparte" ${aparte ? 'checked' : ''}> En una carpeta aparte, en una subcarpeta por sistema</label>
-        <div class="line" ${aparte ? '' : 'hidden'}><input type="text" id="salida" value="${esc(aparte ? b.salida : '')}" placeholder="C:\\Juegos\\Traducidos"><button class="btn" id="elegir-salida">Elegir…</button></div>
+        <div class="line" ${aparte ? '' : 'hidden'}><input type="text" id="salida" aria-label="Carpeta de los traducidos" value="${esc(aparte ? b.salida : '')}" placeholder="C:\\Juegos\\Traducidos"><button class="btn" id="elegir-salida">Elegir…</button></div>
       </section>
       <section><h2>Juegos de PC</h2>
         <label class="opt"><input type="checkbox" id="tiendas" ${b.tiendas ? 'checked' : ''}> Buscar los juegos instalados con Steam, GOG y Epic</label>
@@ -564,7 +573,7 @@ function pintarAjustes() {
       </section>
       <section><h2>RetroBat (opcional)</h2>
         <p>Si usas RetroBat, el botón <b>Jugar</b> abre el juego con su lanzador y el emulador que tengas elegido. Si no, se abre con el programa que Windows tenga asociado.</p>
-        <div class="line"><input type="text" id="retrobat" value="${esc(b.retrobat)}" placeholder="Sin RetroBat"><button class="btn" id="elegir-rb">Elegir…</button></div>
+        <div class="line"><input type="text" id="retrobat" aria-label="Carpeta de RetroBat" value="${esc(b.retrobat)}" placeholder="Sin RetroBat"><button class="btn" id="elegir-rb">Elegir…</button></div>
       </section>
       <div class="line"><button class="btn primary" id="guardar">Guardar y buscar mis juegos</button></div>
       <section><h2>Parches que bajas tú</h2>
@@ -673,7 +682,7 @@ function abrirFicha(r, p) {
     <div class="f-portada">
       <button type="button" class="btn" data-portada="elegir">Elegir portada…</button>
       <button type="button" class="btn" data-portada="enlace">Pegar un enlace…</button>
-      <div class="f-enlace" hidden><input type="text" id="f-url" placeholder="https://…/portada.jpg" spellcheck="false"><button type="button" class="btn" data-portada="usar">Usar</button></div>
+      <div class="f-enlace" hidden><input type="text" id="f-url" aria-label="Dirección de la imagen" placeholder="https://…/portada.jpg" spellcheck="false"><button type="button" class="btn" data-portada="usar">Usar</button></div>
       ${propias[gr.k] ? '<button type="button" class="btn ghost" data-portada="quitar">Volver a la automática</button>' : ''}
       <a class="btn ghost" href="${esc(buscarImg)}" target="_blank" rel="noopener">Buscar en Google Imágenes</a>
       <p class="hint">También puedes copiar una imagen en el navegador y pulsar <kbd>Ctrl</kbd>+<kbd>V</kbd> aquí, o arrastrarla desde una carpeta.</p>
@@ -703,6 +712,11 @@ function abrirFicha(r, p) {
       const nombre = enSteam.a[F.juego].replace(/\s*[(\[][^)\]]*[)\]]/g, '').trim();
       html += `<div class="f-compra"><a class="btn" href="${esc(INSTANT_GAMING + encodeURIComponent(nombre) + '&igr=' + AFILIADO)}" target="_blank" rel="noopener">¿No lo tienes? Búscalo en Instant Gaming</a>
         <p class="hint">Enlace de afiliado: si lo compras, me llevo una pequeña comisión sin que te cueste más.</p></div>`;
+    }
+    // Los que no están en Steam: la página oficial del juego, si la conocemos (no es un enlace de afiliado).
+    const conPagina = (r.gr ? r.gr.filas : [r]).find(f => webSegura(f.x.pj));
+    if (conPagina && !enSteam && !opciones.length) {
+      html += `<div class="f-compra"><a class="btn" href="${esc(conPagina.x.pj)}" target="_blank" rel="noopener">¿No lo tienes? Página del juego en ${esc(sitioPagina(conPagina.x.pj))}${conPagina.x.pj18 ? ' (18+)' : ''}</a></div>`;
     }
   } else if (!opciones.length) {
     html += `<p class="muted">No tienes este juego. Pon tu copia en una de tus carpetas de juegos (${esc((ajustes.carpetas || []).join(', '))}) y pulsa <b>Buscar mis juegos</b>.</p>`;
@@ -740,7 +754,7 @@ function abrirFicha(r, p) {
   if (salida) html += '<button class="btn primary" data-act="jugar">Jugar</button><button class="btn" data-act="carpeta">Ver en la carpeta</button>';
   if (puede && d0) html += `<button class="btn${salida ? '' : ' primary'}" data-act="traducir">${salida ? 'Volver a traducir' : 'Traducir'}</button>`;
   if (puede) html += `<button class="btn" data-act="esperar">${a[F.url] ? 'Abrir página' : 'Buscar en Google'} y esperar la descarga</button>`;
-  if (a[F.url]) html += `<a class="btn" href="${esc(a[F.url])}" target="_blank" rel="noopener">Abrir página</a>`;
+  if (webSegura(a[F.url])) html += `<a class="btn" href="${esc(a[F.url])}" target="_blank" rel="noopener">Abrir página</a>`;
   // Sin página, el botón de esperar ya busca en Google.
   if (a[F.url] || !puede) html += `<a class="btn" href="https://www.google.com/search?q=${encodeURIComponent('traducción español ' + (a[F.orig] || a[F.juego]) + ' ' + (SYS[r.s] || r.s) + ' ' + a[F.grupo])}" target="_blank" rel="noopener">Buscar en Google</a>`;
   html += '</div></div></div>';
@@ -757,7 +771,7 @@ function pintarGuardar(abierto) {
     <div class="menu-listas" ${abierto ? '' : 'hidden'}>
       <div class="m-h">Guardar en…</div>
       ${misListas.map(l => `<label class="opt"><input type="checkbox" data-l="${esc(l.id)}" ${enLista(l, gr) ? 'checked' : ''}><span>${esc(l.nombre)}</span></label>`).join('')}
-      <div class="m-nueva"><input type="text" id="m-nombre" placeholder="Lista nueva…" maxlength="80" spellcheck="false"><button type="button" class="btn" data-g="crear">Crear</button></div>
+      <div class="m-nueva"><input type="text" id="m-nombre" aria-label="Nombre de la lista nueva" placeholder="Lista nueva…" maxlength="80" spellcheck="false"><button type="button" class="btn" data-g="crear">Crear</button></div>
     </div>`;
 }
 function guardarFicha(que, l) {
@@ -888,8 +902,11 @@ $('f-guardar').addEventListener('keydown', e => {
   if (e.target.id === 'm-nombre' && e.key === 'Enter' && fichaActual) guardarFicha('crear');
 });
 $('f-close').addEventListener('click', () => $('ficha').close());
+// Se cierra al pulsar el fondo, pero no si solo se ha soltado ahí el ratón tras seleccionar texto dentro.
+let pulsadoEnFondo = false;
+$('ficha').addEventListener('pointerdown', e => { pulsadoEnFondo = e.target.id === 'ficha'; });
 $('ficha').addEventListener('click', e => {
-  if (e.target.id === 'ficha') return e.target.close();
+  if (e.target.id === 'ficha') { if (pulsadoEnFondo) e.target.close(); return; }
   // El menú de las listas se cierra al pulsar fuera de él.
   const menu = $('f-guardar').querySelector('.menu-listas');
   if (menu && !menu.hidden && !e.target.closest('#f-guardar')) pintarGuardar(false);
@@ -928,7 +945,12 @@ $('scan').addEventListener('click', async () => {
 
 const ventana = T.window.getCurrentWindow();
 $('w-min').onclick = () => ventana.minimize();
-$('w-max').onclick = () => ventana.toggleMaximize();
+$('w-max').onclick = async () => {
+  await ventana.toggleMaximize();
+  // El nombre del botón dice lo que hará ahora.
+  const max = await ventana.isMaximized().catch(() => null);
+  if (max !== null) $('w-max').setAttribute('aria-label', max ? 'Restaurar' : 'Maximizar');
+};
 $('w-close').onclick = () => ventana.close();
 
 // ---------------------------------------------------------------- estado (trabajos, búsqueda, espera)
@@ -974,11 +996,12 @@ async function sondear() {
     const st = await api('estado');
     const antes = new Map(trabajos.map(t => [t.id, t.estado]));
     trabajos = st.trabajos || [];
-    let cambio = false;
+    let cambio = false, hechoNuevo = false;
     for (const t of trabajos) {
       if (antes.get(t.id) !== t.estado) cambio = true;
       if (t.estado === 'hecho' && antes.get(t.id) && antes.get(t.id) !== 'hecho') {
         traducidos[t.clave] = t.final;
+        hechoNuevo = true;
         const r = porClave.get(t.clave);
         aviso((r ? r.a[F.juego] : 'El juego') + ' ya está en español.', 'ok');
         contarCafe();
@@ -993,7 +1016,9 @@ async function sondear() {
     const habiaEspera = !!espera;
     espera = st.espera;
     activo = activo || escaneando || !!espera;
-    if (cambio || habiaEspera !== !!espera) { if (vista === 'descargas') pintar(); else contadores(); }
+    // Un juego recién traducido cambia su tarjeta («Jugar»): se repinta la rejilla, salvo con la ficha abierta.
+    if (hechoNuevo && !['descargas', 'ajustes'].includes(vista) && !$('ficha').open) pintar();
+    else if (cambio || habiaEspera !== !!espera) { if (vista === 'descargas') pintar(); else contadores(); }
   } catch (e) {
     $('scan-text').textContent = e.message;
   }
@@ -1021,7 +1046,11 @@ async function cargarTodo() {
 }
 
 // Al acabar una búsqueda se recarga la lista aunque la ventana no supiera que había empezado.
-T.event.listen('juegos', async () => { escaneando = false; await cargarJuegos(); sondear(); });
+T.event.listen('juegos', async () => {
+  escaneando = false;
+  try { await cargarJuegos(); } catch (e) { aviso(e.message, 'bad'); }
+  sondear();
+});
 T.event.listen('trabajo', () => sondear());
 // Ha llegado un catálogo más nuevo de GitHub: se vuelve a cargar sin cerrar nada.
 T.event.listen('catalogo', async () => {

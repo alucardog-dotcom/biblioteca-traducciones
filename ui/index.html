@@ -14,32 +14,32 @@
         <div data-tauri-drag-region><b>Biblioteca</b><span>de traducciones</span></div>
       </div>
       <nav class="navs" aria-label="Secciones">
-        <button type="button" class="nav" data-go="inicio"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg><span>Inicio</span></button>
-        <button type="button" class="nav" data-go="mios"><svg viewBox="0 0 24 24"><path d="M6 7h12a4 4 0 0 1 4 4v3a3 3 0 0 1-5.4 1.8L15 14H9l-1.6 1.8A3 3 0 0 1 2 14v-3a4 4 0 0 1 4-4zm1 3v2H5v1h2v2h1v-2h2v-1H8v-2zm9 1a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm2-2a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/></svg><span>Mis juegos</span><b class="n" id="n-mios"></b></button>
-        <button type="button" class="nav" data-go="todas"><svg viewBox="0 0 24 24"><path d="M10 3a7 7 0 0 1 5.6 11.2l5.1 5.1-1.4 1.4-5.1-5.1A7 7 0 1 1 10 3zm0 2a5 5 0 1 0 0 10 5 5 0 0 0 0-10z"/></svg><span>Descubrir</span></button>
-        <button type="button" class="nav" data-go="hechas"><svg viewBox="0 0 24 24"><path d="M9 16.2l-3.5-3.5L4 14.2l5 5 11-11-1.5-1.5z"/></svg><span>Traducidos</span><b class="n" id="n-hechas"></b></button>
-        <button type="button" class="nav" data-go="descargas"><svg viewBox="0 0 24 24"><path d="M11 3h2v9.2l3.3-3.3 1.4 1.4L12 16l-5.7-5.7 1.4-1.4 3.3 3.3zM4 18h16v2H4z"/></svg><span>Descargas</span><b class="n acc" id="n-dl"></b></button>
+        <button type="button" class="nav" data-go="inicio"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg><span>Inicio</span></button>
+        <button type="button" class="nav" data-go="mios"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 7h12a4 4 0 0 1 4 4v3a3 3 0 0 1-5.4 1.8L15 14H9l-1.6 1.8A3 3 0 0 1 2 14v-3a4 4 0 0 1 4-4zm1 3v2H5v1h2v2h1v-2h2v-1H8v-2zm9 1a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm2-2a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/></svg><span>Mis juegos</span><b class="n" id="n-mios"></b></button>
+        <button type="button" class="nav" data-go="todas"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M10 3a7 7 0 0 1 5.6 11.2l5.1 5.1-1.4 1.4-5.1-5.1A7 7 0 1 1 10 3zm0 2a5 5 0 1 0 0 10 5 5 0 0 0 0-10z"/></svg><span>Descubrir</span></button>
+        <button type="button" class="nav" data-go="hechas"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M9 16.2l-3.5-3.5L4 14.2l5 5 11-11-1.5-1.5z"/></svg><span>Traducidos</span><b class="n" id="n-hechas"></b></button>
+        <button type="button" class="nav" data-go="descargas"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M11 3h2v9.2l3.3-3.3 1.4 1.4L12 16l-5.7-5.7 1.4-1.4 3.3 3.3zM4 18h16v2H4z"/></svg><span>Descargas</span><b class="n acc" id="n-dl"></b></button>
       </nav>
       <div class="side-h"><span>Mis listas</span><button type="button" class="mas" id="nueva-lista" aria-label="Nueva lista" title="Nueva lista">+</button></div>
       <nav class="navs listas" id="listas-nav" aria-label="Mis listas"></nav>
       <div class="side-foot">
         <button type="button" class="nueva" id="nueva" hidden></button>
-        <div class="scan-text" id="scan-text"></div>
-        <button type="button" class="nav" id="scan"><svg viewBox="0 0 24 24"><path d="M12 4a8 8 0 0 1 7.7 6h-2.1A6 6 0 1 0 18 13h2a8 8 0 1 1-8-9zm5 1h4v4h-4z"/></svg><span>Buscar mis juegos</span></button>
-        <button type="button" class="nav" data-go="ajustes"><svg viewBox="0 0 24 24"><path d="M12 8a4 4 0 1 1 0 8 4 4 0 0 1 0-8zm0 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM10.6 2h2.8l.5 2.6 1.6.7 2.2-1.5 2 2-1.5 2.2.7 1.6 2.6.5v2.8l-2.6.5-.7 1.6 1.5 2.2-2 2-2.2-1.5-1.6.7-.5 2.6h-2.8l-.5-2.6-1.6-.7-2.2 1.5-2-2 1.5-2.2-.7-1.6L2 13.4v-2.8l2.6-.5.7-1.6-1.5-2.2 2-2 2.2 1.5 1.6-.7z"/></svg><span>Ajustes</span></button>
+        <div class="scan-text" id="scan-text" aria-live="polite"></div>
+        <button type="button" class="nav" id="scan"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 4a8 8 0 0 1 7.7 6h-2.1A6 6 0 1 0 18 13h2a8 8 0 1 1-8-9zm5 1h4v4h-4z"/></svg><span>Buscar mis juegos</span></button>
+        <button type="button" class="nav" data-go="ajustes"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 8a4 4 0 1 1 0 8 4 4 0 0 1 0-8zm0 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM10.6 2h2.8l.5 2.6 1.6.7 2.2-1.5 2 2-1.5 2.2.7 1.6 2.6.5v2.8l-2.6.5-.7 1.6 1.5 2.2-2 2-2.2-1.5-1.6.7-.5 2.6h-2.8l-.5-2.6-1.6-.7-2.2 1.5-2-2 1.5-2.2-.7-1.6L2 13.4v-2.8l2.6-.5.7-1.6-1.5-2.2 2-2 2.2 1.5 1.6-.7z"/></svg><span>Ajustes</span></button>
       </div>
     </aside>
 
     <div class="mainwrap">
       <header class="topbar" data-tauri-drag-region>
         <label class="search">
-          <svg viewBox="0 0 24 24"><path d="M10 3a7 7 0 0 1 5.6 11.2l5.1 5.1-1.4 1.4-5.1-5.1A7 7 0 1 1 10 3zm0 2a5 5 0 1 0 0 10 5 5 0 0 0 0-10z"/></svg>
-          <input id="q" type="search" placeholder="Buscar un juego, un grupo o tu ROM" autocomplete="off" spellcheck="false">
+          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M10 3a7 7 0 0 1 5.6 11.2l5.1 5.1-1.4 1.4-5.1-5.1A7 7 0 1 1 10 3zm0 2a5 5 0 1 0 0 10 5 5 0 0 0 0-10z"/></svg>
+          <input id="q" type="search" aria-label="Buscar" placeholder="Buscar un juego, un grupo o tu ROM" autocomplete="off" spellcheck="false">
         </label>
         <div class="win">
-          <button type="button" id="w-min" aria-label="Minimizar"><svg viewBox="0 0 12 12"><path d="M2 6h8"/></svg></button>
-          <button type="button" id="w-max" aria-label="Maximizar"><svg viewBox="0 0 12 12"><rect x="2.5" y="2.5" width="7" height="7"/></svg></button>
-          <button type="button" id="w-close" class="close" aria-label="Cerrar"><svg viewBox="0 0 12 12"><path d="M2.5 2.5l7 7M9.5 2.5l-7 7"/></svg></button>
+          <button type="button" id="w-min" aria-label="Minimizar"><svg aria-hidden="true" viewBox="0 0 12 12"><path d="M2 6h8"/></svg></button>
+          <button type="button" id="w-max" aria-label="Maximizar"><svg aria-hidden="true" viewBox="0 0 12 12"><rect x="2.5" y="2.5" width="7" height="7"/></svg></button>
+          <button type="button" id="w-close" class="close" aria-label="Cerrar"><svg aria-hidden="true" viewBox="0 0 12 12"><path d="M2.5 2.5l7 7M9.5 2.5l-7 7"/></svg></button>
         </div>
       </header>
       <main id="main" tabindex="-1"><div class="empty">Cargando el catálogo…</div></main>
@@ -65,7 +65,7 @@
     <form method="dialog">
       <h2 id="p-title"></h2>
       <p id="p-texto"></p>
-      <input type="text" id="p-valor" maxlength="80" spellcheck="false" autocomplete="off">
+      <input type="text" id="p-valor" aria-labelledby="p-title" maxlength="80" spellcheck="false" autocomplete="off">
       <div class="f-actions"><button class="btn primary" value="si" id="p-si"></button><button class="btn ghost" value="no">Cancelar</button></div>
     </form>
   </dialog>

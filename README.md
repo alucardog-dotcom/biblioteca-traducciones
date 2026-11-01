@@ -27,7 +27,7 @@ Más de 6.000 traducciones hechas por aficionados, de la NES a la Switch y los j
 - **Descarga el parche y lo aplica**: IPS, BPS, UPS, PPF, APS y xdelta. Saca el juego de su comprimido o de su .chd y devuelve los discos traducidos en .chd. El traducido queda junto al original con la etiqueta `[T-Es]`, o en la carpeta que elijas.
 - **Sin descarga directa**: abre la página de la traducción y, en cuanto bajas el parche, lo aplica él solo.
 - **Juegos de PC y de consolas actuales**: sus traducciones se instalan a mano (en la carpeta del juego, o como mod en el emulador o en la consola). La biblioteca te dice cuáles tienes y te lleva a la página de la traducción y a la carpeta del juego.
-- **¿No tienes el juego?** En los que se venden en Steam, la ficha enlaza a su búsqueda en Instant Gaming (enlace de afiliado: si lo compras, el proyecto se lleva una pequeña comisión sin que te cueste más).
+- **¿No tienes el juego?** En los que se venden en Steam, la ficha enlaza a su búsqueda en Instant Gaming (enlace de afiliado: si lo compras, el proyecto se lleva una pequeña comisión sin que te cueste más). En los que no están en Steam, si se conoce su página oficial (itch.io, Game Jolt o la web de su autor), enlaza a ella, sin afiliado.
 - **Portadas** de libretro-thumbnails, Steam y LaunchBox. Si falta alguna, puedes poner la tuya: elegir una imagen, pegarla con Ctrl+V o soltarla sobre el juego.
 - **Favoritos y listas**: pulsa el corazón de un juego para tenerlo en Favoritos, o guárdalo en tus propias listas («Pendientes», «RPG japoneses»…) para volver a él más tarde.
 - **Con RetroBat**, el botón Jugar abre el juego traducido con su emulador.

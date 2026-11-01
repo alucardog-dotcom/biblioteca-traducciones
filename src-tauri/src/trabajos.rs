@@ -239,7 +239,8 @@ fn escanear(r: &Rutas, a: &Ajustes, cola: &Cola) {
 pub fn ejecutar(r: &Rutas, a: &Ajustes, cola: &Cola, t: Tarea) -> &'static str {
     match t {
         Tarea::Escanear => {
-            escanear(r, a, cola);
+            // Igual que al traducir: un fallo inesperado en una carpeta rara no puede parar la cola.
+            let _ = catch_unwind(AssertUnwindSafe(|| escanear(r, a, cola)));
             let mut g = cola.m.lock().unwrap();
             g.escaneando = false;
             g.progreso.clear();
@@ -326,33 +327,39 @@ pub fn esperar(cola: &Cola, clave: &str, juego: &Path) -> PathBuf {
 /// Una pasada de la vigilancia: si ha llegado un parche nuevo y ya no crece, se copia a
 /// <datos>\parches\<sistema> y se devuelve (clave, juego, parche) para crear el trabajo.
 pub fn revisar_espera(r: &Rutas, cola: &Cola) -> Option<(String, PathBuf, PathBuf)> {
-    let mut g = cola.m.lock().unwrap();
-    let e = g.espera.as_mut()?;
-    if SystemTime::now() > e.hasta {
-        g.espera = None;
+    // Con el mutex cogido solo se mira Descargas; la copia va fuera, para no tener parada a la ventana
+    // (su sondeo de `estado` espera este mismo mutex).
+    let (clave, juego, nuevo) = {
+        let mut g = cola.m.lock().unwrap();
+        let e = g.espera.as_mut()?;
+        if SystemTime::now() > e.hasta {
+            g.espera = None;
+            return None;
+        }
+        let mut nuevo = None;
+        for (p, len) in parches_en(&e.dir) {
+            if e.conocidos.contains(&(p.clone(), len)) {
+                continue;
+            }
+            // Se espera a que el tamaño deje de cambiar (descarga terminada).
+            if e.vistos.get(&p) != Some(&len) {
+                e.vistos.insert(p, len);
+                continue;
+            }
+            nuevo = Some(p);
+            break;
+        }
+        (e.clave.clone(), e.juego.clone(), nuevo?)
+    };
+    let sis = clave.split('|').next().unwrap_or("").to_string();
+    let dest_dir = r.parches.join(&sis);
+    let _ = fs::create_dir_all(&dest_dir);
+    let dest = dest_dir.join(nuevo.file_name()?);
+    if fs::copy(&nuevo, &dest).is_err() {
         return None;
     }
-    for (p, len) in parches_en(&e.dir) {
-        if e.conocidos.contains(&(p.clone(), len)) {
-            continue;
-        }
-        // Se espera a que el tamaño deje de cambiar (descarga terminada).
-        if e.vistos.get(&p) != Some(&len) {
-            e.vistos.insert(p, len);
-            continue;
-        }
-        let sis = e.clave.split('|').next().unwrap_or("").to_string();
-        let dest_dir = r.parches.join(&sis);
-        let _ = fs::create_dir_all(&dest_dir);
-        let dest = dest_dir.join(p.file_name()?);
-        if fs::copy(&p, &dest).is_err() {
-            continue;
-        }
-        let res = (e.clave.clone(), e.juego.clone(), dest);
-        g.espera = None;
-        return Some(res);
-    }
-    None
+    cola.m.lock().unwrap().espera = None;
+    Some((clave, juego, dest))
 }
 
 pub fn estado_espera(cola: &Cola) -> Value {

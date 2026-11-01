@@ -99,7 +99,8 @@ pub struct Entrada {
 
 /// Lo que hay dentro de un .zip/.7z/.rar, sin descomprimirlo (7z guarda el CRC32 de cada fichero).
 pub fn listar(siete_z: &Path, archivo: &Path) -> Vec<Entrada> {
-    let Ok((true, t)) = herramienta(siete_z, [OsStr::new("l"), OsStr::new("-slt"), OsStr::new("-ba"), OsStr::new("-sccUTF-8"), archivo.as_os_str()]) else {
+    // `--`: lo que viene después es un nombre, aunque empiece por `-` o `@` (7z lo tomaría por un conmutador).
+    let Ok((true, t)) = herramienta(siete_z, [OsStr::new("l"), OsStr::new("-slt"), OsStr::new("-ba"), OsStr::new("-sccUTF-8"), OsStr::new("--"), archivo.as_os_str()]) else {
         return vec![];
     };
     let mut out: Vec<(Entrada, bool)> = vec![];
@@ -125,6 +126,9 @@ pub fn descomprimir(siete_z: &Path, archivo: &Path, dest: &Path, entrada: Option
     let mut o = std::ffi::OsString::from("-o");
     o.push(dest);
     args.push(o);
+    // `--`: el archivo y la entrada son nombres aunque empiecen por `-` (una entrada llamada «-spf» haría
+    // que 7z extrajera con rutas absolutas, fuera de la carpeta temporal).
+    args.push("--".into());
     args.push(archivo.as_os_str().to_owned());
     if let Some(e) = entrada {
         args.push(e.into());
@@ -360,7 +364,9 @@ fn emparejar(e: &Entorno, p: &Parche, c: &mut Candidato, sis: &str, crc_base: &[
                 return Emparejado::YaTraducido;
             }
         }
-        if info.crc_origen.is_some() || !crcs.is_empty() {
+        // Sin ningún CRC calculable (un CHD, un juego de más de 128 MB) se sigue adelante: BPS y UPS
+        // comprueban el origen al aplicarse, y un IPS sin CRC es lo mismo que elegirlo a mano.
+        if !crcs.is_empty() {
             return Emparejado::No(format!("Tu copia no es la versión que pide la traducción (CRC32 {}).", buscados[0]));
         }
     }
@@ -377,8 +383,17 @@ enum Origen {
 }
 
 fn preparar(e: &Entorno, c: &mut Candidato, salto: u64, entrada: Option<&str>, trabajo: &Path) -> Result<Origen, String> {
+    preparar_nivel(e, c, salto, entrada, trabajo, 0)
+}
+
+/// `nivel`: cuántos comprimidos se han abierto ya, uno dentro de otro. Con tope, y sin volver a elegir el
+/// comprimido que se acaba de abrir, para que un zip dentro de un zip no dé vueltas sin fin.
+fn preparar_nivel(e: &Entorno, c: &mut Candidato, salto: u64, entrada: Option<&str>, trabajo: &Path, nivel: u8) -> Result<Origen, String> {
     match c.tipo {
         Tipo::Comprimido => {
+            if nivel >= 3 {
+                return Err("El juego está comprimido demasiadas veces, uno dentro de otro.".into());
+            }
             let entradas = c.entradas(e.siete_z).to_vec();
             let dentro = trabajo.join("origen");
             let hoja = entradas.iter().find(|x| matches!(ext_de(Path::new(&x.ruta)).as_str(), "cue" | "gdi" | "chd" | "iso"));
@@ -394,7 +409,7 @@ fn preparar(e: &Entorno, c: &mut Candidato, salto: u64, entrada: Option<&str>, t
                     .ok_or("El comprimido no tiene ningún juego.")?;
                 descomprimir(e.siete_z, &c.ruta, &dentro, Some(&mayor.ruta))?;
             }
-            let fs_ = ficheros(&dentro);
+            let fs_: Vec<PathBuf> = ficheros(&dentro).into_iter().filter(|f| f.as_path() != c.ruta.as_path()).collect();
             let elegido = fs_
                 .iter()
                 .find(|f| matches!(ext_de(f).as_str(), "cue" | "gdi" | "chd"))
@@ -403,7 +418,7 @@ fn preparar(e: &Entorno, c: &mut Candidato, salto: u64, entrada: Option<&str>, t
                 .ok_or("El comprimido no tiene ningún juego.")?
                 .clone();
             let mut sub = Candidato::de(&elegido);
-            preparar(e, &mut sub, salto, None, trabajo)
+            preparar_nivel(e, &mut sub, salto, None, trabajo, nivel + 1)
         }
         Tipo::Chd => {
             let dir = trabajo.join("chd");
