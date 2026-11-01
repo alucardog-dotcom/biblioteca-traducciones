@@ -1,0 +1,43 @@
+# La web (GitHub Pages): se genera con tools/web.py a partir del catálogo y se publica cada vez que cambia
+# en main el catálogo, las portadas a mano, las capturas, la versión o la propia web.
+name: Web
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src-tauri/recursos/catalogo/**'
+      - 'src-tauri/tauri.conf.json'
+      - 'ui/portadas/**'
+      - 'ui/icono.svg'
+      - 'ui/app.js'
+      - 'docs/**'
+      - 'web/**'
+      - 'tools/web.py'
+      - '.github/workflows/web.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.publicar.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Generar la web
+        run: python3 tools/web.py _site
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: publicar
+        uses: actions/deploy-pages@v4

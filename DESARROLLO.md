@@ -54,6 +54,16 @@ Las portadas que alguien pone a mano en el programa pueden pasar al catálogo pa
 
 Para poner al día el catálogo de todos basta con subir a `main` los ficheros nuevos de `src-tauri/recursos/catalogo` (y las portadas de `ui/portadas`): los programas ya instalados los descargan al abrirse. No hace falta publicar una versión.
 
+## La web
+
+`tools/web.py` genera la web a partir del catálogo: la portada, el buscador (`web/catalogo.js`, que lee `catalogo/juegos.json`), una página por juego y otra por sistema, más `sitemap.xml` y `robots.txt`. Junta las traducciones en juegos y elige las portadas igual que la ventana. Solo usa la biblioteca estándar de Python:
+
+```
+python tools/web.py          (la deja en _web; para verla: python -m http.server -d _web)
+```
+
+El flujo `web.yml` la genera y la publica en GitHub Pages cada vez que cambia en `main` el catálogo, las portadas a mano, las capturas o la propia web. Para usar un dominio propio, pon el dominio en `web/CNAME` y en Settings › Pages del repositorio, y apunta el DNS del dominio a GitHub Pages.
+
 ## Pendiente
 
 - Publicar los scripts del catálogo.

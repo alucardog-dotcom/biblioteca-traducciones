@@ -13,7 +13,7 @@ Más de 6.000 traducciones hechas por aficionados, de la NES a los juegos de PC 
   <a href="https://www.paypal.com/donate/?business=alucardj%40gmail.com&currency_code=EUR"><img alt="Invítame a un café con PayPal" src="https://img.shields.io/badge/PayPal-Inv%C3%ADtame%20a%20un%20caf%C3%A9-00457C?logo=paypal"></a>
 </p>
 
-<p align="center"><a href="https://github.com/alucardog-dotcom/biblioteca-traducciones/releases/latest"><b>⬇️ Descargar para Windows</b></a></p>
+<p align="center"><a href="https://github.com/alucardog-dotcom/biblioteca-traducciones/releases/latest"><b>⬇️ Descargar para Windows</b></a> · <a href="https://alucardog-dotcom.github.io/biblioteca-traducciones/"><b>🔎 Buscar tu juego en la web</b></a></p>
 
 ¿Tienes un juego japonés de Super Nintendo, un RPG de PlayStation que nunca llegó a España o un juego de Steam que solo está en inglés? Hay muchas probabilidades de que alguien lo haya traducido. La Biblioteca de traducciones busca tus juegos, te dice cuáles tienen traducción al español y la aplica con un clic. **Nunca descarga juegos**: solo los parches de traducción, que se aplican sobre tu propia copia, y tu copia queda intacta.
 
