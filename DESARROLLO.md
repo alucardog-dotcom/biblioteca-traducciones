@@ -62,6 +62,8 @@ Para poner al día el catálogo de todos basta con subir a `main` los ficheros n
 python tools/web.py          (la deja en _web; para verla: python -m http.server -d _web)
 ```
 
+Las páginas de los juegos de PC que están en Steam (los que tienen AppID) llevan un enlace de afiliado a la búsqueda de Instant Gaming (`INSTANT_GAMING` en `tools/web.py`), con su aviso.
+
 El flujo `web.yml` la genera y la publica en GitHub Pages cada vez que cambia en `main` el catálogo, las portadas a mano, las capturas o la propia web. Para usar un dominio propio, pon el dominio en `web/CNAME` y en Settings › Pages del repositorio, y apunta el DNS del dominio a GitHub Pages.
 
 ## Pendiente

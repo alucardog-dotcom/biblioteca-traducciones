@@ -114,6 +114,11 @@ main { display: block; max-width: var(--ancho); margin: 0 auto; padding: 0 var(-
 .juego-t { display: grid; gap: 6px; justify-items: start; }
 .juego-t h1 span { color: var(--amarillo); }
 .juego-t .btn { margin-top: 18px; }
+.compra { margin-top: 10px; display: grid; gap: 4px; justify-items: start; }
+.juego-t .compra .btn { margin-top: 0; }
+.compra p { margin: 0; font-size: 0.82rem; }
+.btn.tienda { border-color: rgba(255, 196, 0, 0.55); color: var(--amarillo-t); }
+.btn.tienda:hover { border-color: var(--amarillo); }
 .eti { margin: 0; color: var(--amarillo-t); font-size: 0.8rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
 .trads { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr)); gap: 16px; }
 .trad { background: var(--panel); border: 1px solid var(--linea); border-radius: 14px; padding: 18px; display: grid; gap: 12px; align-content: start; }

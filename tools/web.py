@@ -13,6 +13,8 @@ REPO = 'https://github.com/alucardog-dotcom/biblioteca-traducciones'
 DESCARGA = REPO + '/releases/latest'
 INCIDENCIAS = REPO + '/issues'
 DONAR = 'https://paypal.me/btraducciones'
+# Enlace de afiliado: la búsqueda de Instant Gaming con el código del autor (igr).
+INSTANT_GAMING = 'https://www.instant-gaming.com/es/busquedas/?query={}&igr=gamer-d73144'
 PC = {'dos', 'windows', 'scummvm', 'easyrpg', 'pc'}
 e = html.escape
 
@@ -227,6 +229,17 @@ def pagina_juego(gr, sysn, libretro, base):
     img = (f'<img src="{e(urls[0])}" data-alt="{e(" ".join(urls[1:]))}" alt="Portada de {e(titulo)}" '
            f'referrerpolicy="no-referrer" onerror="sig(this)">') if urls else ''
     quien = ', '.join(grupos[:3]) + (' y otros' if len(grupos) > 3 else '')
+    # Los que están en Steam (tienen AppID) se venden en las tiendas de claves; los gratuitos y los de
+    # aficionados, no. Se busca por el nombre de la ficha (en los de Steam, el de la tienda; el título
+    # original de las novelas visuales suele ir en japonés), sin lo que va entre paréntesis.
+    en_steam = next((f for f in gr['filas'] if f['x'].get('steam')), None)
+    compra = ''
+    if en_steam:
+        nombre = re.sub(r'\s*[(\[][^)\]]*[)\]]', '', en_steam['juego']).strip()
+        compra = f'''<div class="compra">
+        <a class="btn tienda" href="{e(INSTANT_GAMING.format(quote(nombre)))}" target="_blank" rel="sponsored noopener">¿No lo tienes? Búscalo en Instant Gaming</a>
+        <p class="suave">Enlace de afiliado: si lo compras, me llevo una pequeña comisión sin que te cueste más.</p>
+      </div>'''
     desc = (f'{"Traducción" if n == 1 else f"{n} traducciones"} al español de {titulo} para {nombre_sis}'
             + (f', de {quien}' if quien else '') + '. Aplícala sobre tu copia con un clic con la Biblioteca de traducciones.')
     if s in PC:
@@ -251,6 +264,7 @@ def pagina_juego(gr, sysn, libretro, base):
       <h1>{e(titulo)} <span>en español</span></h1>
       <p class="lede">{'Hay una traducción' if n == 1 else f'Hay {n} traducciones'} al español hechas por aficionados{f": {e(quien)}" if quien else ''}.</p>
       <a class="btn primario grande" href="{DESCARGA}">Descargar el programa para Windows</a>
+      {compra}
     </div>
   </div>
   <section class="bloque">
