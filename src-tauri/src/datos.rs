@@ -43,6 +43,14 @@ pub fn leer_texto(p: &Path) -> std::io::Result<String> {
     Ok(s.strip_prefix('\u{feff}').map(str::to_string).unwrap_or(s))
 }
 
+/// Escribe un fichero de golpe: primero a un «.nuevo» al lado y luego lo renombra, para que quien lo lea
+/// a la vez (la ventana, otro hilo) no vea nunca uno a medias.
+pub fn escribir_atomico(p: &Path, b: &[u8]) -> std::io::Result<()> {
+    let nuevo = p.with_extension(format!("{}.nuevo", p.extension().and_then(|e| e.to_str()).unwrap_or("")));
+    fs::write(&nuevo, b)?;
+    fs::rename(&nuevo, p)
+}
+
 pub fn clave(a: &[String]) -> String {
     format!("{}|{}|{}", a[SISTEMA], a[JUEGO], a[GRUPO])
 }

@@ -239,9 +239,12 @@ fn ips(parche: &Path, origen: &Path, salida: &Path, salto: u64) -> Result<String
         let desde = u24(pos).ok_or("Parche IPS truncado (falta EOF).")?;
         pos += 3;
         if desde == 0x454F46 {
-            // Tras «EOF» puede venir el tamaño final del juego.
-            if let Some(t) = u24(pos) {
-                o.set_len(t).map_err(es)?;
+            // Tras «EOF» pueden venir exactamente 3 bytes: el tamaño final del juego (truncado). Cualquier
+            // otra cosa sobrante (relleno, otro formato pegado) no es un tamaño y se ignora.
+            if p.len() == pos + 3 {
+                if let Some(t) = u24(pos) {
+                    o.set_len(t).map_err(es)?;
+                }
             }
             break;
         }
@@ -480,7 +483,10 @@ fn ppf(parche: &Path, origen: &Path, salida: &Path, forzar: bool) -> Result<Stri
         bloques += 1;
     }
     drop(o);
-    if bloques > 0 && iguales == bloques {
+    if bloques == 0 {
+        return Err("El parche PPF no tiene ningún bloque: está truncado o dañado.".into());
+    }
+    if iguales == bloques {
         return Err("Este disco ya tiene aplicado este parche.".into());
     }
     let que = if info.ppf_bloque.is_some() { "PPF aplicado (bloque de comprobación correcto)" } else { "PPF aplicado (este PPF no incluye comprobación)" };

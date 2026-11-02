@@ -204,7 +204,7 @@ impl<'a> Escaner<'a> {
     pub fn guardar(mut self, cache: &Path) {
         // Solo se quedan los ficheros que siguen existiendo.
         self.cache.0.retain(|k, _| self.usados.contains(k));
-        let _ = fs::write(cache, serde_json::to_vec(&self.cache).unwrap_or_default());
+        let _ = crate::datos::escribir_atomico(cache, &serde_json::to_vec(&self.cache).unwrap_or_default());
     }
 
     fn crcs(&mut self, p: &Path, len: u64, sis: &str, calc: impl FnOnce(&Path) -> Vec<String>) -> Vec<String> {

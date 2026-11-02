@@ -308,6 +308,7 @@ pub fn run() {
             let config = app.path().app_config_dir()?;
             let rutas = Rutas::de(&app.path().resource_dir()?, &app.path().app_local_data_dir()?);
             rutas.crear_carpetas();
+            rutas.limpiar_al_arrancar();
             let (ajustes, nuevo) = Ajustes::cargar(&config);
             let estado = Arc::new(App {
                 rutas,

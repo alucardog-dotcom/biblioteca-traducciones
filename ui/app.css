@@ -283,3 +283,4 @@ kbd { font: inherit; font-size: 11px; background: var(--panel-2); border: 1px so
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }
+#more { height: 1px; }

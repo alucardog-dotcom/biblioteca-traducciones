@@ -83,7 +83,7 @@ fn ahora() -> String {
 
 fn escribir_estado(r: &Rutas, id: &str, clave: &str, estado: &str, mensaje: &str, fin: &str, log: &[String]) {
     let o = json!({"id": id, "clave": clave, "estado": estado, "mensaje": mensaje, "final": fin, "log": log, "actualizado": ahora()});
-    let _ = fs::write(r.trabajos.join(format!("{id}.estado.json")), serde_json::to_vec_pretty(&o).unwrap_or_default());
+    let _ = crate::datos::escribir_atomico(&r.trabajos.join(format!("{id}.estado.json")), &serde_json::to_vec_pretty(&o).unwrap_or_default());
 }
 
 /// Un trabajo en marcha: su estado para la ventana y lo que va haciendo.

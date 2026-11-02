@@ -27,7 +27,7 @@ fn guardar(r: &Rutas, clave: &str, entrada: Option<Value>) -> Result<Value, Stri
         Some(e) => o.insert(clave.to_string(), e),
         None => o.remove(clave),
     };
-    fs::write(fichero_mapa(r), serde_json::to_vec_pretty(&m).unwrap_or_default()).map_err(|e| format!("No se pudo guardar la portada: {e}"))?;
+    crate::datos::escribir_atomico(&fichero_mapa(r), &serde_json::to_vec_pretty(&m).unwrap_or_default()).map_err(|e| format!("No se pudo guardar la portada: {e}"))?;
     Ok(m)
 }
 
@@ -71,11 +71,12 @@ fn tipo(b: &[u8]) -> Option<&'static str> {
 }
 
 /// Copia la imagen a <datos>\portadas con el nombre del juego. El nombre cambia en cada copia (lleva la
-/// hora) para que la ventana no siga enseñando la anterior desde su caché.
+/// hora en milisegundos) para que la ventana no siga enseñando la anterior desde su caché, y para que dos
+/// copias seguidas no se pisen (al guardar se borra la anterior).
 fn copiar(r: &Rutas, clave: &str, ext: &str, escribir: impl FnOnce(&Path) -> std::io::Result<()>) -> Result<Value, String> {
     let dir = r.datos.join("portadas");
     fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
-    let hora = SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0);
+    let hora = SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_millis()).unwrap_or(0);
     let destino = dir.join(format!("{}-{hora}.{ext}", nombre(clave)));
     escribir(&destino).map_err(|e| format!("No se pudo guardar la imagen: {e}"))?;
     guardar(r, clave, Some(json!({"ruta": destino})))

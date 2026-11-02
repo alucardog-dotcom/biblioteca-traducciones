@@ -1,13 +1,14 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "La ventana principal: sus propios botones de minimizar, maximizar y cerrar, y arrastrarla por la barra de arriba.",
+  "description": "La ventana principal: sus propios botones de minimizar, maximizar y cerrar, arrastrarla por la barra de arriba y recordar el zoom del texto.",
   "windows": ["main"],
   "permissions": [
     "core:default",
     "core:window:allow-minimize",
     "core:window:allow-toggle-maximize",
     "core:window:allow-is-maximized",
+    "core:webview:allow-set-webview-zoom",
     "core:window:allow-close",
     "core:window:allow-start-dragging"
   ]

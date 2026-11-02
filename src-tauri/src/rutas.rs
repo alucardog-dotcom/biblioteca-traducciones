@@ -67,6 +67,18 @@ impl Rutas {
         }
     }
 
+    /// Al arrancar, antes de que empiece ningún trabajo: fuera los restos de `_temp` (si el programa se
+    /// cerró a mitad de un parcheo pueden ser gigabytes) y los trabajos de hace más de 30 días.
+    pub fn limpiar_al_arrancar(&self) {
+        let _ = fs::remove_dir_all(&self.temp);
+        let limite = std::time::SystemTime::now() - std::time::Duration::from_secs(30 * 24 * 3600);
+        for e in fs::read_dir(&self.trabajos).into_iter().flatten().flatten() {
+            if e.metadata().and_then(|m| m.modified()).is_ok_and(|t| t < limite) {
+                let _ = fs::remove_file(e.path());
+            }
+        }
+    }
+
     /// `p` está dentro de `raiz` (sin `..` que se salgan).
     pub fn dentro(p: &Path, raiz: &Path) -> bool {
         match (fs::canonicalize(p), fs::canonicalize(raiz)) {
@@ -132,7 +144,7 @@ impl Ajustes {
 
     pub fn guardar(&self, dir: &Path) -> std::io::Result<()> {
         fs::create_dir_all(dir)?;
-        fs::write(dir.join("ajustes.json"), serde_json::to_vec_pretty(self).unwrap_or_default())
+        crate::datos::escribir_atomico(&dir.join("ajustes.json"), &serde_json::to_vec_pretty(self).unwrap_or_default())
     }
 
 }

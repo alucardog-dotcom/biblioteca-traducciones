@@ -39,7 +39,21 @@ pub fn nombre_seguro(n: &str) -> String {
     let n = percent_encoding::percent_decode_str(n).decode_utf8_lossy();
     let n = n.rsplit(['/', '\\']).next().unwrap_or("");
     let n: String = n.chars().map(|c| if c.is_control() || "<>:\"|?*".contains(c) { '_' } else { c }).collect();
-    let n = n.trim().trim_end_matches('.').to_string();
+    let mut n = n.trim().trim_end_matches('.').to_string();
+    // Nombres que Windows reserva para dispositivos (CON, NUL, COM1…), también con extensión.
+    let base = n.split('.').next().unwrap_or("").to_ascii_uppercase();
+    if matches!(base.as_str(), "CON" | "PRN" | "AUX" | "NUL") || (base.len() == 4 && (base.starts_with("COM") || base.starts_with("LPT")) && base.ends_with(|c: char| c.is_ascii_digit())) {
+        n.insert(0, '_');
+    }
+    // Con la carpeta delante, un nombre muy largo pasa del límite de ruta de Windows: se recorta por
+    // delante de la extensión.
+    if n.chars().count() > 120 {
+        let (tronco, ext) = match n.rfind('.') {
+            Some(i) if n.len() - i <= 12 => (&n[..i], &n[i..]),
+            _ => (n.as_str(), ""),
+        };
+        n = tronco.chars().take(120 - ext.chars().count()).collect::<String>() + ext;
+    }
     if n.is_empty() { "parche.bin".into() } else { n }
 }
 
@@ -258,6 +272,11 @@ mod pruebas {
         assert_eq!(nombre_de_cabecera("attachment; filename=\"Juego (Es).zip\""), Some("Juego (Es).zip".into()));
         assert_eq!(nombre_de_cabecera("attachment; filename*=UTF-8''Pok%C3%A9mon.bps"), Some("Pok%C3%A9mon.bps".into()));
         assert_eq!(nombre_seguro("Pok%C3%A9mon.bps"), "Pokémon.bps");
+        assert_eq!(nombre_seguro("con.ips"), "_con.ips");
+        assert_eq!(nombre_seguro("COM1"), "_COM1");
+        assert_eq!(nombre_seguro("console.ips"), "console.ips");
+        let largo = nombre_seguro(&format!("{}.xdelta", "a".repeat(200)));
+        assert!(largo.chars().count() == 120 && largo.ends_with(".xdelta"), "{largo}");
     }
 
     #[test]

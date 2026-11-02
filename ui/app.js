@@ -18,7 +18,7 @@ const VISTAS = {inicio: 'Inicio', mios: 'Mis juegos', todas: 'Descubrir', hechas
 let filas = [], grupos = [], porClave = new Map(), porJuego = new Map(), centro = {sistemas: {}, filas: {}}, traducidos = {}, tes = new Map();
 let juegos = [], pares = [], paresPorFila = new Map();
 let vista = 'inicio', limit = 60, lista = [];
-let filtro = {sys: '', directa: false, completa: false, sinia: false};
+let filtro = {sys: '', directa: false, completa: false, sinia: false, steam: false};
 let escaneando = false, trabajos = [], espera = null, ajustes = {}, propias = {};
 let misListas = [{id: 'fav', nombre: 'Favoritos', juegos: []}];
 const ICONO_FAV = '<svg viewBox="0 0 24 24" class="i-fav"><path d="M12 20s-7.5-4.6-9.3-9.2C1.4 7.4 3.6 4 7 4c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.4 0 5.6 3.4 4.3 6.8C19.5 15.4 12 20 12 20z"/></svg>';
@@ -197,7 +197,7 @@ const itemsDe = v => gruposDe(v).map(gr => elegida(gr, undefined, guardada(lista
 
 function filtrar(grs) {
   const q = tokens($('q').value);
-  const vale = r => (!filtro.directa || directa(r)) && (!filtro.completa || completa(r)) && (!filtro.sinia || !esIA(r));
+  const vale = r => (!filtro.directa || directa(r)) && (!filtro.completa || completa(r)) && (!filtro.sinia || !esIA(r)) && (!filtro.steam || !!r.x.steam);
   const l = listaDe(vista);
   const out = [];
   for (const gr of grs) {
@@ -443,6 +443,25 @@ function ir(v) {
   try { localStorage.setItem('vista', v); } catch (e) { }
   pintar();
   main.scrollTop = 0;
+  // El foco pasa al contenido nuevo: con el teclado, el siguiente Tab empieza por la sección, no por el menú.
+  main.focus({preventScroll: true});
+}
+
+// Qué tenía el foco antes de repintar, para devolvérselo después: cada repintado cambia todo el HTML y, si
+// no, el teclado vuelve al principio de la ventana con cada pulsación.
+function recordarFoco(raiz) {
+  const a = document.activeElement;
+  if (!a || a === document.body || !raiz.contains(a)) return null;
+  if (a.id) return {id: a.id};
+  const card = a.closest('.card');
+  if (card) return {n: card.dataset.n, sel: a.classList.contains('fav') ? '.fav' : a.dataset.act ? `[data-act="${a.dataset.act}"]` : '.title'};
+  for (const k of ['f', 'g', 'go', 'lista', 'l', 'act', 'portada']) if (a.dataset[k] !== undefined) return {sel: `[data-${k}="${CSS.escape(a.dataset[k])}"]`};
+  return null;
+}
+function devolverFoco(raiz, f) {
+  if (!f) return;
+  const el = f.id ? document.getElementById(f.id) : f.n !== undefined ? raiz.querySelector(`.card[data-n="${f.n}"] ${f.sel}`) : raiz.querySelector(f.sel);
+  if (el) el.focus({preventScroll: true});
 }
 
 function contadores() {
@@ -462,10 +481,12 @@ function pintar() {
   marcarNav();
   contadores();
   tarjetas = [];
-  if (vista === 'inicio') return pintarInicio();
-  if (vista === 'descargas') return pintarDescargas();
-  if (vista === 'ajustes') return pintarAjustes();
-  pintarRejilla();
+  const foco = recordarFoco(main);
+  if (vista === 'inicio') pintarInicio();
+  else if (vista === 'descargas') pintarDescargas();
+  else if (vista === 'ajustes') pintarAjustes();
+  else pintarRejilla();
+  devolverFoco(main, foco);
 }
 
 function pintarInicio() {
@@ -500,7 +521,7 @@ function pintarRejilla() {
   if (filtro.sys && !sistemas.includes(filtro.sys)) filtro.sys = '';
   lista = filtrar(gruposDe(vista));
   const nTrad = lista.reduce((n, it) => n + it.gr.filas.length, 0);
-  const chip = (k, t) => `<button class="chip" data-f="${k}" aria-pressed="${filtro[k]}">${t}</button>`;
+  const chip = (k, t, ayuda) => `<button class="chip" data-f="${k}" aria-pressed="${filtro[k]}"${ayuda ? ` title="${ayuda}"` : ''}>${t}</button>`;
   const l = listaDe(vista);
   let vacio = 'No hay resultados con estos filtros.';
   if (vista === 'mios' && !juegos.length) vacio = escaneando ? 'Buscando tus juegos…' : `No hay juegos tuyos todavía. Pon tus ROMs en <code>${esc((ajustes.carpetas || [])[0] || 'C:\\Juegos')}</code> y pulsa <b>Buscar mis juegos</b>.`;
@@ -517,10 +538,10 @@ function pintarRejilla() {
   main.innerHTML = `${cabecera}
     <div class="filters">
       <select id="sys" aria-label="Sistema"><option value="">Todos los sistemas</option>${sistemas.map(s => `<option value="${esc(s)}" ${s === filtro.sys ? 'selected' : ''}>${esc(SYS[s] || s)}</option>`).join('')}</select>
-      ${chip('directa', 'Traducción de un clic')}${chip('completa', 'Completas')}${chip('sinia', 'Sin IA')}
+      ${chip('directa', 'Traducción de un clic')}${chip('completa', 'Completas')}${chip('sinia', 'Sin IA')}${chip('steam', 'En Steam', 'Solo los juegos que se venden en Steam: fuera los gratuitos de itch.io y los que ya no están a la venta')}
       <span class="count">${lista.length.toLocaleString('es')} ${lista.length === 1 ? 'juego' : 'juegos'} · ${nTrad.toLocaleString('es')} ${nTrad === 1 ? 'traducción' : 'traducciones'}</span>
     </div>
-    ${lista.length ? `<div class="grid">${lista.slice(0, limit).map(tarjeta).join('')}</div><div id="more" style="height:1px"></div>` : `<div class="empty">${vacio}</div>`}`;
+    ${lista.length ? `<div class="grid">${lista.slice(0, limit).map(tarjeta).join('')}</div><div id="more"></div>` : `<div class="empty">${vacio}</div>`}`;
   $('sys').onchange = e => { filtro.sys = e.target.value; limit = 60; pintar(); };
   if ($('more')) masAlFinal.observe($('more'));
 }
@@ -735,10 +756,12 @@ function abrirFicha(r, p) {
       : '<p>De esta traducción no se conoce la página: búscala en Google.</p>';
   } else if (d0) {
     html += `<p>Se descarga directamente de ${esc(FUENTE[d0.t] || d0.t)}.</p>`;
-    if (d0.t === 'rhdn2021' && d0.v && a[F.version] && tokens(d0.v).join() !== tokens(a[F.version]).join()) {
+    // Las versiones se comparan sin la «v» delante: tokens() se come «v1» y «v1.0» quedaría como «0».
+    const verTok = v => tokens(String(v).replace(/^v\s*/i, '')).join();
+    if (d0.t === 'rhdn2021' && d0.v && a[F.version] && verTok(d0.v) !== verTok(a[F.version])) {
       html += `<p class="f-note warn">Esa copia es de 2021 y trae la versión ${esc(d0.v)}; la más reciente es la ${esc(a[F.version])}. Si la quieres, usa «Abrir página y esperar la descarga».</p>`;
     }
-    if (d0.t === 'ra' && d0.v && a[F.version] && tokens(d0.v).join() !== tokens(a[F.version]).join()) {
+    if (d0.t === 'ra' && d0.v && a[F.version] && verTok(d0.v) !== verTok(a[F.version])) {
       html += `<p class="f-note warn">RetroAchievements guarda la versión ${esc(d0.v)}, no la ${esc(a[F.version])} de esta ficha. Si quieres la de la ficha, usa «Abrir página y esperar la descarga».</p>`;
     }
     const otras = [...new Set((r.x.d || []).slice(1).map(d => FUENTE[d.t] || d.t))];
@@ -766,6 +789,7 @@ function abrirFicha(r, p) {
 function pintarGuardar(abierto) {
   const {gr} = fichaActual, fv = favorito(gr);
   const otras = misListas.filter(l => l.id !== 'fav' && enLista(l, gr)).length;
+  const foco = recordarFoco($('f-guardar'));
   $('f-guardar').innerHTML = `<button type="button" class="btn" data-g="fav" aria-pressed="${fv}">${ICONO_FAV}${fv ? 'En Favoritos' : 'Favoritos'}</button>
     <button type="button" class="btn" data-g="menu" aria-expanded="${abierto}">${ICONO_LISTA}${otras ? `En ${otras} ${otras === 1 ? 'lista' : 'listas'}` : 'Guardar en una lista'}</button>
     <div class="menu-listas" ${abierto ? '' : 'hidden'}>
@@ -773,6 +797,7 @@ function pintarGuardar(abierto) {
       ${misListas.map(l => `<label class="opt"><input type="checkbox" data-l="${esc(l.id)}" ${enLista(l, gr) ? 'checked' : ''}><span>${esc(l.nombre)}</span></label>`).join('')}
       <div class="m-nueva"><input type="text" id="m-nombre" aria-label="Nombre de la lista nueva" placeholder="Lista nueva…" maxlength="80" spellcheck="false"><button type="button" class="btn" data-g="crear">Crear</button></div>
     </div>`;
+  devolverFoco($('f-guardar'), foco);
 }
 function guardarFicha(que, l) {
   const {gr, r} = fichaActual;
@@ -900,6 +925,14 @@ $('f-guardar').addEventListener('change', e => {
 });
 $('f-guardar').addEventListener('keydown', e => {
   if (e.target.id === 'm-nombre' && e.key === 'Enter' && fichaActual) guardarFicha('crear');
+  // Escape con el menú de listas abierto cierra el menú, no toda la ficha.
+  const menu = $('f-guardar').querySelector('.menu-listas');
+  if (e.key === 'Escape' && menu && !menu.hidden && fichaActual) {
+    e.preventDefault();
+    e.stopPropagation();
+    pintarGuardar(false);
+    $('f-guardar').querySelector('[data-g="menu"]').focus();
+  }
 });
 $('f-close').addEventListener('click', () => $('ficha').close());
 // Se cierra al pulsar el fondo, pero no si solo se ha soltado ahí el ratón tras seleccionar texto dentro.
@@ -944,6 +977,21 @@ $('scan').addEventListener('click', async () => {
 });
 
 const ventana = T.window.getCurrentWindow();
+
+// Zoom del texto con Ctrl y la rueda, Ctrl+«+» y Ctrl+«-» (lo hace el propio WebView2: zoomHotkeysEnabled).
+// Se recuerda entre sesiones: el zoom cambia devicePixelRatio, así que se mide respecto al del arranque.
+function recordarZoom() {
+  const base = window.devicePixelRatio;
+  let guardado = 1;
+  try { guardado = Math.min(3, Math.max(0.5, parseFloat(localStorage.getItem('zoom')) || 1)); } catch (e) { }
+  const webview = T.webview && T.webview.getCurrentWebview();
+  if (!webview) return;
+  if (guardado !== 1) webview.setZoom(guardado).catch(() => {});
+  window.addEventListener('resize', () => {
+    const z = Math.round(window.devicePixelRatio / base * 100) / 100;
+    try { localStorage.setItem('zoom', z); } catch (e) { }
+  });
+}
 $('w-min').onclick = () => ventana.minimize();
 $('w-max').onclick = async () => {
   await ventana.toggleMaximize();
@@ -959,8 +1007,8 @@ function pintarEscaneo(prog) {
   let t = '';
   if (escaneando) t = prog ? prog + '…' : 'Buscando tus juegos…';
   else if (juegos.length) {
-    const pc = juegos.filter(g => g.s === 'pc').length;
-    t = `${(juegos.length - pc).toLocaleString('es')} ROMs y ${pc.toLocaleString('es')} juegos de PC`;
+    const pc = juegos.filter(g => g.s === 'pc').length, roms = juegos.length - pc;
+    t = `${roms.toLocaleString('es')} ${roms === 1 ? 'ROM' : 'ROMs'} y ${pc.toLocaleString('es')} ${pc === 1 ? 'juego' : 'juegos'} de PC`;
   }
   $('scan-text').textContent = t;
 }
@@ -988,8 +1036,12 @@ function mostrarCafe() {
 $('cafe-si').href = DONAR;
 for (const id of ['cafe-si', 'cafe-no', 'cafe-x']) $(id).addEventListener('click', () => { $('cafe').hidden = true; });
 
-let sondeo = null;
+let sondeo = null, sondeando = false, sondearOtraVez = false;
 async function sondear() {
+  // Una pasada cada vez: dos a la vez podrían aplicar las respuestas en orden inverso. Si llega otra
+  // petición mientras tanto (un trabajo nuevo), se repite nada más terminar.
+  if (sondeando) { sondearOtraVez = true; return; }
+  sondeando = true;
   clearTimeout(sondeo);
   let activo = false;
   try {
@@ -1022,7 +1074,9 @@ async function sondear() {
   } catch (e) {
     $('scan-text').textContent = e.message;
   }
-  sondeo = setTimeout(sondear, activo ? 1500 : 10000);
+  sondeando = false;
+  sondeo = setTimeout(sondear, sondearOtraVez ? 0 : activo ? 1500 : 10000);
+  sondearOtraVez = false;
 }
 
 async function cargarJuegos() {
@@ -1060,7 +1114,7 @@ T.event.listen('catalogo', async () => {
     emparejar();
     if (!$('ficha').open && vista !== 'ajustes') pintar(); else contadores();
     const mas = filas.length - antes;
-    aviso(`Catálogo actualizado${mas > 0 ? `: ${mas} traducciones nuevas` : ''}.`, 'ok');
+    aviso(`Catálogo actualizado${mas > 0 ? `: ${mas} ${mas === 1 ? 'traducción nueva' : 'traducciones nuevas'}` : ''}.`, 'ok');
   } catch (e) { aviso(e.message, 'bad'); }
 });
 
@@ -1077,6 +1131,7 @@ T.event.listen('catalogo', async () => {
   }
   if (ajustes.nuevo) bienvenida();
   sondear();
+  recordarZoom();
   // ¿Hay una versión más nueva en GitHub? Sale un botón abajo a la izquierda para ir a descargarla.
   setTimeout(async () => {
     const v = await api('version_nueva').catch(() => null);
