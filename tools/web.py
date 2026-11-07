@@ -17,7 +17,7 @@ DESCARGA = REPO + '/releases/latest'
 INSTALADOR = REPO + '/releases/latest/download/Biblioteca-de-traducciones-setup.exe'
 # Estadísticas anónimas y sin cookies con GoatCounter: el código del sitio (lo que va antes de .goatcounter.com).
 # Vacío, la web no carga ningún script de estadísticas.
-GOATCOUNTER = ''
+GOATCOUNTER = 'bibliotecadetraducciones'
 INCIDENCIAS = REPO + '/issues'
 DONAR = 'https://paypal.me/btraducciones'
 # Enlace de afiliado: la búsqueda de Instant Gaming con el código del autor (igr).
