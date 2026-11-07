@@ -41,3 +41,6 @@ jobs:
           path: _site
       - id: publicar
         uses: actions/deploy-pages@v4
+        with:
+          # Son 5.400 páginas y las miniaturas: a GitHub Pages le cuesta a veces más de los 10 minutos por defecto.
+          timeout: 1800000
