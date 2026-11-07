@@ -175,7 +175,7 @@ def pagina(raiz, titulo, descripcion, ruta, cuerpo, base, imagen='img/vista-prev
   <div class="pie-in">
     <p><b>Biblioteca de traducciones</b> es gratuita y de código libre (<a href="{REPO}/blob/main/LICENSE">GPL-3.0</a>). Las traducciones son de sus autores: este programa solo las encuentra y las aplica, y nunca descarga juegos.</p>
     <p><a href="{REPO}">Código en GitHub</a> · <a href="{INCIDENCIAS}">Avisar de un error o de una traducción que falta</a> · <a href="{DONAR}">Invítame a un café</a></p>
-    <p class="suave">No está relacionado con ninguna de las empresas de los juegos. Las portadas son de sus propietarios.</p>
+    <p class="suave">No está relacionado con ninguna de las empresas de los juegos. Las portadas son de sus propietarios. Firma del instalador: <a href="{REPO}#code-signing-policy">Code signing policy</a>.</p>
   </div>
 </footer>
 </body>

@@ -34,7 +34,31 @@ npm run build                         # instalador: src-tauri\target\release\bun
 
 Compila siempre con `npm run build`, que llama a `tools\compilar.ps1`, y no con `npx tauri build` directamente. Ese script le dice al compilador que cambie por nombres genéricos las rutas de tu máquina (tu carpeta de usuario, la de Rust y la del proyecto). Si no, el `.exe` las lleva dentro.
 
-Al publicar una etiqueta `v*` en GitHub, GitHub Actions compila el instalador y lo sube a la versión (`.github/workflows/publicar.yml`).
+Al publicar una etiqueta `v*` en GitHub, GitHub Actions compila el instalador, lo firma (ver abajo) y lo sube a la versión (`.github/workflows/publicar.yml`).
+
+## Firma del instalador
+
+El instalador se firma con el certificado de [SignPath Foundation](https://signpath.org), que firma gratis programas de código libre compilados en GitHub Actions. SignPath no firma dentro de instaladores NSIS, así que se firma el instalador entero y el `.exe` del programa que va dentro queda sin firmar (ver Pendiente). Las condiciones están en <https://signpath.org/terms>: licencia libre, doble factor en GitHub y en SignPath, la sección «Code signing policy» del README y aprobar cada firma a mano.
+
+El flujo `publicar.yml` lo hace así: guarda el instalador como artefacto del flujo (`actions/upload-artifact`), lo manda a firmar (`signpath/github-action-submit-signing-request`), espera a que alguien del proyecto apruebe la petición en signpath.io (**media hora como mucho**; si se pasa, el trabajo falla y se vuelve a lanzar con `gh run rerun --failed <id>`) y sube el instalador firmado a la versión. Si en el repositorio no está la variable `SIGNPATH_ORGANIZATION_ID`, se salta la firma y sube el instalador sin firmar, como antes.
+
+Lo que hay que tener configurado:
+
+- En el repositorio (Settings › Secrets and variables › Actions): el secreto `SIGNPATH_API_TOKEN` (token de API de un usuario de SignPath con permiso de *submitter*) y las variables `SIGNPATH_ORGANIZATION_ID`, `SIGNPATH_PROJECT_SLUG` y `SIGNPATH_SIGNING_POLICY_SLUG` (la política de firma de versiones, normalmente `release-signing`).
+- En SignPath: el sistema de compilación de confianza *GitHub.com* añadido a la organización y enlazado al proyecto; el proyecto enlazado a este repositorio; y esta configuración de artefacto, que exige que el fichero firmado lleve el nombre del programa y la versión que le pasa el flujo:
+
+```xml
+<artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
+  <parameters>
+    <parameter name="version" required="true" />
+  </parameters>
+  <pe-file product-name="Biblioteca de traducciones" product-version="${version}">
+    <authenticode-sign />
+  </pe-file>
+</artifact-configuration>
+```
+
+En las notas de cada versión conviene poner el enlace a la política: `Instalador firmado por SignPath Foundation: [Code signing policy](https://github.com/alucardog-dotcom/biblioteca-traducciones#code-signing-policy)`. Y cuando salga la primera versión firmada, quitar del README la nota «estamos en ello» y el aviso de que el instalador no está firmado.
 
 ## Pruebas
 
@@ -75,4 +99,4 @@ El flujo `web.yml` la genera y la publica en GitHub Pages cada vez que cambia en
 - Publicar los scripts del catálogo.
 - Modo para mando y tele, como el Big Picture de RecompLauncher.
 - Guardar en disco las portadas descargadas, para verlas sin conexión.
-- Firmar el instalador.
+- Firmar también el `.exe` del programa que va dentro del instalador: compilar sin empaquetar (`tauri build --no-bundle`), firmarlo en SignPath, empaquetarlo con `tauri bundle` y firmar el instalador; dos aprobaciones por versión.
