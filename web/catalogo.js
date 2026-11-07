@@ -1,6 +1,7 @@
 'use strict';
-// Buscador del catálogo: carga juegos.json ([título, sistema, ruta, traducciones, un clic, palabras]) y
-// filtra mientras escribes, sin distinguir acentos ni mayúsculas. La búsqueda queda en el enlace (?q=).
+// Buscador del catálogo: carga juegos.json ([título, sistema, ruta, traducciones, un clic, palabras, portada])
+// y filtra mientras escribes, sin distinguir acentos ni mayúsculas. Los juegos salen como tarjetas con su
+// portada, como en el programa. La búsqueda queda en el enlace (?q=).
 (function () {
   const q = document.getElementById('q'), s = document.getElementById('s'), res = document.getElementById('res');
   const cuenta = document.getElementById('cuenta'), mas = document.getElementById('mas');
@@ -10,11 +11,35 @@
   const esc = t => String(t).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
   const num = n => n.toLocaleString('es-ES');
 
+  // Las direcciones de la portada, en el orden en que se prueban (las mismas que hace web.py para las
+  // páginas): la puesta a mano; la de Steam, la del catálogo y la cabecera de Steam; o la de libretro, la
+  // del catálogo y la pantalla de título.
+  function portadas(spec) {
+    if (!spec) return [];
+    const tipo = spec[0], resto = spec.slice(2).split('|');
+    if (tipo === 'm') return ['../' + resto[0]];
+    if (tipo === 'u') return [resto[0]];
+    if (tipo === 's') {
+      const st = 'https://cdn.cloudflare.steamstatic.com/steam/apps/' + encodeURIComponent(resto[0]) + '/';
+      return [st + 'library_600x900.jpg', resto[1], st + 'header.jpg'].filter(Boolean);
+    }
+    const [sis, t, nombre, pu] = resto;
+    const alt = t === 'Named_Boxarts' ? 'Named_Titles' : 'Named_Snaps';
+    const thumb = tt => 'https://thumbnails.libretro.com/' + encodeURIComponent(sis) + '/' + tt + '/' + encodeURIComponent(nombre.replace(/[&*/:`<>?\\|"]/g, '_')) + '.png';
+    return [thumb(t), pu, thumb(alt)].filter(Boolean);
+  }
+
+  function tarjeta(j) {
+    const urls = portadas(j[6]);
+    const img = urls.length ? `<img loading="lazy" src="${esc(urls[0])}" data-alt="${esc(urls.slice(1).join(' '))}" alt="" referrerpolicy="no-referrer" onerror="sig(this)" onload="this.classList.add('ok')">` : '';
+    const meta = [esc(SYS[j[1]] || j[1]), j[3] > 1 ? `${j[3]} traducciones` : '', j[4] ? '<b>Un clic</b>' : ''].filter(Boolean).join(' · ');
+    return `<li class="tarjeta"><a href="../${j[2]}"><span class="port${img ? '' : ' sin'}">${img}<span class="ph">${esc(j[0])}</span></span>` +
+      `<span class="cuerpo"><span class="t">${esc(j[0])}</span><span class="m">${meta}</span></span></a></li>`;
+  }
+
   function pintar() {
     const trozo = hallados.slice(vistos, vistos + POR_VEZ);
-    res.insertAdjacentHTML('beforeend', trozo.map(j =>
-      `<li><a href="../${j[2]}"><span class="t">${esc(j[0])}</span><span class="m">${esc(SYS[j[1]] || j[1])}` +
-      `${j[3] > 1 ? ` · ${j[3]} traducciones` : ''}${j[4] ? ' · <b>Un clic</b>' : ''}</span></a></li>`).join(''));
+    res.insertAdjacentHTML('beforeend', trozo.map(tarjeta).join(''));
     vistos += trozo.length;
     mas.hidden = vistos >= hallados.length;
   }

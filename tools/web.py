@@ -22,6 +22,7 @@ INCIDENCIAS = REPO + '/issues'
 DONAR = 'https://paypal.me/btraducciones'
 # Enlace de afiliado: la búsqueda de Instant Gaming con el código del autor (igr).
 INSTANT_GAMING = 'https://www.instant-gaming.com/es/busquedas/?query={}&igr=gamer-d73144'
+LIBRETRO = {}  # nombres de los sistemas en thumbnails.libretro.com (de centro_datos.json); lo rellena main()
 PC = {'dos', 'windows', 'scummvm', 'easyrpg', 'pc'}
 # Consolas de hoy: sus traducciones son mods que se instalan a mano (como MODERNAS en ui/app.js).
 MODERNAS = {'switch', 'ps3', 'ps4', 'ps5', 'wiiu', 'xbox360', 'xboxone'}
@@ -229,17 +230,48 @@ def item_juego(g, raiz, sysn, con_sistema=False):
     return f'<li><a href="{raiz}{g["ruta"]}">{e(g["titulo"])}</a>{extra}</li>'
 
 
+def tarjeta_juego(g, raiz, sysn, con_sistema=True, fila=None, extra=''):
+    """Un juego como en el programa: la portada (con las alternativas por si una falla), el título, el sistema
+    y sus traducciones. El título queda debajo mientras la portada carga, y se queda si no hay ninguna."""
+    urls = portadas(g, LIBRETRO, raiz)
+    img = (f'<img loading="lazy" src="{e(urls[0])}" data-alt="{e(" ".join(urls[1:]))}" alt="" referrerpolicy="no-referrer" '
+           f'onerror="sig(this)" onload="this.classList.add(\'ok\')">') if urls else ''
+    n = len(g['filas'])
+    f = fila or g['filas'][0]
+    partes = [e(sysn.get(g['s'], g['s'])) if con_sistema else '',
+              e(f['grupo'].strip()) if (fila or n == 1) and f['grupo'].strip() else '',
+              f'{n} traducciones' if n > 1 else '',
+              '<b>Un clic</b>' if any(directa(x) for x in g['filas']) else '']
+    return (f'<li class="tarjeta"><a href="{raiz}{g["ruta"]}"><span class="port{"" if img else " sin"}">{img}<span class="ph">{e(g["titulo"])}</span></span>'
+            f'<span class="cuerpo"><span class="t">{e(g["titulo"])}</span><span class="m">{" · ".join(p for p in partes if p)}{extra}</span></span></a></li>')
+
+
+def portada_spec(g):
+    """La portada para el buscador (catalogo.js), en corto: m:<fichero a mano>, s:<AppID>[|<pu>],
+    l:<sistema libretro>|<tipo>|<nombre>[|<pu>] o u:<dirección>. catalogo.js hace con ello las mismas direcciones que portadas()."""
+    x, s = g['cover']['x'], g['cover']['sistema']
+    sis = x.get('ps') or LIBRETRO.get(s)
+    pu = ('|' + x['pu']) if x.get('pu') else ''
+    if x.get('pm'):
+        return 'm:' + x['pm']
+    if x.get('steam'):
+        return 's:' + str(x['steam']) + pu
+    if x.get('p') and sis:
+        return 'l:' + sis + '|' + (x.get('pt') or 'Named_Boxarts') + '|' + x['p'] + pu
+    return ('u:' + x['pu']) if x.get('pu') else ''
+
+
 def relacionados(gr, ctx, raiz, nombre_sis):
     """Enlaces a los juegos vecinos del mismo sistema y a otras traducciones del mismo grupo."""
     sysn, bloques = ctx['sysn'], []
     cerca = vecinos(ctx['por_sis'][gr['s']], gr)
     if cerca:
-        bloques.append(f'<h2>Más juegos de {e(nombre_sis)} en español</h2><ul class="lista">{"".join(item_juego(g, raiz, sysn) for g in cerca)}</ul>'
+        bloques.append(f'<h2>Más juegos de {e(nombre_sis)} en español</h2><ul class="tarjetas">{"".join(tarjeta_juego(g, raiz, sysn, False) for g in cerca)}</ul>'
                        f'<p class="suave"><a href="{raiz}sistema/{e(gr["s"])}/">Todos los juegos de {e(nombre_sis)} con traducción</a></p>')
     for grupo in dict.fromkeys(f['grupo'].strip() for f in gr['filas'] if f['grupo'].strip()):
         otros = vecinos(ctx['por_grupo'].get(grupo, []), gr)
         if otros:
-            bloques.append(f'<h2>Más traducciones de {e(grupo)}</h2><ul class="lista">{"".join(item_juego(g, raiz, sysn, True) for g in otros)}</ul>')
+            bloques.append(f'<h2>Más traducciones de {e(grupo)}</h2><ul class="tarjetas">{"".join(tarjeta_juego(g, raiz, sysn) for g in otros)}</ul>')
             break
     return ''.join(f'<section class="bloque relacionados">{b}</section>' for b in bloques)
 
@@ -252,13 +284,10 @@ def recientes(filas, raiz, sysn, k, con_sistema):
         if id(g) in vistos:
             continue
         vistos.add(id(g))
-        items.append(f'<li><a href="{raiz}{g["ruta"]}">{e(g["titulo"])}</a>'
-                     + (f' <span class="n">{e(sysn.get(g["s"], g["s"]))}</span>' if con_sistema else '')
-                     + (f' <span class="n">{e(f["grupo"].strip())}</span>' if f['grupo'].strip() else '')
-                     + f' <span class="fecha">{fecha_iso(f)}</span></li>')
+        items.append(tarjeta_juego(g, raiz, sysn, con_sistema, fila=f, extra=f' · <span class="fecha">{fecha_iso(f)}</span>'))
         if len(items) == k:
             break
-    return f'<ul class="recientes">{"".join(items)}</ul>' if items else ''
+    return f'<ul class="tarjetas">{"".join(items)}</ul>' if items else ''
 
 
 def jsonld(datos):
@@ -478,11 +507,7 @@ def pagina_sistema(s, juegos, sysn, base):
         l = sin_acentos(g['titulo'])[:1].upper()
         letras.setdefault(l if l.isalpha() else '#', []).append(g)
 
-    def item(g):
-        n = len(g['filas'])
-        return f'<li><a href="{raiz}{g["ruta"]}">{e(g["titulo"])}</a>' + (f' <span class="n">{n}</span>' if n > 1 else '') + '</li>'
-
-    bloques = ''.join(f'<section class="letra"><h2>{e(l)}</h2><ul class="lista">{"".join(item(g) for g in gs)}</ul></section>'
+    bloques = ''.join(f'<section class="letra"><h2>{e(l)}</h2><ul class="tarjetas">{"".join(tarjeta_juego(g, raiz, sysn, False) for g in gs)}</ul></section>'
                       for l, gs in letras.items())
     filas = [f for g in juegos for f in g['filas']]
     grupos = collections.Counter(f['grupo'].strip() for f in filas if f['grupo'].strip())
@@ -531,7 +556,7 @@ def pagina_catalogo(por_sis, sysn, base, n_trad, n_juegos, filas):
     <select id="s"><option value="">Todos los sistemas</option>{opciones}</select>
   </form>
   <p class="suave" id="cuenta" aria-live="polite"></p>
-  <ul class="resultados" id="res"></ul>
+  <ul class="tarjetas" id="res"></ul>
   <button class="btn" id="mas" hidden>Ver más</button>
   <section class="bloque">
     <h2>Por sistema</h2>
@@ -730,6 +755,7 @@ def main():
 
     sysn = sistemas_app()
     filas, libretro = cargar()
+    LIBRETRO.update(libretro)
     juegos = agrupar(filas)
     usados = set()
     por_sis = {}
@@ -783,7 +809,7 @@ def main():
         escribir(salida, g['ruta'] + 'index.html', pagina_juego(g, sysn, libretro, base, ctx))
         busca = ' '.join(dict.fromkeys(sum((tokens(f['juego']) + tokens(f['titulo_original']) for f in g['filas']), [])
                                        + [sin_acentos(f['grupo']).lower() for f in g['filas'] if f['grupo']]))
-        indice.append([g['titulo'], g['s'], g['ruta'], len(g['filas']), int(any(directa(f) for f in g['filas'])), busca])
+        indice.append([g['titulo'], g['s'], g['ruta'], len(g['filas']), int(any(directa(f) for f in g['filas'])), busca, portada_spec(g)])
     indice.sort(key=lambda j: sin_acentos(j[0]).lower())
     escribir(salida, 'catalogo/juegos.json', json.dumps(indice, ensure_ascii=False, separators=(',', ':')))
     escribir(salida, 'catalogo/parches.json', parches_json(filas))
