@@ -175,3 +175,14 @@ main { display: block; max-width: var(--ancho); margin: 0 auto; padding: 0 var(-
   .acciones .btn { flex: 1 1 100%; }
 }
 @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+
+/* Resumen de la ficha, juegos relacionados y últimas traducciones */
+.juego-t .orig { margin: 6px 0 0; color: var(--suave); font-size: 0.95rem; }
+.relacionados h2 { font-size: 1.3rem; }
+.relacionados .lista { columns: 2 260px; }
+.relacionados p.suave { margin: 0; }
+.recientes { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.recientes li { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: baseline; }
+.recientes a { color: var(--texto); text-decoration: none; }
+.recientes a:hover { color: var(--amarillo-t); text-decoration: underline; }
+.recientes .fecha { color: var(--suave); font-size: 0.85rem; font-variant-numeric: tabular-nums; }

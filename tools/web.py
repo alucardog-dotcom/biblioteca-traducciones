@@ -1,8 +1,9 @@
 # Genera la web de la Biblioteca de traducciones (GitHub Pages) a partir del catálogo: la portada, el
 # buscador, una página por juego y otra por sistema. Solo usa la biblioteca estándar de Python.
 # Uso: python tools/web.py [carpeta de salida, _web por defecto]
-# El dominio va en web/CNAME; si no está, la web queda en la dirección de GitHub Pages.
-import csv, html, json, os, re, shutil, sys, unicodedata
+# El dominio va en web/CNAME; si no está, la web queda en la dirección de GitHub Pages. Los ficheros de
+# verificación de Google Search Console (google….html) y Bing (BingSiteAuth.xml) se dejan en web/ y van a la raíz.
+import collections, csv, html, json, os, re, shutil, sys, unicodedata
 from datetime import date
 from urllib.parse import quote
 
@@ -11,6 +12,12 @@ CAT = os.path.join(RAIZ, 'src-tauri', 'recursos', 'catalogo')
 WEB = os.path.join(RAIZ, 'web')
 REPO = 'https://github.com/alucardog-dotcom/biblioteca-traducciones'
 DESCARGA = REPO + '/releases/latest'
+# El instalador de la última versión con nombre fijo: publicar.yml sube cada instalador también con ese nombre
+# y GitHub resuelve «latest» a la última versión publicada, así que el botón descarga el .exe directamente.
+INSTALADOR = REPO + '/releases/latest/download/Biblioteca-de-traducciones-setup.exe'
+# Estadísticas anónimas y sin cookies con GoatCounter: el código del sitio (lo que va antes de .goatcounter.com).
+# Vacío, la web no carga ningún script de estadísticas.
+GOATCOUNTER = ''
 INCIDENCIAS = REPO + '/issues'
 DONAR = 'https://paypal.me/btraducciones'
 # Enlace de afiliado: la búsqueda de Instant Gaming con el código del autor (igr).
@@ -92,8 +99,23 @@ def agrupar(filas):
     for fs in grupos.values():
         rep = sorted(fs, key=lambda f: (not con_portada(f), '(' in f['juego']))[0]
         cover = next((f for f in fs if f['x'].get('pm')), None) or next((f for f in fs if con_portada(f)), rep)
-        out.append({'titulo': rep['juego'], 's': rep['sistema'], 'filas': sorted(fs, key=orden), 'cover': cover})
+        g = {'titulo': rep['juego'], 's': rep['sistema'], 'filas': sorted(fs, key=orden), 'cover': cover,
+             'fecha': max((fecha_iso(f) for f in fs), default='')}
+        for f in fs:
+            f['gr'] = g
+        out.append(g)
     return out
+
+
+def fecha_iso(f):
+    """La fecha de la traducción como AAAA-MM-DD, o '' si no está entera."""
+    d = f['fecha'].strip()
+    return d if re.fullmatch(r'\d{4}-\d{2}-\d{2}', d) else ''
+
+
+def anio(f):
+    m = re.match(r'\d{4}', f['fecha'].strip())
+    return m.group(0) if m else ''
 
 
 def es_ia(f):
@@ -138,9 +160,124 @@ def portadas(gr, libretro, raiz):
     return [u for u in urls if u]
 
 
+# ---------------------------------------------------------------- texto para quien lee (y para los buscadores)
+FORMATOS = {'ips': 'parche IPS', 'bps': 'parche BPS', 'ups': 'parche UPS', 'ppf': 'parche PPF', 'aps': 'parche APS',
+            'xdelta': 'parche xdelta', 'parche': 'parche', 'archivos': 'archivos que se copian sobre el juego', 'mod': 'mod',
+            'instalador': 'instalador', 'workshop': 'mod del Workshop de Steam'}
+ESTADOS = {'completa': 'está completa', 'publicada': 'está publicada', 'beta': 'está en beta', 'parcial': 'es parcial',
+           'en curso': 'está en curso', 'en desarrollo': 'está en desarrollo', 'en actualización': 'está en actualización',
+           'abandonada': 'quedó abandonada'}
+
+
+def titulo_original(gr):
+    t = gr['titulo']
+    return next((f['titulo_original'].strip() for f in gr['filas']
+                 if f['titulo_original'].strip() and f['titulo_original'].strip() != t), '')
+
+
+def frase_trad(f):
+    """Una frase con lo que se sabe de la traducción: quién, de cuándo, cómo está y cómo se aplica."""
+    quien = f['grupo'].strip() or 'autor desconocido'
+    datos = []
+    if anio(f):
+        datos.append(f'es de {anio(f)}')
+    est, ver = ESTADOS.get(f['estado'].strip().lower()), f['version'].strip()
+    if est:
+        datos.append(est + (f' (versión {ver})' if ver else ''))
+    elif ver:
+        datos.append(f'va por la versión {ver}')
+    fmt = FORMATOS.get(f['formato_parche'].strip().lower())
+    roms = [r.strip() for r in f['rom_requerida'].split('|') if r.strip()]
+    if fmt:
+        datos.append(f'viene como {fmt}' + (f' para la versión {" o ".join(roms)}' if roms else ''))
+    elif roms:
+        datos.append(f'pide la versión {" o ".join(roms)}')
+    frase = f'La traducción de {quien}' + (', hecha con IA o con traducción automática,' if es_ia(f) else '')
+    if datos:
+        frase += ' ' + (datos[0] if len(datos) == 1 else ', '.join(datos[:-1]) + ' y ' + datos[-1])
+    else:
+        frase += ' no tiene más datos en el catálogo'
+    if directa(f):
+        frase += '; la Biblioteca de traducciones la descarga y la aplica con un clic'
+    return frase + '.'
+
+
+def resumen_juego(gr, nombre_sis):
+    """Dos párrafos propios de cada juego, con las palabras con las que la gente busca."""
+    titulo, fs = gr['titulo'], gr['filas']
+    orig, n = titulo_original(gr), len(fs)
+    intro = (f'{titulo} es un juego de {nombre_sis}' + (f' (título original: {orig})' if orig else '') + '. '
+             + ('Esta ficha reúne su traducción al español (castellano), hecha por aficionados, con sus datos y cómo aplicarla a tu copia.'
+                if n == 1 else
+                f'Esta ficha reúne sus {n} traducciones al español (castellano), hechas por aficionados, con sus datos y cómo aplicarlas a tu copia.'))
+    frases = [frase_trad(f) for f in fs[:4]] + ([f'Y hay {n - 4} más, abajo.'] if n > 4 else [])
+    return f'<p class="texto">{e(intro)}</p>\n    <p class="texto">{e(" ".join(frases))}</p>'
+
+
+def vecinos(lista, g, k=3):
+    """Los k juegos de antes y de después de g en una lista ordenada por título."""
+    i = next((j for j, x in enumerate(lista) if x is g), -1)
+    if i < 0:
+        return [x for x in lista if x is not g][:2 * k]
+    return lista[max(0, i - k):i] + lista[i + 1:i + 1 + k]
+
+
+def item_juego(g, raiz, sysn, con_sistema=False):
+    n = len(g['filas'])
+    extra = ((f' <span class="n">{e(sysn.get(g["s"], g["s"]))}</span>' if con_sistema else '')
+             + (f' <span class="n">{n} traducciones</span>' if n > 1 else ''))
+    return f'<li><a href="{raiz}{g["ruta"]}">{e(g["titulo"])}</a>{extra}</li>'
+
+
+def relacionados(gr, ctx, raiz, nombre_sis):
+    """Enlaces a los juegos vecinos del mismo sistema y a otras traducciones del mismo grupo."""
+    sysn, bloques = ctx['sysn'], []
+    cerca = vecinos(ctx['por_sis'][gr['s']], gr)
+    if cerca:
+        bloques.append(f'<h2>Más juegos de {e(nombre_sis)} en español</h2><ul class="lista">{"".join(item_juego(g, raiz, sysn) for g in cerca)}</ul>'
+                       f'<p class="suave"><a href="{raiz}sistema/{e(gr["s"])}/">Todos los juegos de {e(nombre_sis)} con traducción</a></p>')
+    for grupo in dict.fromkeys(f['grupo'].strip() for f in gr['filas'] if f['grupo'].strip()):
+        otros = vecinos(ctx['por_grupo'].get(grupo, []), gr)
+        if otros:
+            bloques.append(f'<h2>Más traducciones de {e(grupo)}</h2><ul class="lista">{"".join(item_juego(g, raiz, sysn, True) for g in otros)}</ul>')
+            break
+    return ''.join(f'<section class="bloque relacionados">{b}</section>' for b in bloques)
+
+
+def recientes(filas, raiz, sysn, k, con_sistema):
+    """Las últimas traducciones con fecha entera, un juego por línea."""
+    vistos, items = set(), []
+    for f in sorted((f for f in filas if fecha_iso(f)), key=fecha_iso, reverse=True):
+        g = f['gr']
+        if id(g) in vistos:
+            continue
+        vistos.add(id(g))
+        items.append(f'<li><a href="{raiz}{g["ruta"]}">{e(g["titulo"])}</a>'
+                     + (f' <span class="n">{e(sysn.get(g["s"], g["s"]))}</span>' if con_sistema else '')
+                     + (f' <span class="n">{e(f["grupo"].strip())}</span>' if f['grupo'].strip() else '')
+                     + f' <span class="fecha">{fecha_iso(f)}</span></li>')
+        if len(items) == k:
+            break
+    return f'<ul class="recientes">{"".join(items)}</ul>' if items else ''
+
+
+def jsonld(datos):
+    return '<script type="application/ld+json">' + json.dumps(datos, ensure_ascii=False).replace('<', '\\u003c') + '</script>'
+
+
+def migas_ld(base, pasos):
+    """BreadcrumbList para los buscadores: [(nombre, ruta), ...], la última es la página actual."""
+    return {'@type': 'BreadcrumbList', 'itemListElement': [
+        {'@type': 'ListItem', 'position': i + 1, 'name': n, 'item': base + r} for i, (n, r) in enumerate(pasos)]}
+
+
 # ---------------------------------------------------------------- páginas
-def pagina(raiz, titulo, descripcion, ruta, cuerpo, base, imagen='img/vista-previa.png', tipo='website'):
+def pagina(raiz, titulo, descripcion, ruta, cuerpo, base, imagen='img/vista-previa.png', tipo='website', ld=None):
     canon = base + ruta
+    og_imagen = imagen if imagen.startswith('http') else base + imagen
+    cuenta = (f'<script data-goatcounter="https://{GOATCOUNTER}.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>\n'
+              if GOATCOUNTER else '')
+    nota_cuenta = ' Estadísticas anónimas y sin cookies con <a href="https://www.goatcounter.com/">GoatCounter</a>.' if GOATCOUNTER else ''
     return f'''<!doctype html>
 <html lang="es">
 <head>
@@ -155,9 +292,10 @@ def pagina(raiz, titulo, descripcion, ruta, cuerpo, base, imagen='img/vista-prev
 <meta property="og:title" content="{e(titulo)}">
 <meta property="og:description" content="{e(descripcion)}">
 <meta property="og:url" content="{e(canon)}">
-<meta property="og:image" content="{e(base + imagen)}">
+<meta property="og:image" content="{e(og_imagen)}">
 <meta property="og:locale" content="es_ES">
 <meta name="twitter:card" content="summary_large_image">
+{jsonld(ld) if ld else ''}
 <script>function sig(i){{var r=(i.dataset.alt||'').split(' ').filter(Boolean);if(!r.length){{i.parentNode.classList.add('sin');i.remove();return}}i.src=r.shift();i.dataset.alt=r.join(' ')}}</script>
 </head>
 <body>
@@ -167,7 +305,7 @@ def pagina(raiz, titulo, descripcion, ruta, cuerpo, base, imagen='img/vista-prev
   <nav aria-label="Principal">
     <a href="{raiz}catalogo/">Catálogo</a>
     <a href="{REPO}">GitHub</a>
-    <a class="btn primario" href="{DESCARGA}">Descargar</a>
+    <a class="btn primario" href="{INSTALADOR}" data-goatcounter-click="descarga-cabecera">Descargar</a>
   </nav>
 </header>
 {cuerpo}
@@ -175,10 +313,10 @@ def pagina(raiz, titulo, descripcion, ruta, cuerpo, base, imagen='img/vista-prev
   <div class="pie-in">
     <p><b>Biblioteca de traducciones</b> es gratuita y de código libre (<a href="{REPO}/blob/main/LICENSE">GPL-3.0</a>). Las traducciones son de sus autores: este programa solo las encuentra y las aplica, y nunca descarga juegos.</p>
     <p><a href="{REPO}">Código en GitHub</a> · <a href="{INCIDENCIAS}">Avisar de un error o de una traducción que falta</a> · <a href="{DONAR}">Invítame a un café</a></p>
-    <p class="suave">No está relacionado con ninguna de las empresas de los juegos. Las portadas son de sus propietarios. Firma del instalador: <a href="{REPO}#code-signing-policy">Code signing policy</a>.</p>
+    <p class="suave">No está relacionado con ninguna de las empresas de los juegos. Las portadas son de sus propietarios. Firma del instalador: <a href="{REPO}#code-signing-policy">Code signing policy</a>.{nota_cuenta}</p>
   </div>
 </footer>
-</body>
+{cuenta}</body>
 </html>
 '''
 
@@ -227,7 +365,7 @@ def tarjeta_trad(f):
 </article>'''
 
 
-def pagina_juego(gr, sysn, libretro, base):
+def pagina_juego(gr, sysn, libretro, base, ctx):
     raiz = '../../../'
     titulo, s = gr['titulo'], gr['s']
     nombre_sis = sysn.get(s, s)
@@ -236,7 +374,11 @@ def pagina_juego(gr, sysn, libretro, base):
     urls = portadas(gr, libretro, raiz)
     img = (f'<img src="{e(urls[0])}" data-alt="{e(" ".join(urls[1:]))}" alt="Portada de {e(titulo)}" '
            f'referrerpolicy="no-referrer" onerror="sig(this)">') if urls else ''
+    # Para las redes y los buscadores, la portada con dirección completa.
+    absolutas = portadas(gr, libretro, base)
+    imagen = absolutas[0] if absolutas else 'img/vista-previa.png'
     quien = ', '.join(grupos[:3]) + (' y otros' if len(grupos) > 3 else '')
+    orig = titulo_original(gr)
     # Los que están en Steam (tienen AppID) se venden en las tiendas de claves; los gratuitos y los de
     # aficionados, no. Se busca por el nombre de la ficha (en los de Steam, el de la tienda; el título
     # original de las novelas visuales suele ir en japonés), sin lo que va entre paréntesis.
@@ -244,52 +386,58 @@ def pagina_juego(gr, sysn, libretro, base):
     compra = ''
     if en_steam:
         nombre = re.sub(r'\s*[(\[][^)\]]*[)\]]', '', en_steam['juego']).strip()
-        compra = f'''<div class="compra">
+        compra = f"""<div class="compra">
         <a class="btn tienda" href="{e(INSTANT_GAMING.format(quote(nombre)))}" target="_blank" rel="sponsored noopener">¿No lo tienes? Búscalo en Instant Gaming</a>
         <p class="suave">Enlace de afiliado: si lo compras, me llevo una pequeña comisión sin que te cueste más.</p>
-      </div>'''
+      </div>"""
     # Los que no están en Steam: la página oficial del juego ("pj", itch.io o la web de su autor), si se conoce.
     con_pagina = next((f for f in gr['filas'] if web_segura(f['x'].get('pj', ''))), None)
     if con_pagina and not en_steam:
         pj = con_pagina['x']['pj']
         sitio = ('itch.io' if '.itch.io/' in pj else 'Game Jolt' if 'gamejolt.com/' in pj else 'Steam' if 'store.steampowered.com/' in pj
                  else 'GOG' if '.gog.com/' in pj else 'la web oficial')
-        compra = f'''<div class="compra">
+        compra = f"""<div class="compra">
         <a class="btn tienda" href="{e(pj)}" target="_blank" rel="noopener">¿No lo tienes? Página del juego en {sitio}{' (18+)' if con_pagina['x'].get('pj18') else ''}</a>
-      </div>'''
+      </div>"""
+    detalle = ''
+    if n == 1:
+        f0 = gr['filas'][0]
+        bits = [b for b in (anio(f0), f0['estado'].strip().lower()) if b]
+        detalle = f' ({", ".join(bits)})' if bits else ''
     desc = (f'{"Traducción" if n == 1 else f"{n} traducciones"} al español de {titulo} para {nombre_sis}'
-            + (f', de {quien}' if quien else '')
+            + (f', de {quien}' if quien else '') + detalle
             + ('. Se instala a mano; la Biblioteca de traducciones te lleva a su página.' if s in PC | MODERNAS
                else '. Aplícala sobre tu copia con un clic con la Biblioteca de traducciones.'))
     if s in MODERNAS:
-        como = f'''<ol class="pasos">
+        como = f"""<ol class="pasos">
       <li>Abre la página de la traducción y comprueba qué versión o actualización del juego pide.</li>
       <li>Copia el mod en la carpeta de mods de tu emulador (Ryujinx, RPCS3, shadPS4, Cemu, Xenia…) o de tu consola con firmware modificado, como explique el traductor.</li>
       <li>Con la Biblioteca de traducciones puedes buscar «{e(titulo)}» entre tus juegos y abrir su ficha y la página de la traducción.</li>
     </ol>
-    <p class="suave">Necesitas tu propia copia del juego: ni la web ni el programa descargan juegos.</p>'''
+    <p class="suave">Necesitas tu propia copia del juego: ni la web ni el programa descargan juegos.</p>"""
     elif s in PC:
-        como = '''<ol class="pasos">
+        como = """<ol class="pasos">
       <li>Descarga la Biblioteca de traducciones e instálala.</li>
       <li>Si tienes el juego en Steam, GOG o Epic, la biblioteca lo encuentra sola.</li>
       <li>Las traducciones de PC se instalan a mano: abre la ficha del juego y te lleva a la página de la traducción y a la carpeta del juego.</li>
-    </ol>'''
+    </ol>"""
     else:
-        como = f'''<ol class="pasos">
+        como = f"""<ol class="pasos">
       <li>Descarga la Biblioteca de traducciones e instálala.</li>
       <li>Dile en qué carpeta tienes tus juegos.</li>
       <li>Busca «{e(titulo)}» y pulsa <b>Traducir</b>. Comprueba que tu copia es la versión que pide la traducción y la aplica; tu original no se toca.</li>
     </ol>
-    <p class="suave">Necesitas tu propia copia del juego: el programa no descarga juegos, solo los parches de traducción.</p>'''
-    cuerpo = f'''<main class="juego">
+    <p class="suave">Necesitas tu propia copia del juego: el programa no descarga juegos, solo los parches de traducción.</p>"""
+    cuerpo = f"""<main class="juego">
   <nav class="migas" aria-label="Estás en"><a href="{raiz}">Inicio</a> › <a href="{raiz}catalogo/">Catálogo</a> › <a href="{raiz}sistema/{e(s)}/">{e(nombre_sis)}</a></nav>
   <div class="juego-h">
     <div class="portada{'' if img else ' sin'}">{img}<span class="ph">{e(titulo)}</span></div>
     <div class="juego-t">
       <p class="eti">{e(nombre_sis)}</p>
       <h1>{e(titulo)} <span>en español</span></h1>
-      <p class="lede">{'Hay una traducción' if n == 1 else f'Hay {n} traducciones'} al español hechas por aficionados{f": {e(quien)}" if quien else ''}.</p>
-      <a class="btn primario grande" href="{DESCARGA}">Descargar el programa para Windows</a>
+      {f'<p class="orig">Título original: {e(orig)}</p>' if orig else ''}
+      <p class="lede">{'Hay una traducción al español hecha por aficionados' if n == 1 else f'Hay {n} traducciones al español hechas por aficionados'}{f": {e(quien)}" if quien else ''}.</p>
+      <a class="btn primario grande" href="{INSTALADOR}" data-goatcounter-click="descarga-juego">Descargar el programa para Windows</a>
       {compra}
     </div>
   </div>
@@ -297,13 +445,28 @@ def pagina_juego(gr, sysn, libretro, base):
     <h2>{'La traducción' if n == 1 else 'Las traducciones'}</h2>
     <div class="trads">{''.join(tarjeta_trad(f) for f in gr['filas'])}</div>
   </section>
+  <section class="bloque">
+    <h2>En resumen</h2>
+    {resumen_juego(gr, nombre_sis)}
+  </section>
   <section class="bloque como">
     <h2>Cómo jugarlo en español</h2>
     {como}
   </section>
+  {relacionados(gr, ctx, raiz, nombre_sis)}
   <p class="suave">¿Algún dato está mal o eres el autor y quieres cambiar algo? <a href="{INCIDENCIAS}">Avísame en GitHub</a>.</p>
-</main>'''
-    return pagina(raiz, f'{titulo} en español ({nombre_sis}) · Biblioteca de traducciones', desc, gr['ruta'], cuerpo, base, tipo='article')
+</main>"""
+    titulo_pagina = f'{titulo} ({nombre_sis}): traducción al español · Biblioteca de traducciones'
+    canon = base + gr['ruta']
+    juego = {'@type': 'VideoGame', 'name': titulo, 'gamePlatform': nombre_sis, 'url': canon}
+    if orig:
+        juego['alternateName'] = orig
+    if imagen.startswith('http'):
+        juego['image'] = imagen
+    ld = {'@context': 'https://schema.org', '@graph': [
+        migas_ld(base, [('Inicio', ''), ('Catálogo', 'catalogo/'), (nombre_sis, f'sistema/{s}/'), (titulo, gr['ruta'])]),
+        {'@type': 'WebPage', '@id': canon, 'url': canon, 'name': titulo_pagina, 'description': desc, 'inLanguage': 'es', 'about': juego}]}
+    return pagina(raiz, titulo_pagina, desc, gr['ruta'], cuerpo, base, imagen=imagen, tipo='article', ld=ld)
 
 
 def pagina_sistema(s, juegos, sysn, base):
@@ -321,16 +484,33 @@ def pagina_sistema(s, juegos, sysn, base):
 
     bloques = ''.join(f'<section class="letra"><h2>{e(l)}</h2><ul class="lista">{"".join(item(g) for g in gs)}</ul></section>'
                       for l, gs in letras.items())
+    filas = [f for g in juegos for f in g['filas']]
+    grupos = collections.Counter(f['grupo'].strip() for f in filas if f['grupo'].strip())
+    top = [g for g, _ in grupos.most_common(5)]
+    clic = sum(1 for f in filas if directa(f))
+    texto = (f'{nombre} tiene {n:,} {"traducción" if n == 1 else "traducciones"} al español de {len(juegos):,} {"juego" if len(juegos) == 1 else "juegos"}, '
+             + ('hecha' if n == 1 else 'hechas') + ' por aficionados'
+             + (f': entre otros, {", ".join(top[:-1])} y {top[-1]}' if len(top) > 1 else f': {top[0]}' if top else '') + '. '
+             + (f'{clic:,} de ellas se aplican con un clic desde la Biblioteca de traducciones, que comprueba que tu copia es la versión que pide cada parche.'
+                if clic > 1 else
+                'La Biblioteca de traducciones te dice cuáles de tus juegos tienen traducción y te lleva a la página de cada una para instalarla.'))
+    ultimas = recientes(filas, raiz, sysn, 8, False)
     cuerpo = f'''<main class="sistema">
   <nav class="migas" aria-label="Estás en"><a href="{raiz}">Inicio</a> › <a href="{raiz}catalogo/">Catálogo</a></nav>
   <h1>Traducciones al español de {e(nombre)}</h1>
   <p class="lede">{n:,} {"traducción" if n == 1 else "traducciones"} de {len(juegos):,} {"juego" if len(juegos) == 1 else "juegos"}, hechas por aficionados. Elige un juego para ver sus traducciones.</p>
+  <p class="texto">{e(texto)}</p>
+  {f'<section class="bloque"><h2>Últimas traducciones de {e(nombre)}</h2>{ultimas}</section>' if ultimas else ''}
+  <section class="bloque"><h2>Todos los juegos</h2></section>
   {bloques}
 </main>'''
+    ld = {'@context': 'https://schema.org', '@graph': [
+        migas_ld(base, [('Inicio', ''), ('Catálogo', 'catalogo/'), (nombre, f'sistema/{s}/')]),
+        {'@type': 'CollectionPage', 'url': base + f'sistema/{s}/', 'name': f'Juegos de {nombre} en español', 'inLanguage': 'es'}]}
     desc = (f'{n:,} traducciones al español de juegos de {nombre} hechas por aficionados, '
             + ('reunidas en la Biblioteca de traducciones.' if s in PC | MODERNAS
                else 'listas para aplicar con un clic con la Biblioteca de traducciones.'))
-    return pagina(raiz, f'Juegos de {nombre} en español · Biblioteca de traducciones', desc, f'sistema/{s}/', cuerpo, base)
+    return pagina(raiz, f'Juegos de {nombre} en español: traducciones · Biblioteca de traducciones', desc, f'sistema/{s}/', cuerpo, base, ld=ld)
 
 
 def chips_sistemas(por_sis, sysn, raiz):
@@ -338,7 +518,7 @@ def chips_sistemas(por_sis, sysn, raiz):
                    for s, gs in sorted(por_sis.items(), key=lambda kv: -sum(len(g['filas']) for g in kv[1])))
 
 
-def pagina_catalogo(por_sis, sysn, base, n_trad, n_juegos):
+def pagina_catalogo(por_sis, sysn, base, n_trad, n_juegos, filas):
     raiz = '../'
     opciones = ''.join(f'<option value="{s}">{e(sysn.get(s, s))}</option>' for s in sorted(por_sis, key=lambda s: sysn.get(s, s).lower()))
     cuerpo = f'''<main class="catalogo">
@@ -357,6 +537,10 @@ def pagina_catalogo(por_sis, sysn, base, n_trad, n_juegos):
     <h2>Por sistema</h2>
     <div class="sistemas">{chips_sistemas(por_sis, sysn, raiz)}</div>
   </section>
+  <section class="bloque">
+    <h2>Últimas traducciones</h2>
+    {recientes(filas, raiz, sysn, 12, True)}
+  </section>
 </main>
 <script>var SYS = {json.dumps(sysn, ensure_ascii=False).replace('<', '\\u003c')};</script>
 <script src="catalogo.js" defer></script>'''
@@ -372,10 +556,10 @@ def pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version):
       <h1>Juega en español a juegos que nunca salieron traducidos</h1>
       <p class="lede">Más de {n_trad // 1000 * 1000:,} traducciones hechas por aficionados, de la NES a la Switch y los juegos de PC de hoy. La Biblioteca de traducciones busca tus juegos, te dice cuáles tienen traducción y la aplica con un clic.</p>
       <div class="acciones">
-        <a class="btn primario grande" href="{DESCARGA}">Descargar para Windows</a>
+        <a class="btn primario grande" href="{INSTALADOR}" data-goatcounter-click="descarga-portada">Descargar para Windows</a>
         <a class="btn grande" href="catalogo/">Buscar mi juego</a>
       </div>
-      <p class="suave">Gratis y de código libre · Windows 10 y 11 · versión {e(version)}</p>
+      <p class="suave">Gratis y de código libre · Windows 10 y 11 · versión {e(version)} · <a href="{DESCARGA}">todas las versiones</a></p>
     </div>
     <img class="captura" src="img/captura-listas.png" width="1360" height="860" alt="La Biblioteca de traducciones con juegos de diez plataformas: Game Boy Advance, PlayStation, Super Nintendo, Mega CD, Dreamcast, Saturn, Nintendo DS, PlayStation 2, Nintendo 64 y PC">
   </section>
@@ -434,12 +618,20 @@ def pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version):
 
   <section class="final">
     <h2>¿Qué juego vas a jugar en español?</h2>
-    <a class="btn primario grande" href="{DESCARGA}">Descargar para Windows</a>
+    <a class="btn primario grande" href="{INSTALADOR}" data-goatcounter-click="descarga-final">Descargar para Windows</a>
   </section>
 </main>'''
     desc = (f'Juega en español a juegos que nunca salieron traducidos: {n_trad:,} traducciones de aficionados, de la NES a la Switch y el PC. '
             'Programa gratuito para Windows que busca tus juegos y aplica la traducción con un clic.')
-    return pagina(raiz, 'Biblioteca de traducciones: juega en español a juegos que nunca salieron traducidos', desc, '', cuerpo, base)
+    ld = {'@context': 'https://schema.org', '@graph': [
+        {'@type': 'WebSite', 'url': base, 'name': 'Biblioteca de traducciones', 'inLanguage': 'es',
+         'potentialAction': {'@type': 'SearchAction', 'target': {'@type': 'EntryPoint', 'urlTemplate': base + 'catalogo/?q={q}'},
+                             'query-input': 'required name=q'}},
+        {'@type': 'SoftwareApplication', 'name': 'Biblioteca de traducciones', 'url': base, 'description': desc, 'inLanguage': 'es',
+         'operatingSystem': 'Windows 10, Windows 11', 'applicationCategory': 'UtilitiesApplication', 'softwareVersion': version,
+         'downloadUrl': INSTALADOR, 'license': 'https://www.gnu.org/licenses/gpl-3.0.html', 'image': base + 'img/vista-previa.png',
+         'offers': {'@type': 'Offer', 'price': '0', 'priceCurrency': 'EUR'}}]}
+    return pagina(raiz, 'Biblioteca de traducciones: juega en español a juegos que nunca salieron traducidos', desc, '', cuerpo, base, ld=ld)
 
 
 def pagina_404(base):
@@ -483,6 +675,11 @@ def main():
         usados.add(ruta)
         g['ruta'] = ruta
         por_sis.setdefault(g['s'], []).append(g)
+    por_grupo = {}
+    for g in sorted(juegos, key=lambda g: sin_acentos(g['titulo']).lower()):
+        for grupo in dict.fromkeys(f['grupo'].strip() for f in g['filas'] if f['grupo'].strip()):
+            por_grupo.setdefault(grupo, []).append(g)
+    ctx = {'sysn': sysn, 'por_sis': por_sis, 'por_grupo': por_grupo}
 
     if os.path.isdir(salida):
         shutil.rmtree(salida)
@@ -501,14 +698,17 @@ def main():
     shutil.copy(os.path.join(WEB, 'catalogo.js'), os.path.join(salida, 'catalogo', 'catalogo.js'))
     if dominio:
         shutil.copy(cname, os.path.join(salida, 'CNAME'))
+    for nombre in os.listdir(WEB):
+        if re.fullmatch(r'google[0-9a-f]+\.html|BingSiteAuth\.xml', nombre):
+            shutil.copy(os.path.join(WEB, nombre), os.path.join(salida, nombre))
     escribir(salida, '.nojekyll', '')
 
     n_trad, n_juegos = len(filas), len(juegos)
     escribir(salida, 'index.html', miles(pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version)))
-    escribir(salida, 'catalogo/index.html', miles(pagina_catalogo(por_sis, sysn, base, n_trad, n_juegos)))
+    escribir(salida, 'catalogo/index.html', miles(pagina_catalogo(por_sis, sysn, base, n_trad, n_juegos, filas)))
     indice = []
     for g in juegos:
-        escribir(salida, g['ruta'] + 'index.html', pagina_juego(g, sysn, libretro, base))
+        escribir(salida, g['ruta'] + 'index.html', pagina_juego(g, sysn, libretro, base, ctx))
         busca = ' '.join(dict.fromkeys(sum((tokens(f['juego']) + tokens(f['titulo_original']) for f in g['filas']), [])
                                        + [sin_acentos(f['grupo']).lower() for f in g['filas'] if f['grupo']]))
         indice.append([g['titulo'], g['s'], g['ruta'], len(g['filas']), int(any(directa(f) for f in g['filas'])), busca])
@@ -518,10 +718,14 @@ def main():
         escribir(salida, f'sistema/{s}/index.html', miles(pagina_sistema(s, gs, sysn, base)))
     escribir(salida, '404.html', pagina_404(base))
 
+    # La fecha de cada página es la de su última traducción (los buscadores ignoran un lastmod que siempre es hoy);
+    # la portada y el catálogo cambian cada vez que se genera la web.
     hoy = date.today().isoformat()
-    rutas = ['', 'catalogo/'] + [f'sistema/{s}/' for s in por_sis] + [g['ruta'] for g in juegos]
+    rutas = ([('', hoy), ('catalogo/', hoy)]
+             + [(f'sistema/{s}/', max((g['fecha'] for g in gs), default='')) for s, gs in por_sis.items()]
+             + [(g['ruta'], g['fecha']) for g in juegos])
     escribir(salida, 'sitemap.xml', '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
-             + ''.join(f'<url><loc>{e(base + r)}</loc><lastmod>{hoy}</lastmod></url>\n' for r in rutas) + '</urlset>\n')
+             + ''.join(f'<url><loc>{e(base + r)}</loc>' + (f'<lastmod>{d}</lastmod>' if d else '') + '</url>\n' for r, d in rutas) + '</urlset>\n')
     escribir(salida, 'robots.txt', f'User-agent: *\nAllow: /\nSitemap: {base}sitemap.xml\n')
     print(f'Web en {salida}: {n_juegos} juegos, {len(por_sis)} sistemas, {len(rutas)} páginas. Dirección: {base}')
 
