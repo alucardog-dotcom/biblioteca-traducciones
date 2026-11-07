@@ -312,7 +312,7 @@ const thumb = (sys, name, tipo) => 'https://thumbnails.libretro.com/' + encodeUR
 const steamImg = (id, f) => `https://cdn.cloudflare.steamstatic.com/steam/apps/${encodeURIComponent(id)}/${f}`;
 const REPO_UI = 'https://raw.githubusercontent.com/alucardog-dotcom/biblioteca-traducciones/main/ui/';
 const DONAR = 'https://paypal.me/btraducciones';
-const WEB = 'https://alucardog-dotcom.github.io/biblioteca-traducciones/';
+const WEB = 'https://bibliotecadetraducciones.com/';
 // Enlace de afiliado de Instant Gaming: su búsqueda con el código del autor.
 const INSTANT_GAMING = 'https://www.instant-gaming.com/es/busquedas/?query=', AFILIADO = 'gamer-d73144';
 // Los juegos de PC que no están en Steam suelen estar en itch.io o en la web de su autor ("pj" en el catálogo).

@@ -94,7 +94,7 @@ Los juegos de PC que no están en Steam pero tienen página oficial conocida (it
 
 Las traducciones de PC y de las consolas actuales (Switch, PS3, PS4, Xbox 360…; `MODERNAS` en `ui/app.js` y en `tools/web.py`) se instalan a mano: ni la web ni el programa las marcan como «Un clic» aunque su descarga sea directa.
 
-El flujo `web.yml` la genera y la publica en GitHub Pages cada vez que cambia en `main` el catálogo, las portadas a mano, las capturas o la propia web. Para usar un dominio propio, pon el dominio en `web/CNAME` y en Settings › Pages del repositorio, y apunta el DNS del dominio a GitHub Pages.
+El flujo `web.yml` la genera y la publica en GitHub Pages cada vez que cambia en `main` el catálogo, las portadas a mano, las capturas o la propia web. El dominio es `bibliotecadetraducciones.com` (comprado en Nominalia el 07-11-2026, con `bibliotecadetraducciones.es`; renuevan el 07-11-2027). Está en `web/CNAME` (de ahí lo leen `web.py` y `preparar_centro.py`, que pone esa dirección en las miniaturas del catálogo) y en Settings › Pages del repositorio. En Nominalia, el `.com` lleva los registros de GitHub Pages: cuatro A en la raíz (185.199.108.153, 185.199.109.153, 185.199.110.153 y 185.199.111.153), sus cuatro AAAA (2606:50c0:8000::153 a 2606:50c0:8003::153) y `www` como CNAME a `alucardog-dotcom.github.io`; el `.es` solo redirige al `.com`. La dirección antigua de GitHub Pages redirige sola al dominio.
 
 ## Pendiente
 
