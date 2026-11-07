@@ -558,6 +558,7 @@ def pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version):
       <div class="acciones">
         <a class="btn primario grande" href="{INSTALADOR}" data-goatcounter-click="descarga-portada">Descargar para Windows</a>
         <a class="btn grande" href="catalogo/">Buscar mi juego</a>
+        <a class="btn grande" href="parchear/">Parchear en el navegador</a>
       </div>
       <p class="suave">Gratis y de código libre · Windows 10 y 11 · versión {e(version)} · <a href="{DESCARGA}">todas las versiones</a></p>
     </div>
@@ -642,6 +643,72 @@ def pagina_404(base):
     return pagina(base, 'Página no encontrada · Biblioteca de traducciones', 'Esta página no existe.', '404.html', cuerpo, base)
 
 
+def parches_json(filas):
+    """Lo que necesita «Parchear en el navegador» (web/parchear.js): cada traducción con sus CRC32 (los de la
+    ficha y los de sus descargas) y de dónde se baja el parche, como lo hace el programa."""
+    out = []
+    for f in filas:
+        x = f['x']
+        crcs = {c.strip().upper() for c in f['crc32'].split('|') if re.fullmatch(r'[0-9a-fA-F]{8}', c.strip())}
+        for d in x.get('d') or []:
+            crcs.update(c.upper() for c in d.get('c') or [] if re.fullmatch(r'[0-9a-fA-F]{8}', c))
+        if not crcs:
+            continue
+        descargas = []
+        for d in x.get('d') or []:
+            if d.get('u'):
+                descargas.append({'t': d['t'], 'u': d['u'], 'f': d.get('f') or []})
+            elif d.get('t') == 'github' and d.get('r'):
+                descargas.append({'t': 'github', 'r': d['r'], 'tag': d.get('tag', '')})
+        fila = {'k': f"{f['sistema']}|{f['juego']}|{f['grupo']}", 's': f['sistema'], 'j': f['juego'], 'g': f['grupo'], 'v': f['version'],
+                'e': f['estado'], 'f': f['formato_parche'], 'c': sorted(crcs), 'd': descargas, 'u': web_segura(f['url']), 'p': f.get('ruta', '')}
+        if es_ia(f):
+            fila['ia'] = 1
+        if f['notas'].strip():
+            fila['n'] = f['notas'].strip()[:200]
+        out.append(fila)
+    return json.dumps(out, ensure_ascii=False, separators=(',', ':'))
+
+
+def pagina_parchear(base, sysn):
+    raiz = '../'
+    cuerpo = f'''<main>
+<p class="migas"><a href="{raiz}">Inicio</a> › Parchear en el navegador</p>
+<h1>Parchear en el navegador</h1>
+<p class="lede">Prueba: elige tu ROM, la página la reconoce por su CRC32, baja el parche de la web de sus autores y te da el juego traducido. Todo ocurre en tu navegador: tu juego no se sube a ningún sitio.</p>
+<div class="zona" id="zona">
+  <input type="file" id="rom" aria-label="Tu ROM">
+  <p>Arrastra aquí tu ROM (o un zip con ella) o <label for="rom" class="btn">elige el fichero</label></p>
+</div>
+<div id="juego"></div>
+<div id="trads"></div>
+<div id="resultado"></div>
+<details class="registro"><summary>Registro</summary><pre id="registro"></pre></details>
+<p class="muted">Funciona mejor en Chrome y Edge. Los parches xdelta y los juegos en 7z, rar o CHD necesitan el <a href="{raiz}#descargar">programa</a>. Nunca descarga juegos: solo el parche de traducción, que se aplica sobre tu propia copia.</p>
+</main>
+<style>
+.zona {{ margin-top: 28px; padding: 36px 24px; border: 2px dashed var(--linea); border-radius: 16px; background: var(--panel); text-align: center; }}
+.zona.sobre {{ border-color: var(--amarillo); }}
+.zona input {{ position: absolute; width: 1px; height: 1px; opacity: 0; }}
+.zona p {{ margin: 0; }}
+.sis {{ font-size: 0.6em; color: var(--suave); font-weight: 600; margin-left: 10px; }}
+.trad {{ margin: 14px 0; padding: 16px 18px; border: 1px solid var(--linea); border-radius: 12px; background: var(--panel); }}
+.trad-t {{ display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }}
+.trad-a {{ display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }}
+.manual {{ display: inline-block; margin-top: 8px; color: var(--suave); }}
+.hecho {{ margin: 22px 0; padding: 20px; border: 1px solid rgba(95, 211, 154, 0.4); border-radius: 12px; background: var(--panel); }}
+.aviso {{ padding: 14px 16px; border: 1px solid rgba(255, 196, 0, 0.4); border-radius: 12px; background: var(--panel); }}
+.registro {{ margin-top: 28px; color: var(--suave); }}
+.registro pre {{ white-space: pre-wrap; font-size: 0.85rem; max-height: 240px; overflow: auto; background: #0B0E13; padding: 12px; border-radius: 8px; }}
+#juego h2 {{ margin-top: 28px; }}
+</style>
+<script>var SYS = {json.dumps(sysn, ensure_ascii=False).replace('<', '\\u003c')};</script>
+<script src="motor.js"></script>
+<script src="parchear.js" defer></script>'''
+    desc = 'Aplica una traducción al español a tu ROM desde el navegador: la página reconoce el juego por su CRC32, baja el parche de sus autores y te da el juego traducido. Nada se sube a ningún sitio.'
+    return pagina(raiz, 'Parchear en el navegador · Biblioteca de traducciones', desc, 'parchear/', cuerpo, base)
+
+
 def miles(t):
     """6,109 -> 6.109, sin tocar el resto del texto."""
     return re.sub(r'(?<=\d),(?=\d{3}\b)', '.', t)
@@ -674,6 +741,8 @@ def main():
             n += 1
         usados.add(ruta)
         g['ruta'] = ruta
+        for f in g['filas']:
+            f['ruta'] = ruta
         por_sis.setdefault(g['s'], []).append(g)
     por_grupo = {}
     for g in sorted(juegos, key=lambda g: sin_acentos(g['titulo']).lower()):
@@ -696,6 +765,9 @@ def main():
     shutil.copy(os.path.join(WEB, 'estilo.css'), os.path.join(salida, 'estilo.css'))
     os.makedirs(os.path.join(salida, 'catalogo'))
     shutil.copy(os.path.join(WEB, 'catalogo.js'), os.path.join(salida, 'catalogo', 'catalogo.js'))
+    os.makedirs(os.path.join(salida, 'parchear'))
+    for nombre in ('motor.js', 'parchear.js'):
+        shutil.copy(os.path.join(WEB, nombre), os.path.join(salida, 'parchear', nombre))
     if dominio:
         shutil.copy(cname, os.path.join(salida, 'CNAME'))
     for nombre in os.listdir(WEB):
@@ -714,6 +786,8 @@ def main():
         indice.append([g['titulo'], g['s'], g['ruta'], len(g['filas']), int(any(directa(f) for f in g['filas'])), busca])
     indice.sort(key=lambda j: sin_acentos(j[0]).lower())
     escribir(salida, 'catalogo/juegos.json', json.dumps(indice, ensure_ascii=False, separators=(',', ':')))
+    escribir(salida, 'catalogo/parches.json', parches_json(filas))
+    escribir(salida, 'parchear/index.html', pagina_parchear(base, sysn))
     for s, gs in por_sis.items():
         escribir(salida, f'sistema/{s}/index.html', miles(pagina_sistema(s, gs, sysn, base)))
     escribir(salida, '404.html', pagina_404(base))
@@ -721,7 +795,7 @@ def main():
     # La fecha de cada página es la de su última traducción (los buscadores ignoran un lastmod que siempre es hoy);
     # la portada y el catálogo cambian cada vez que se genera la web.
     hoy = date.today().isoformat()
-    rutas = ([('', hoy), ('catalogo/', hoy)]
+    rutas = ([('', hoy), ('catalogo/', hoy), ('parchear/', hoy)]
              + [(f'sistema/{s}/', max((g['fecha'] for g in gs), default='')) for s, gs in por_sis.items()]
              + [(g['ruta'], g['fecha']) for g in juegos])
     escribir(salida, 'sitemap.xml', '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
