@@ -708,7 +708,7 @@ def pagina_parchear(base, sysn):
 </div>
 <div class="zona carpeta">
   <input type="file" id="carpeta" webkitdirectory multiple aria-label="Tu carpeta de juegos">
-  <p>O busca en toda una carpeta, como hace el programa: <label for="carpeta" class="btn">elegir carpeta</label></p>
+  <p>O busca en toda una carpeta, como hace el programa: <button type="button" class="btn" id="elegir-carpeta">elegir carpeta</button></p>
   <p class="muted">Lee ROMs sueltas o en zip, y discos .cue y .gdi; el sistema lo saca de la extensión o del nombre de la subcarpeta (snes, psx, megadrive…). Nada sale de tu equipo.</p>
 </div>
 <div id="mios"></div>

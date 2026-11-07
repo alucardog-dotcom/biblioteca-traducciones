@@ -561,6 +561,24 @@ async function elegirCarpeta(lista) {
   try { await escanear(items); } catch (e) { log('Error: ' + e.message, 'bad'); $('mios').innerHTML = `<p class="aviso">${esc(e.message)}</p>`; }
 }
 
+// Con la API de acceso a carpetas (Chrome y Edge) el navegador pide permiso para «ver» la carpeta, no para
+// «subirla», y se recorre entera; en los demás, el input con webkitdirectory.
+async function recorrer(dir, ruta, items) {
+  for await (const [nombre, h] of dir.entries()) {
+    if (h.kind === 'file') items.push({file: await h.getFile(), ruta: ruta + nombre});
+    else if (!CARPETAS_FUERA.has(nombre.toLowerCase())) await recorrer(h, ruta + nombre + '/', items);
+  }
+}
+async function pedirCarpeta() {
+  if (!window.showDirectoryPicker) return $('carpeta').click();
+  let dir;
+  try { dir = await window.showDirectoryPicker({mode: 'read'}); } catch (e) { if (e.name !== 'AbortError') log('No se pudo abrir la carpeta: ' + e.message, 'bad'); return; }
+  $('mios').innerHTML = '<h2>Mis juegos</h2><p class="progreso">Mirando la carpeta…</p>';
+  const items = [];
+  try { await recorrer(dir, dir.name + '/', items); await escanear(items); }
+  catch (e) { log('Error: ' + e.message, 'bad'); $('mios').innerHTML = `<p class="aviso">${esc(e.message)}</p>`; }
+}
+
 // ---------------------------------------------------------------- arranque
 (async () => {
   if (!M || !window.DecompressionStream) {
@@ -573,5 +591,6 @@ async function elegirCarpeta(lista) {
   for (const ev of ['dragleave', 'drop']) zona.addEventListener(ev, e => { e.preventDefault(); zona.classList.remove('sobre'); });
   zona.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if (f) elegirJuego(f); });
   if ($('carpeta')) $('carpeta').onchange = () => elegirCarpeta($('carpeta').files);
+  if ($('elegir-carpeta')) $('elegir-carpeta').onclick = pedirCarpeta;
   try { await cargarIndice(); } catch (e) { log('Error: ' + e.message, 'bad'); $('juego').innerHTML = `<p class="aviso">${esc(e.message)}</p>`; }
 })();
