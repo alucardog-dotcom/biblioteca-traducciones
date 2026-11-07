@@ -123,6 +123,24 @@ def es_ia(f):
     return f['notas'].startswith('[IA]')
 
 
+def adulto(f):
+    """Traducción de un juego para adultos (+18): la marca a18 de centro_datos (de cache\adultos.tsv)."""
+    return bool(f['x'].get('a18'))
+
+
+def juego_adulto(g):
+    """Un juego se oculta cuando todas sus traducciones son de adultos."""
+    return all(adulto(f) for f in g['filas'])
+
+
+def banderas(g):
+    """Lo que filtra el buscador (catalogo.js): 1 alguna completa, 2 alguna sin IA, 4 se vende en Steam, 8 para adultos."""
+    return ((1 if any(f['estado'].strip().lower().startswith('complet') for f in g['filas']) else 0)
+            | (2 if any(not es_ia(f) for f in g['filas']) else 0)
+            | (4 if any(f['x'].get('steam') for f in g['filas']) else 0)
+            | (8 if juego_adulto(g) else 0))
+
+
 def directa(f):
     """Un clic: el programa la baja y la aplica. Las de PC y consolas de hoy se instalan a mano."""
     return bool(f['x'].get('d')) and f['sistema'] not in PC | MODERNAS
@@ -242,7 +260,7 @@ def tarjeta_juego(g, raiz, sysn, con_sistema=True, fila=None, extra=''):
               e(f['grupo'].strip()) if (fila or n == 1) and f['grupo'].strip() else '',
               f'{n} traducciones' if n > 1 else '',
               '<b>Un clic</b>' if any(directa(x) for x in g['filas']) else '']
-    return (f'<li class="tarjeta" data-ruta="{e(g["ruta"])}" data-sis="{e(g["s"])}" data-sisn="{e(sysn.get(g["s"], g["s"]))}" data-titulo="{e(g["titulo"])}">'
+    return (f'<li class="tarjeta" data-ruta="{e(g["ruta"])}" data-sis="{e(g["s"])}" data-sisn="{e(sysn.get(g["s"], g["s"]))}" data-titulo="{e(g["titulo"])}"{' data-a18="1"' if juego_adulto(g) else ''}>'
             f'<a href="{raiz}{g["ruta"]}"><span class="port{"" if img else " sin"}">{img}<span class="ph">{e(g["titulo"])}</span></span>'
             f'<span class="cuerpo"><span class="t">{e(g["titulo"])}</span><span class="m">{" · ".join(p for p in partes if p)}{extra}</span></span></a><button type="button" class="fav" aria-pressed="false" aria-label="Añadir a Favoritos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7.5-4.6-9.3-9.2C1.4 7.4 3.6 4 7 4c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.4 0 5.6 3.4 4.3 6.8C19.5 15.4 12 20 12 20z"/></svg></button></li>')
 
@@ -326,7 +344,7 @@ def pagina(raiz, titulo, descripcion, ruta, cuerpo, base, imagen='img/vista-prev
 <meta property="og:locale" content="es_ES">
 <meta name="twitter:card" content="summary_large_image">
 {jsonld(ld) if ld else ''}
-<script>function sig(i){{var r=(i.dataset.alt||'').split(' ').filter(Boolean);if(!r.length){{i.parentNode.classList.add('sin');i.remove();return}}i.src=r.shift();i.dataset.alt=r.join(' ')}}</script>
+<script>try{{if(localStorage.getItem('adultos')==='1')document.documentElement.classList.add('adultos')}}catch(e){{}}function sig(i){{var r=(i.dataset.alt||'').split(' ').filter(Boolean);if(!r.length){{i.parentNode.classList.add('sin');i.remove();return}}i.src=r.shift();i.dataset.alt=r.join(' ')}}</script>
 </head>
 <body>
 <div class="franja" aria-hidden="true"></div>
@@ -465,7 +483,7 @@ def pagina_juego(gr, sysn, libretro, base, ctx):
   <div class="juego-h">
     <div class="portada{'' if img else ' sin'}">{img}<span class="ph">{e(titulo)}</span></div>
     <div class="juego-t">
-      <p class="eti">{e(nombre_sis)}</p>
+      <p class="eti">{e(nombre_sis)}{' <span class="chip aviso" title="Juego para adultos">+18</span>' if juego_adulto(gr) else ''}</p>
       <h1>{e(titulo)} <span>en español</span></h1>
       {f'<p class="orig">Título original: {e(orig)}</p>' if orig else ''}
       <p class="lede">{'Hay una traducción al español hecha por aficionados' if n == 1 else f'Hay {n} traducciones al español hechas por aficionados'}{f": {e(quien)}" if quien else ''}.</p>
@@ -559,6 +577,13 @@ def pagina_catalogo(por_sis, sysn, base, n_trad, n_juegos, filas):
     <label class="sr" for="s">Sistema</label>
     <select id="s"><option value="">Todos los sistemas</option>{opciones}</select>
   </form>
+  <div class="filtros" role="group" aria-label="Filtros">
+    <button type="button" class="chip" data-f="directa" aria-pressed="false" title="Traducciones que el programa o la web aplican solos">Un clic</button>
+    <button type="button" class="chip" data-f="completa" aria-pressed="false">Completas</button>
+    <button type="button" class="chip" data-f="sinia" aria-pressed="false" title="Sin traducciones hechas con IA">Sin IA</button>
+    <button type="button" class="chip" data-f="steam" aria-pressed="false" title="Solo los juegos que se venden en Steam">En Steam</button>
+    <label class="chip-l"><input type="checkbox" id="adultos"> Mostrar juegos para adultos (+18)</label>
+  </div>
   <p class="suave" id="cuenta" aria-live="polite"></p>
   <ul class="tarjetas" id="res"></ul>
   <button class="btn" id="mas" hidden>Ver más</button>
@@ -707,6 +732,8 @@ def parches_json(filas):
                 'r': f['rom_requerida']}
         if es_ia(f):
             fila['ia'] = 1
+        if adulto(f):
+            fila['a18'] = 1
         if f['notas'].strip():
             fila['n'] = f['notas'].strip()[:200]
         out.append(fila)
@@ -842,7 +869,7 @@ def main():
         escribir(salida, g['ruta'] + 'index.html', pagina_juego(g, sysn, libretro, base, ctx))
         busca = ' '.join(dict.fromkeys(sum((tokens(f['juego']) + tokens(f['titulo_original']) for f in g['filas']), [])
                                        + [sin_acentos(f['grupo']).lower() for f in g['filas'] if f['grupo']]))
-        indice.append([g['titulo'], g['s'], g['ruta'], len(g['filas']), int(any(directa(f) for f in g['filas'])), busca, portada_spec(g)])
+        indice.append([g['titulo'], g['s'], g['ruta'], len(g['filas']), int(any(directa(f) for f in g['filas'])), busca, portada_spec(g), banderas(g)])
     indice.sort(key=lambda j: sin_acentos(j[0]).lower())
     escribir(salida, 'catalogo/juegos.json', json.dumps(indice, ensure_ascii=False, separators=(',', ':')))
     escribir(salida, 'catalogo/parches.json', parches_json(filas))

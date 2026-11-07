@@ -539,9 +539,23 @@ function tarjetaMio(g, t, tipo) {
     <button type="button" class="fav" aria-pressed="false" aria-label="Añadir a Favoritos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7.5-4.6-9.3-9.2C1.4 7.4 3.6 4 7 4c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.4 0 5.6 3.4 4.3 6.8C19.5 15.4 12 20 12 20z"/></svg></button></li>`;
 }
 
+// Los juegos para adultos van ocultos salvo con el ajuste del catálogo («Mostrar juegos para adultos»).
+let verAdultos = false;
+try { verAdultos = localStorage.getItem('adultos') === '1'; } catch (e) { }
+const esAdulta = t => !!t.a18;
+
 async function pintarMios(juegos, traducidos, total, saltados, seg) {
   await cargarPortadas();
   tarjetasMios = [];
+  let ocultos = 0;
+  if (!verAdultos) {
+    for (const g of juegos) {
+      const antes = g.exactos.length + g.posibles.length;
+      g.exactos = g.exactos.filter(t => !esAdulta(t));
+      g.posibles = g.posibles.filter(t => !esAdulta(t));
+      if (antes && !g.exactos.length && !g.posibles.length) ocultos++;
+    }
+  }
   const con = juegos.filter(g => g.exactos.length || g.posibles.length);
   const exactos = con.filter(g => g.exactos.length), posibles = con.filter(g => !g.exactos.length);
   const orden = (a, b) => a.n.localeCompare(b.n, 'es');
@@ -549,7 +563,7 @@ async function pintarMios(juegos, traducidos, total, saltados, seg) {
   const sin = juegos.length - con.length;
   const resumen = `${num(con.length)} de tus ${num(juegos.length)} juegos tienen traducción al español`
     + (exactos.length && posibles.length ? ` (${num(exactos.length)} de tu versión exacta y ${num(posibles.length)} por el nombre)` : '')
-    + `. ${num(sin)} sin traducción conocida${traducidos.length ? `, ${num(traducidos.length)} ya traducidos` : ''}. ${num(total)} ficheros leídos en ${seg}.`;
+    + `. ${num(sin)} sin traducción conocida${traducidos.length ? `, ${num(traducidos.length)} ya traducidos` : ''}${ocultos ? `, ${num(ocultos)} para adultos (ocultos; se muestran activándolo en el <a href="../catalogo/">catálogo</a>)` : ''}. ${num(total)} ficheros leídos en ${seg}.`;
   $('mios').innerHTML = `<div class="mios-h"><h2>Mis juegos</h2><span class="muted">${resumen}</span></div>
     ${exactos.length ? `<h3>Tu versión vale: Traducir y listo</h3>${tarjetas(exactos)}` : ''}
     ${posibles.length ? `<h3>Por el nombre: puede que pidan otra versión</h3><p class="muted">El CRC32 no coincide con ninguna ficha; los parches BPS y UPS lo comprueban al aplicarse, los IPS no.</p>${tarjetas(posibles)}` : ''}

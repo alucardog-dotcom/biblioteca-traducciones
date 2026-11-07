@@ -236,3 +236,11 @@ main { display: block; max-width: var(--ancho); margin: 0 auto; padding: 0 var(-
 .acciones-l { display: flex; flex-wrap: wrap; gap: 10px; }
 .aviso-flot { position: fixed; left: 16px; bottom: 16px; z-index: 20; padding: 10px 14px; background: var(--panel-2); border: 1px solid var(--linea); border-radius: 10px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4); opacity: 0; transform: translateY(8px); transition: opacity .2s, transform .2s; pointer-events: none; }
 .aviso-flot.ver { opacity: 1; transform: none; }
+
+/* Filtros del catálogo y juegos para adultos ocultos */
+.filtros { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; }
+button.chip { cursor: pointer; background: var(--panel); color: var(--texto); font: inherit; font-size: 0.85rem; padding: 5px 12px; }
+button.chip:hover { border-color: var(--suave); }
+button.chip[aria-pressed="true"] { background: var(--amarillo); color: #141922; border-color: transparent; font-weight: 700; }
+.chip-l { display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; color: var(--suave); margin-left: auto; }
+html:not(.adultos) .tarjeta[data-a18] { display: none; }
