@@ -686,7 +686,8 @@ def parches_json(filas):
             elif d.get('t') == 'github' and d.get('r'):
                 descargas.append({'t': 'github', 'r': d['r'], 'tag': d.get('tag', '')})
         fila = {'k': f"{f['sistema']}|{f['juego']}|{f['grupo']}", 's': f['sistema'], 'j': f['juego'], 'g': f['grupo'], 'v': f['version'],
-                'e': f['estado'], 'f': f['formato_parche'], 'c': sorted(crcs), 'd': descargas, 'u': web_segura(f['url']), 'p': f.get('ruta', '')}
+                'e': f['estado'], 'f': f['formato_parche'], 'c': sorted(crcs), 'd': descargas, 'u': web_segura(f['url']), 'p': f.get('ruta', ''),
+                'r': f['rom_requerida']}
         if es_ia(f):
             fila['ia'] = 1
         if f['notas'].strip():
@@ -700,11 +701,17 @@ def pagina_parchear(base, sysn):
     cuerpo = f'''<main>
 <p class="migas"><a href="{raiz}">Inicio</a> › Parchear en el navegador</p>
 <h1>Parchear en el navegador</h1>
-<p class="lede">Prueba: elige tu ROM, la página la reconoce por su CRC32, baja el parche de la web de sus autores y te da el juego traducido. Todo ocurre en tu navegador: tu juego no se sube a ningún sitio.</p>
+<p class="lede">Elige tu ROM o toda tu carpeta de juegos: la página reconoce cada juego por su CRC32, baja el parche de la web de sus autores y te da el juego traducido. Todo ocurre en tu navegador: tus juegos no se suben a ningún sitio.</p>
 <div class="zona" id="zona">
   <input type="file" id="rom" aria-label="Tu ROM">
   <p>Arrastra aquí tu ROM (o un zip con ella) o <label for="rom" class="btn">elige el fichero</label></p>
 </div>
+<div class="zona carpeta">
+  <input type="file" id="carpeta" webkitdirectory multiple aria-label="Tu carpeta de juegos">
+  <p>O busca en toda una carpeta, como hace el programa: <label for="carpeta" class="btn">elegir carpeta</label></p>
+  <p class="muted">Lee ROMs sueltas o en zip, y discos .cue y .gdi; el sistema lo saca de la extensión o del nombre de la subcarpeta (snes, psx, megadrive…). Nada sale de tu equipo.</p>
+</div>
+<div id="mios"></div>
 <div id="juego"></div>
 <div id="trads"></div>
 <div id="resultado"></div>
@@ -716,6 +723,11 @@ def pagina_parchear(base, sysn):
 .zona.sobre {{ border-color: var(--amarillo); }}
 .zona input {{ position: absolute; width: 1px; height: 1px; opacity: 0; }}
 .zona p {{ margin: 0; }}
+.zona.carpeta {{ margin-top: 14px; padding: 22px 24px; }}
+.zona.carpeta .muted {{ margin-top: 8px; font-size: 0.9rem; }}
+.mios-h {{ display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 18px; margin-top: 36px; }}
+#mios h3 {{ margin-top: 28px; }}
+.progreso {{ color: var(--suave); }}
 .sis {{ font-size: 0.6em; color: var(--suave); font-weight: 600; margin-left: 10px; }}
 .trad {{ margin: 14px 0; padding: 16px 18px; border: 1px solid var(--linea); border-radius: 12px; background: var(--panel); }}
 .trad-t {{ display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }}

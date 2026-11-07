@@ -15,11 +15,15 @@ for (let i = 0; i < 256; i++) {
   for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1;
   TABLA[i] = c >>> 0;
 }
-function crc32(b, desde = 0, hasta = b.length) {
-  let c = 0xFFFFFFFF;
+// Por trozos (para leer ficheros grandes sin cargarlos enteros): c = crcAvanza(c, trozo) desde CRC_INICIO, y
+// crcFin(c) al acabar.
+const CRC_INICIO = 0xFFFFFFFF;
+function crcAvanza(c, b, desde = 0, hasta = b.length) {
   for (let i = desde; i < hasta; i++) c = TABLA[(c ^ b[i]) & 0xFF] ^ (c >>> 8);
-  return (c ^ 0xFFFFFFFF) >>> 0;
+  return c >>> 0;
 }
+const crcFin = c => (c ^ 0xFFFFFFFF) >>> 0;
+const crc32 = (b, desde = 0, hasta = b.length) => crcFin(crcAvanza(CRC_INICIO, b, desde, hasta));
 const hex = c => (c >>> 0).toString(16).toUpperCase().padStart(8, '0');
 
 // ---------------------------------------------------------------- lectura
@@ -382,11 +386,11 @@ function zipEntradas(b) {
   for (let k = 0; k < n; k++) {
     if (u32le(b, p) !== 0x02014B50) throw new Error('El zip está dañado (índice).');
     const flags = b[p + 8] | b[p + 9] << 8, metodo = b[p + 10] | b[p + 11] << 8;
-    const comp = u32le(b, p + 20), tam = u32le(b, p + 24);
+    const crc = hex(u32le(b, p + 16)), comp = u32le(b, p + 20), tam = u32le(b, p + 24);
     const nlen = b[p + 28] | b[p + 29] << 8, elen = b[p + 30] | b[p + 31] << 8, clen = b[p + 32] | b[p + 33] << 8;
     const off = u32le(b, p + 42);
     const nombre = dec.decode(b.subarray(p + 46, p + 46 + nlen));
-    if (!nombre.endsWith('/')) out.push({nombre, metodo, comp, tam, off, cifrado: !!(flags & 1)});
+    if (!nombre.endsWith('/')) out.push({nombre, metodo, comp, tam, off, crc, cifrado: !!(flags & 1)});
     p += 46 + nlen + elen + clen;
   }
   return out;
@@ -430,5 +434,5 @@ function cabecera(b) {
   return 0;
 }
 
-raiz.Motor = {crc32, hex, detectar, inspeccionar, comprobar, aplicar, esZip, zipEntradas, zipExtraer, parchesDe, cabecera, MAX_EN_MEMORIA};
+raiz.Motor = {crc32, CRC_INICIO, crcAvanza, crcFin, hex, detectar, inspeccionar, comprobar, aplicar, esZip, zipEntradas, zipExtraer, parchesDe, cabecera, MAX_EN_MEMORIA};
 })(typeof window !== 'undefined' ? window : globalThis);

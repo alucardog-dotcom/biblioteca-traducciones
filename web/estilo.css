@@ -203,3 +203,12 @@ main { display: block; max-width: var(--ancho); margin: 0 auto; padding: 0 var(-
 .tarjeta .fecha { font-variant-numeric: tabular-nums; }
 .relacionados .tarjetas { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
 @media (max-width: 480px) { .tarjetas { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; } }
+
+/* Tarjetas con botones (Mis juegos en la página de parcheo) */
+.tarjeta.con-acc { display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--linea); border-radius: 12px; overflow: hidden; }
+.tarjeta.con-acc a { border: 0; border-radius: 0; background: none; height: auto; }
+.tarjeta.con-acc a:hover { transform: none; }
+.tarjeta .acc { margin-top: auto; padding: 0 10px 10px; display: flex; gap: 6px; }
+.tarjeta .acc .btn { flex: 1; padding: 6px 8px; font-size: 0.82rem; border-radius: 8px; }
+.tarjeta .m .ok { color: var(--verde); }
+.tarjeta .m .warn { color: var(--amarillo-t); }
