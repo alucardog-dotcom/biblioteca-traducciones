@@ -40,7 +40,7 @@ Más de 6.000 traducciones hechas por aficionados, de la NES a la Switch y los j
 
 Descarga el instalador (`…_x64-setup.exe`) de la [última versión](../../releases/latest) y ábrelo. Funciona en Windows 10 y 11 de 64 bits.
 
-El instalador todavía no está firmado (estamos en ello: [Code signing policy](#code-signing-policy)), así que Windows puede avisar con «Windows protegió su PC». Para instalarlo, pulsa **Más información** y luego **Ejecutar de todas formas**.
+El instalador no está firmado (el porqué, en [Code signing policy](#code-signing-policy)), así que Windows puede avisar con «Windows protegió su PC». Para instalarlo, pulsa **Más información** y luego **Ejecutar de todas formas**.
 
 Al abrirlo por primera vez te pregunta en qué carpetas tienes tus juegos. El catálogo se pone al día solo cada vez que lo abres, y cada seis horas mientras siga abierto, sin reinstalar nada. Cuando sale una versión nueva del programa, aparece un aviso abajo a la izquierda. Si no quieres esperar, en Ajustes › Acerca de el botón **Buscar actualizaciones** comprueba las dos cosas al momento.
 
@@ -64,13 +64,7 @@ Tus ajustes, tus listas y tus datos se guardan en tu equipo: `%APPDATA%\es.tradu
 
 ## Code signing policy
 
-El instalador de cada versión lo compila GitHub Actions desde este repositorio ([publicar.yml](.github/workflows/publicar.yml)) y lo firma con el certificado de [SignPath Foundation](https://signpath.org), que firma gratis programas de código libre; cada firma la aprueba a mano alguien del proyecto. *En trámite: hasta que SignPath Foundation acepte el proyecto, el instalador sale sin firmar y Windows avisa (ver [Instalar](#instalar)).*
-
-Free code signing provided by [SignPath.io](https://about.signpath.io), certificate by [SignPath Foundation](https://signpath.org).
-
-- **Committers and reviewers:** [alucardog-dotcom](https://github.com/alucardog-dotcom)
-- **Approvers:** [alucardog-dotcom](https://github.com/alucardog-dotcom)
-- **Privacy policy:** This program will not transfer any information to other networked systems unless specifically requested by the user or the person installing or operating it. It only connects to the sites listed under [Privacidad](#privacidad), to fetch covers, patches, catalog updates and the number of the latest version.
+El instalador no está firmado todavía. En noviembre de 2026 se pidió la firma gratuita de [SignPath Foundation](https://signpath.org), que la da a programas de código libre con cierta difusión, y la dejaron para más adelante porque el proyecto era demasiado nuevo; se volverá a pedir cuando tenga más usuarios. Mientras tanto, cada instalador lo compila GitHub Actions desde este repositorio ([publicar.yml](.github/workflows/publicar.yml)) y en la página de cada versión GitHub muestra su huella SHA-256, con la que puedes comprobar que el fichero que has bajado es el que se publicó.
 
 ## ¿Te gusta?
 

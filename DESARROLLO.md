@@ -38,7 +38,9 @@ Al publicar una etiqueta `v*` en GitHub, GitHub Actions compila el instalador, l
 
 ## Firma del instalador
 
-El instalador se firma con el certificado de [SignPath Foundation](https://signpath.org), que firma gratis programas de código libre compilados en GitHub Actions. SignPath no firma dentro de instaladores NSIS, así que se firma el instalador entero y el `.exe` del programa que va dentro queda sin firmar (ver Pendiente). Las condiciones están en <https://signpath.org/terms>: licencia libre, doble factor en GitHub y en SignPath, la sección «Code signing policy» del README y aprobar cada firma a mano.
+El instalador saldrá firmado con el certificado de [SignPath Foundation](https://signpath.org), que firma gratis programas de código libre compilados en GitHub Actions, cuando acepten el proyecto. **Estado:** solicitado en noviembre de 2026 y denegado por falta de visibilidad (miran estrellas, forks, colaboradores, artículos y hilos en Reddit o YouTube); invitan a volver a pedirlo en <https://signpath.org/apply> cuando el programa tenga difusión. Su plan de pago (500 $ al año) solo da certificados a empresas registradas. Al pedirlo otra vez, el README tiene que llevar en «Code signing policy» las frases que exigen, tal como estaban en el commit 42be214: la atribución «Free code signing provided by SignPath.io, certificate by SignPath Foundation», los roles del equipo (committers and reviewers, approvers) y la frase de privacidad «This program will not transfer any information to other networked systems unless specifically requested by the user or the person installing or operating it».
+
+SignPath no firma dentro de instaladores NSIS, así que se firma el instalador entero y el `.exe` del programa que va dentro queda sin firmar (ver Pendiente). Las condiciones están en <https://signpath.org/terms>: licencia libre, doble factor en GitHub y en SignPath, la sección «Code signing policy» del README y aprobar cada firma a mano.
 
 El flujo `publicar.yml` lo hace así: guarda el instalador como artefacto del flujo (`actions/upload-artifact`), lo manda a firmar (`signpath/github-action-submit-signing-request`), espera a que alguien del proyecto apruebe la petición en signpath.io (**media hora como mucho**; si se pasa, el trabajo falla y se vuelve a lanzar con `gh run rerun --failed <id>`) y sube el instalador firmado a la versión. Si en el repositorio no está la variable `SIGNPATH_ORGANIZATION_ID`, se salta la firma y sube el instalador sin firmar, como antes.
 
@@ -99,4 +101,5 @@ El flujo `web.yml` la genera y la publica en GitHub Pages cada vez que cambia en
 - Publicar los scripts del catálogo.
 - Modo para mando y tele, como el Big Picture de RecompLauncher.
 - Guardar en disco las portadas descargadas, para verlas sin conexión.
+- Volver a pedir la firma a SignPath Foundation cuando haya difusión (anuncios publicados, estrellas, hilos, descargas).
 - Firmar también el `.exe` del programa que va dentro del instalador: compilar sin empaquetar (`tauri build --no-bundle`), firmarlo en SignPath, empaquetarlo con `tauri bundle` y firmar el instalador; dos aprobaciones por versión.
