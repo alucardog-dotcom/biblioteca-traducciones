@@ -423,7 +423,8 @@ async function escanear(items) {
     for (const p of it.pistas) dePista.add(p.ruta.toLowerCase());
   }
   const juegos = [], traducidos = [], saltados = {fuera: 0, pequenos: 0};
-  let leidos = 0, bytes = 0;
+  const cache = cargarCacheCrc();
+  let leidos = 0, bytes = 0, deCache = 0;
   const candidatos = items.filter(it => {
     const partes = it.ruta.toLowerCase().split('/');
     if (partes.slice(0, -1).some(p => CARPETAS_FUERA.has(p))) return false;
@@ -440,6 +441,14 @@ async function escanear(items) {
     let sis = POR_EXTENSION[e] || carpeta;
     if (nombre.includes('[T-Es]')) { traducidos.push({it, sis}); continue; }
     let c = [], k = 'file', zipEntradas = null;
+    // Con el CRC guardado de otra vez (misma ruta, tamaño y fecha) no hace falta volver a leer el fichero.
+    const conCache = async (item, sisDe, calcular) => {
+      const clave = claveCache(item);
+      if (cache[clave]) { deCache++; return cache[clave].slice(); }
+      const r = await calcular();
+      cache[clave] = r;
+      return r;
+    };
     try {
       if (e === 'zip') {
         k = 'archive';
@@ -450,12 +459,12 @@ async function escanear(items) {
         k = 'archive';
       } else if (e === 'cue' || e === 'gdi') {
         k = 'sheet';
-        for (const p of it.pistas || []) if (p.file.size <= MAX_CRC_ESCANEO) { c.push(...await crcsFichero(p.file, '')); bytes += p.file.size; }
+        for (const p of it.pistas || []) if (p.file.size <= MAX_CRC_ESCANEO) { c.push(...await conCache(p, '', () => crcsFichero(p.file, ''))); bytes += p.file.size; }
       } else if (e === 'chd' || DISCOS.has(e) || SIN_CRC.has(e) || f.size > MAX_CRC_ESCANEO) {
         k = e === 'chd' ? 'chd' : 'file';
-        if (DISCOS.has(e) && e !== 'chd' && f.size <= MAX_CRC_ESCANEO) { c = await crcsFichero(f, ''); bytes += f.size; }
+        if (DISCOS.has(e) && e !== 'chd' && f.size <= MAX_CRC_ESCANEO) { c = await conCache(it, '', () => crcsFichero(f, '')); bytes += f.size; }
       } else {
-        c = await crcsFichero(f, sis);
+        c = await conCache(it, sis, () => crcsFichero(f, sis));
         bytes += f.size;
       }
     } catch (err) { log(`${it.ruta}: ${err.message}`, 'bad'); }
@@ -482,9 +491,10 @@ async function escanear(items) {
       await new Promise(r => setTimeout(r, 0));
     }
   }
+  guardarCacheCrc();
   const ms = performance.now() - t0;
   const seg = ms < 1000 ? `${Math.round(ms)} ms` : `${(ms / 1000).toFixed(1)} s`;
-  log(`Carpeta leída: ${num(items.length)} ficheros, ${num(candidatos.length)} juegos posibles, ${(bytes / 1048576).toFixed(0)} MB en ${seg}.`);
+  log(`Carpeta leída: ${num(items.length)} ficheros, ${num(candidatos.length)} juegos posibles, ${(bytes / 1048576).toFixed(0)} MB en ${seg}${deCache ? ` (${num(deCache)} CRC guardados de otra vez)` : ''}.`);
   cuenta('escaneo');
   await pintarMios(juegos, traducidos, items.length, saltados, seg);
 }
@@ -563,22 +573,95 @@ async function elegirCarpeta(lista) {
 }
 
 // Con la API de acceso a carpetas (Chrome y Edge) el navegador pide permiso para «ver» la carpeta, no para
-// «subirla», y se recorre entera; en los demás, el input con webkitdirectory.
+// «subirla», se recorre entera y el permiso se guarda en el navegador (IndexedDB) para la próxima visita;
+// en los demás, el input con webkitdirectory, que no se puede recordar.
 async function recorrer(dir, ruta, items) {
   for await (const [nombre, h] of dir.entries()) {
     if (h.kind === 'file') items.push({file: await h.getFile(), ruta: ruta + nombre});
     else if (!CARPETAS_FUERA.has(nombre.toLowerCase())) await recorrer(h, ruta + nombre + '/', items);
   }
 }
+
+function abrirBD() {
+  return new Promise((res, rej) => {
+    const r = indexedDB.open('biblioteca', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('carpetas', {keyPath: 'id'});
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+  });
+}
+async function carpetasGuardadas() {
+  if (!window.indexedDB || !window.showDirectoryPicker) return [];
+  try {
+    const db = await abrirBD();
+    return await new Promise((res, rej) => { const t = db.transaction('carpetas').objectStore('carpetas').getAll(); t.onsuccess = () => res(t.result || []); t.onerror = () => rej(t.error); });
+  } catch (e) { return []; }
+}
+async function guardarCarpeta(h) {
+  const db = await abrirBD();
+  for (const c of await carpetasGuardadas()) if (await h.isSameEntry(c.handle)) return false;
+  await new Promise((res, rej) => { const t = db.transaction('carpetas', 'readwrite'); t.objectStore('carpetas').put({id: h.name + '|' + Date.now(), nombre: h.name, handle: h}); t.oncomplete = res; t.onerror = () => rej(t.error); });
+  return true;
+}
+async function quitarCarpeta(id) {
+  const db = await abrirBD();
+  await new Promise((res, rej) => { const t = db.transaction('carpetas', 'readwrite'); t.objectStore('carpetas').delete(id); t.oncomplete = res; t.onerror = () => rej(t.error); });
+}
+
+// La lista de carpetas recordadas, con «Buscar mis juegos», «Añadir otra» y «Quitar».
+async function pintarCarpetas() {
+  const c = $('carpetas');
+  if (!c) return;
+  const guardadas = await carpetasGuardadas();
+  if (!guardadas.length) { c.innerHTML = ''; return; }
+  c.innerHTML = `<p class="muted">Tus carpetas (las recuerda este navegador): ${guardadas.map(g => `<span class="carpeta-g"><code>${esc(g.nombre)}</code> <button type="button" class="enlace" data-quitar-carpeta="${esc(g.id)}" title="Olvidar esta carpeta">Quitar</button></span>`).join(' · ')}</p>
+    <p><button type="button" class="btn primario" id="buscar-guardadas">Buscar mis juegos</button> <button type="button" class="btn" id="anyadir-carpeta">Añadir otra carpeta</button></p>`;
+  c.querySelectorAll('[data-quitar-carpeta]').forEach(b => b.onclick = async () => { await quitarCarpeta(b.dataset.quitarCarpeta); pintarCarpetas(); });
+  $('anyadir-carpeta').onclick = pedirCarpeta;
+  $('buscar-guardadas').onclick = async () => {
+    const items = [];
+    for (const g of guardadas) {
+      try {
+        let p = await g.handle.queryPermission({mode: 'read'});
+        if (p !== 'granted') p = await g.handle.requestPermission({mode: 'read'});
+        if (p !== 'granted') { log(`Sin permiso para ${g.nombre}.`, 'bad'); continue; }
+        await recorrer(g.handle, g.nombre + '/', items);
+      } catch (e) { log(`${g.nombre}: ${e.message}`, 'bad'); }
+    }
+    if (!items.length) { $('mios').innerHTML = '<p class="aviso">No se ha podido leer ninguna carpeta. Si la has movido o borrado, quítala y vuelve a elegirla.</p>'; return; }
+    try { await escanear(items); } catch (e) { log('Error: ' + e.message, 'bad'); $('mios').innerHTML = `<p class="aviso">${esc(e.message)}</p>`; }
+  };
+}
+
 async function pedirCarpeta() {
   if (!window.showDirectoryPicker) return $('carpeta').click();
   let dir;
   try { dir = await window.showDirectoryPicker({mode: 'read'}); } catch (e) { if (e.name !== 'AbortError') log('No se pudo abrir la carpeta: ' + e.message, 'bad'); return; }
   $('mios').innerHTML = '<h2>Mis juegos</h2><p class="progreso">Mirando la carpeta…</p>';
+  try { if (await guardarCarpeta(dir)) log(`La carpeta ${dir.name} se recuerda para la próxima visita.`); } catch (e) { log('No se pudo recordar la carpeta: ' + e.message, 'bad'); }
+  pintarCarpetas();
   const items = [];
   try { await recorrer(dir, dir.name + '/', items); await escanear(items); }
   catch (e) { log('Error: ' + e.message, 'bad'); $('mios').innerHTML = `<p class="aviso">${esc(e.message)}</p>`; }
 }
+
+// CRC ya calculados (ruta, tamaño y fecha del fichero), para que la segunda búsqueda no vuelva a leerlo todo.
+const CACHE_CRC = 'crcs';
+let cacheCrc = null;
+function cargarCacheCrc() {
+  if (cacheCrc) return cacheCrc;
+  try { cacheCrc = JSON.parse(localStorage.getItem(CACHE_CRC) || '{}'); } catch (e) { cacheCrc = {}; }
+  if (typeof cacheCrc !== 'object' || !cacheCrc) cacheCrc = {};
+  return cacheCrc;
+}
+function guardarCacheCrc() {
+  try {
+    const claves = Object.keys(cacheCrc);
+    if (claves.length > 30000) for (const k of claves.slice(0, claves.length - 30000)) delete cacheCrc[k];
+    localStorage.setItem(CACHE_CRC, JSON.stringify(cacheCrc));
+  } catch (e) { }
+}
+const claveCache = it => `${it.ruta}|${it.file.size}|${it.file.lastModified}`;
 
 // ---------------------------------------------------------------- arranque
 (async () => {
@@ -593,5 +676,6 @@ async function pedirCarpeta() {
   zona.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if (f) elegirJuego(f); });
   if ($('carpeta')) $('carpeta').onchange = () => elegirCarpeta($('carpeta').files);
   if ($('elegir-carpeta')) $('elegir-carpeta').onclick = pedirCarpeta;
+  pintarCarpetas();
   try { await cargarIndice(); } catch (e) { log('Error: ' + e.message, 'bad'); $('juego').innerHTML = `<p class="aviso">${esc(e.message)}</p>`; }
 })();

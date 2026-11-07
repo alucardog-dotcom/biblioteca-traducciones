@@ -726,7 +726,8 @@ def pagina_parchear(base, sysn):
 <div class="zona carpeta">
   <input type="file" id="carpeta" webkitdirectory multiple aria-label="Tu carpeta de juegos">
   <p>O busca en toda una carpeta, como hace el programa: <button type="button" class="btn" id="elegir-carpeta">elegir carpeta</button></p>
-  <p class="muted">Lee ROMs sueltas o en zip, y discos .cue y .gdi; el sistema lo saca de la extensión o del nombre de la subcarpeta (snes, psx, megadrive…). Nada sale de tu equipo.</p>
+  <p class="muted">Lee ROMs sueltas o en zip, y discos .cue y .gdi; el sistema lo saca de la extensión o del nombre de la subcarpeta (snes, psx, megadrive…). Nada sale de tu equipo. En Chrome y Edge la carpeta se recuerda para la próxima visita, y los CRC ya calculados también.</p>
+  <div id="carpetas"></div>
 </div>
 <div id="mios"></div>
 <div id="juego"></div>
@@ -745,6 +746,8 @@ def pagina_parchear(base, sysn):
 .mios-h {{ display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 18px; margin-top: 36px; }}
 #mios h3 {{ margin-top: 28px; }}
 .progreso {{ color: var(--suave); }}
+.carpeta-g {{ white-space: nowrap; }}
+.enlace {{ background: none; border: 0; color: var(--amarillo-t); cursor: pointer; font: inherit; padding: 0; text-decoration: underline; text-underline-offset: 3px; }}
 .sis {{ font-size: 0.6em; color: var(--suave); font-weight: 600; margin-left: 10px; }}
 .trad {{ margin: 14px 0; padding: 16px 18px; border: 1px solid var(--linea); border-radius: 12px; background: var(--panel); }}
 .trad-t {{ display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }}
