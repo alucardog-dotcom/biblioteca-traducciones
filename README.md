@@ -38,7 +38,7 @@ Más de 6.000 traducciones hechas por aficionados, de la NES a la Switch y los j
 
 ## Instalar
 
-Descarga el instalador (`…_x64-setup.exe`) de la [última versión](../../releases/latest) y ábrelo. Funciona en Windows 10 y 11 de 64 bits.
+Descarga el instalador (`Biblioteca-de-traducciones-setup.exe`) de la [última versión](../../releases/latest) y ábrelo. Funciona en Windows 10 y 11 de 64 bits.
 
 El instalador no está firmado (el porqué, en [Code signing policy](#code-signing-policy)), así que Windows puede avisar con «Windows protegió su PC». Para instalarlo, pulsa **Más información** y luego **Ejecutar de todas formas**.
 

@@ -68,7 +68,7 @@ jobs:
           carpeta=src-tauri/target/release/bundle/nsis
           if [ -d firmado ]; then carpeta=firmado; fi
           gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --generate-notes
-          gh release upload "$GITHUB_REF_NAME" "$carpeta"/*-setup.exe --clobber
-          # El mismo instalador con nombre fijo, para el botón de descarga directa de la web (releases/latest/download/…).
+          # Un solo instalador por versión, con nombre fijo: así el botón de descarga directa de la web
+          # (releases/latest/download/…) siempre funciona y en la página de la versión no hay dos ficheros iguales.
           cp "$carpeta"/*-setup.exe Biblioteca-de-traducciones-setup.exe
           gh release upload "$GITHUB_REF_NAME" Biblioteca-de-traducciones-setup.exe --clobber
