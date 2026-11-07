@@ -117,6 +117,7 @@ function agrupar() {
     const rep = gr.filas.slice().sort((x, y) => conPortada(y) - conPortada(x) || /\(/.test(x.a[F.juego]) - /\(/.test(y.a[F.juego]))[0];
     gr.titulo = rep.a[F.juego];
     gr.portada = gr.filas.find(r => r.x.pm) || gr.filas.find(conPortada) || rep;
+    gr.a18 = gr.filas.every(esAdulto);
   }
 }
 
@@ -160,6 +161,16 @@ const esIA = r => r.a[F.notas].startsWith('[IA]');
 // Las de PC y consolas de hoy se instalan a mano aunque su descarga sea directa.
 const directa = r => !A_MANO.has(r.s) && (r.x.d || []).length > 0;
 const completa = r => /complet/i.test(r.a[F.estado]);
+// Juegos para adultos (+18): el catálogo los marca (a18) y van ocultos en todas las secciones hasta que se
+// activan en Ajustes; tampoco entran en las recomendaciones. Un juego se oculta cuando todas sus
+// traducciones son de adultos.
+const esAdulto = r => !!r.x.a18;
+let verAdultos = false;
+try { verAdultos = localStorage.getItem('adultos') === '1'; } catch (e) { }
+function guardarAdultos(v) { verAdultos = v; try { localStorage.setItem('adultos', v ? '1' : '0'); } catch (e) { } }
+const visible = gr => verAdultos || !gr.a18;
+// Juegos de itch.io (gratuitos o de la tienda indie): fuera de las recomendaciones.
+const esItch = r => /itch\.io/i.test([r.a[F.url], r.a[F.fuente], r.x.pj || ''].join(' '));
 // Un traducido con la extensión de su sistema (.gg) sale con ese sistema aunque el original (.bin) no lo diga.
 const salidaDe = (r, g) => traducidos[r.key] || (g && (tes.get(g.s + '|' + g.n + ' [T-Es]') || tes.get(r.s + '|' + g.n + ' [T-Es]'))) || '';
 const hecha = (r, g) => !!salidaDe(r, g);
@@ -183,7 +194,7 @@ function elegida(gr, vale = () => true, pref = null) {
 }
 
 // Juegos de cada sección.
-function gruposDe(v) {
+function gruposDeTodos(v) {
   if (v === 'mios') {
     const conPar = pares.filter(p => p.tipo !== 'otra' || !pares.some(o => o.g === p.g && o.tipo !== 'otra'));
     return [...new Set(conPar.map(p => p.r.gr))];
@@ -193,6 +204,7 @@ function gruposDe(v) {
   if (l) return l.juegos.map(j => porJuego.get(j.k)).filter(Boolean);
   return grupos;
 }
+const gruposDe = v => gruposDeTodos(v).filter(visible);
 const itemsDe = v => gruposDe(v).map(gr => elegida(gr, undefined, guardada(listaDe(v), gr)));
 
 function filtrar(grs) {
@@ -455,7 +467,7 @@ function recordarFoco(raiz) {
   if (a.id) return {id: a.id};
   const card = a.closest('.card');
   if (card) return {n: card.dataset.n, sel: a.classList.contains('fav') ? '.fav' : a.dataset.act ? `[data-act="${a.dataset.act}"]` : '.title'};
-  for (const k of ['f', 'g', 'go', 'lista', 'l', 'act', 'portada']) if (a.dataset[k] !== undefined) return {sel: `[data-${k}="${CSS.escape(a.dataset[k])}"]`};
+  for (const k of ['f', 'g', 'go', 'lista', 'l', 'act', 'portada', 'tanda']) if (a.dataset[k] !== undefined) return {sel: `[data-${k}="${CSS.escape(a.dataset[k])}"]`};
   return null;
 }
 function devolverFoco(raiz, f) {
@@ -465,7 +477,7 @@ function devolverFoco(raiz, f) {
 }
 
 function contadores() {
-  const mios = new Set(pares.filter(p => p.tipo !== 'otra').map(p => p.r.gr)).size;
+  const mios = new Set(pares.filter(p => p.tipo !== 'otra' && visible(p.r.gr)).map(p => p.r.gr)).size;
   $('n-mios').textContent = mios || '';
   $('n-hechas').textContent = gruposDe('hechas').length || '';
   const activos = trabajos.filter(t => !['hecho', 'error'].includes(t.estado)).length;
@@ -494,8 +506,9 @@ function pintarInicio() {
   const hechas = itemsDe('hechas');
   const listas = itemsDe('mios').filter(({r, p}) => p && p.tipo !== 'otra' && !hecha(r, p.g) && !A_MANO.has(r.s))
     .sort((x, y) => directa(y.r) - directa(x.r));
-  const recientes = filas.filter(r => /^\d{4}-\d{2}-\d{2}/.test(r.a[F.fecha])).sort((x, y) => y.a[F.fecha].localeCompare(x.a[F.fecha]));
+  const recientes = filas.filter(r => visible(r.gr) && /^\d{4}-\d{2}-\d{2}/.test(r.a[F.fecha])).sort((x, y) => y.a[F.fecha].localeCompare(x.a[F.fecha]));
   const nuevas = [...new Set(recientes.map(r => r.gr))].slice(0, 18).map(gr => elegida(gr));
+  const catalogo = gruposDe('todas');
   const fila = (titulo, items, v) => items.length ? `<div class="row-h"><h2>${titulo}</h2>${v ? `<button class="more" data-go="${v}">Ver todo</button>` : ''}</div>
     <div class="row">${items.slice(0, 18).map(tarjeta).join('')}</div>` : '';
   main.innerHTML = `
@@ -505,7 +518,7 @@ function pintarInicio() {
       <div class="stats">
         <div class="stat" data-go="mios"><b>${mios}</b><span>de tus juegos tienen traducción</span></div>
         <div class="stat" data-go="hechas"><b>${hechas.length}</b><span>ya traducidos</span></div>
-        <div class="stat" data-go="todas"><b>${grupos.length.toLocaleString('es')}</b><span>juegos traducidos en el catálogo (${filas.length.toLocaleString('es')} traducciones)</span></div>
+        <div class="stat" data-go="todas"><b>${catalogo.length.toLocaleString('es')}</b><span>juegos traducidos en el catálogo (${catalogo.reduce((n, gr) => n + gr.filas.length, 0).toLocaleString('es')} traducciones)</span></div>
       </div>
     </section>
     ${fila('Listas para tus juegos', listas, 'mios')}
@@ -515,12 +528,43 @@ function pintarInicio() {
     ${!juegos.length && !escaneando ? `<p class="empty">No hay juegos tuyos todavía. Pon tus ROMs en <code>${esc((ajustes.carpetas || [])[0] || 'C:\\Juegos')}</code> (mejor en una subcarpeta por sistema, como <code>snes</code> o <code>psx</code>) y pulsa <b>Buscar mis juegos</b>.</p>` : ''}`;
 }
 
+// ---------------------------------------------------------------- recomendaciones
+// Juegos al azar para Descubrir: con traducción completa y portada, sin juegos de adultos ni de itch.io, y
+// de PC solo los que se venden en Steam. La tanda cambia cada día (y con «Otra tanda»), pero no con cada
+// repintado. Un juego por sistema mientras se pueda, para que no salgan 18 de Super Nintendo.
+let tanda = 0;
+function mulberry32(a) {
+  return () => { a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+}
+function recomendados(n = 18) {
+  const vale = r => completa(r) && !esAdulto(r) && !esItch(r) && (r.s !== 'pc' || !!r.x.steam);
+  const porSis = new Map();
+  for (const gr of gruposDe('todas')) {
+    if (gr.a18 || !conPortada(gr.portada) || gr.filas.some(esItch) || !gr.filas.some(vale)) continue;
+    anyadir(porSis, gr.s, gr);
+  }
+  const rnd = mulberry32(Math.floor(Date.now() / 864e5) * 7919 + tanda * 104729);
+  const baraja = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const sistemas = baraja([...porSis.keys()]);
+  for (const s of sistemas) baraja(porSis.get(s));
+  const out = [];
+  for (let ronda = 0; out.length < n && sistemas.some(s => porSis.get(s).length > ronda); ronda++) {
+    for (const s of sistemas) { const gr = porSis.get(s)[ronda]; if (gr && out.length < n) out.push(gr); }
+  }
+  return out.map(gr => elegida(gr, vale)).filter(Boolean);
+}
+const bloqueRecomendados = () => `<div class="row-h"><h2>Recomendaciones</h2><button class="more" data-tanda>Otra tanda</button></div>
+    <p class="lead">Una tanda al azar de juegos con traducción completa, distinta cada día. Busca o filtra para ver todo el catálogo.</p>
+    <div class="row">${recomendados().map(tarjeta).join('')}</div>`;
+
 function pintarRejilla() {
   const sistemas = [...new Set(gruposDe(vista).map(gr => gr.s))].sort((x, y) => (SYS[x] || x).localeCompare(SYS[y] || y));
   // Un sistema elegido en otra sección que aquí no existe dejaría la rejilla vacía con el desplegable en «Todos».
   if (filtro.sys && !sistemas.includes(filtro.sys)) filtro.sys = '';
   lista = filtrar(gruposDe(vista));
   const nTrad = lista.reduce((n, it) => n + it.gr.filas.length, 0);
+  // En Descubrir, sin buscar ni filtrar nada: una tanda de juegos al azar para empezar por algún sitio.
+  const recomendando = vista === 'todas' && !filtro.sys && !tokens($('q').value).length && !filtro.directa && !filtro.completa && !filtro.sinia && !filtro.steam;
   const chip = (k, t, ayuda) => `<button class="chip" data-f="${k}" aria-pressed="${filtro[k]}"${ayuda ? ` title="${ayuda}"` : ''}>${t}</button>`;
   const l = listaDe(vista);
   let vacio = 'No hay resultados con estos filtros.';
@@ -535,7 +579,7 @@ function pintarRejilla() {
     : '<button class="btn ghost" data-lista="renombrar">Cambiar el nombre</button><button class="btn ghost" data-lista="borrar">Borrar la lista</button>'}</div>`
     + (faltan > 0 ? `<p class="lead">${faltan === 1 ? 'Un juego de esta lista ya no está' : faltan + ' juegos de esta lista ya no están'} en el catálogo.</p>` : '')
     : `<h1>${VISTAS[vista]}</h1>`;
-  main.innerHTML = `${cabecera}
+  main.innerHTML = `${cabecera}${recomendando ? bloqueRecomendados() : ''}
     <div class="filters">
       <select id="sys" aria-label="Sistema"><option value="">Todos los sistemas</option>${sistemas.map(s => `<option value="${esc(s)}" ${s === filtro.sys ? 'selected' : ''}>${esc(SYS[s] || s)}</option>`).join('')}</select>
       ${chip('directa', 'Traducción de un clic')}${chip('completa', 'Completas')}${chip('sinia', 'Sin IA')}${chip('steam', 'En Steam', 'Solo los juegos que se venden en Steam: fuera los gratuitos de itch.io y los que ya no están a la venta')}
@@ -600,6 +644,10 @@ function pintarAjustes() {
       <section><h2>Parches que bajas tú</h2>
         <p>Cuando una traducción no tiene descarga de un clic, la biblioteca vigila tu carpeta <b>Descargas</b> y aplica el parche en cuanto termina de bajar.</p>
       </section>
+      <section><h2>Juegos para adultos</h2>
+        <label class="opt"><input type="checkbox" id="adultos" ${verAdultos ? 'checked' : ''}> Mostrar los juegos para adultos (+18)</label>
+        <p>Sus traducciones van ocultas de serie en todas las secciones y no entran en las recomendaciones. Actívalo solo si eres mayor de edad; se guarda al momento.</p>
+      </section>
       <section><h2>Acerca de</h2>
         <p>Biblioteca de traducciones ${esc(ajustes.version || '')}. Nunca descarga juegos: solo parches de traducción para tu propia copia. Guarda sus datos (trabajos y parches descargados) en tu carpeta de usuario.</p>
         <p>El catálogo se pone al día solo al abrir el programa y cada seis horas; las versiones nuevas del programa se avisan abajo a la izquierda. Si no quieres esperar:</p>
@@ -610,6 +658,7 @@ function pintarAjustes() {
     </div>`;
   const elegir = async titulo => api('elegir_carpeta', {titulo}).catch(e => { aviso(e.message, 'bad'); return null; });
   $('buscar-act').onclick = buscarActualizaciones;
+  $('adultos').onchange = e => { guardarAdultos(e.target.checked); contadores(); aviso(e.target.checked ? 'Los juegos para adultos ya se muestran.' : 'Los juegos para adultos quedan ocultos.', 'ok'); };
   $('anyadir').onclick = async () => {
     const c = await elegir('Elige una carpeta con tus juegos');
     if (c && !b.carpetas.includes(c)) { b.carpetas.push(c); pintarAjustes(); }
@@ -890,6 +939,7 @@ main.addEventListener('click', e => {
   if (go) return ir(go.dataset.go);
   const f = e.target.closest('.chip[data-f]');
   if (f) { filtro[f.dataset.f] = !filtro[f.dataset.f]; limit = 60; return pintar(); }
+  if (e.target.closest('[data-tanda]')) { tanda++; return pintar(); }
   if (e.target.dataset.jugar) return jugar(e.target.dataset.jugar, e.target.dataset.sis || '');
   if (e.target.dataset.ruta) return verCarpeta(e.target.dataset.ruta);
   if (e.target.dataset.lista) return accionLista(e.target.dataset.lista);
