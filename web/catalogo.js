@@ -10,6 +10,7 @@
   const norm = t => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
   const esc = t => String(t).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
   const num = n => n.toLocaleString('es-ES');
+  const FAV = '<button type="button" class="fav" aria-pressed="false" aria-label="Añadir a Favoritos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7.5-4.6-9.3-9.2C1.4 7.4 3.6 4 7 4c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.4 0 5.6 3.4 4.3 6.8C19.5 15.4 12 20 12 20z"/></svg></button>';
 
   // Las direcciones de la portada, en el orden en que se prueban (las mismas que hace web.py para las
   // páginas): la puesta a mano; la de Steam, la del catálogo y la cabecera de Steam; o la de libretro, la
@@ -33,8 +34,8 @@
     const urls = portadas(j[6]);
     const img = urls.length ? `<img loading="lazy" src="${esc(urls[0])}" data-alt="${esc(urls.slice(1).join(' '))}" alt="" referrerpolicy="no-referrer" onerror="sig(this)" onload="this.classList.add('ok')">` : '';
     const meta = [esc(SYS[j[1]] || j[1]), j[3] > 1 ? `${j[3]} traducciones` : '', j[4] ? '<b>Un clic</b>' : ''].filter(Boolean).join(' · ');
-    return `<li class="tarjeta"><a href="../${j[2]}"><span class="port${img ? '' : ' sin'}">${img}<span class="ph">${esc(j[0])}</span></span>` +
-      `<span class="cuerpo"><span class="t">${esc(j[0])}</span><span class="m">${meta}</span></span></a></li>`;
+    return `<li class="tarjeta" data-ruta="${esc(j[2])}" data-sis="${esc(j[1])}" data-sisn="${esc(SYS[j[1]] || j[1])}" data-titulo="${esc(j[0])}"><a href="../${j[2]}"><span class="port${img ? '' : ' sin'}">${img}<span class="ph">${esc(j[0])}</span></span>` +
+      `<span class="cuerpo"><span class="t">${esc(j[0])}</span><span class="m">${meta}</span></span></a>${FAV}</li>`;
   }
 
   function pintar() {

@@ -242,8 +242,9 @@ def tarjeta_juego(g, raiz, sysn, con_sistema=True, fila=None, extra=''):
               e(f['grupo'].strip()) if (fila or n == 1) and f['grupo'].strip() else '',
               f'{n} traducciones' if n > 1 else '',
               '<b>Un clic</b>' if any(directa(x) for x in g['filas']) else '']
-    return (f'<li class="tarjeta"><a href="{raiz}{g["ruta"]}"><span class="port{"" if img else " sin"}">{img}<span class="ph">{e(g["titulo"])}</span></span>'
-            f'<span class="cuerpo"><span class="t">{e(g["titulo"])}</span><span class="m">{" · ".join(p for p in partes if p)}{extra}</span></span></a></li>')
+    return (f'<li class="tarjeta" data-ruta="{e(g["ruta"])}" data-sis="{e(g["s"])}" data-sisn="{e(sysn.get(g["s"], g["s"]))}" data-titulo="{e(g["titulo"])}">'
+            f'<a href="{raiz}{g["ruta"]}"><span class="port{"" if img else " sin"}">{img}<span class="ph">{e(g["titulo"])}</span></span>'
+            f'<span class="cuerpo"><span class="t">{e(g["titulo"])}</span><span class="m">{" · ".join(p for p in partes if p)}{extra}</span></span></a><button type="button" class="fav" aria-pressed="false" aria-label="Añadir a Favoritos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7.5-4.6-9.3-9.2C1.4 7.4 3.6 4 7 4c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.4 0 5.6 3.4 4.3 6.8C19.5 15.4 12 20 12 20z"/></svg></button></li>')
 
 
 def portada_spec(g):
@@ -333,6 +334,7 @@ def pagina(raiz, titulo, descripcion, ruta, cuerpo, base, imagen='img/vista-prev
   <a class="marca" href="{raiz or './'}"><img src="{raiz}icono.svg" alt="" width="32" height="32"><span>Biblioteca de traducciones</span></a>
   <nav aria-label="Principal">
     <a href="{raiz}catalogo/">Catálogo</a>
+    <a href="{raiz}mis-listas/" id="nav-listas">Mis listas</a>
     <a href="{REPO}">GitHub</a>
     <a class="btn primario" href="{INSTALADOR}" data-goatcounter-click="descarga-cabecera">Descargar</a>
   </nav>
@@ -345,6 +347,7 @@ def pagina(raiz, titulo, descripcion, ruta, cuerpo, base, imagen='img/vista-prev
     <p class="suave">No está relacionado con ninguna de las empresas de los juegos. Las portadas son de sus propietarios. Firma del instalador: <a href="{REPO}#code-signing-policy">Code signing policy</a>.{nota_cuenta}</p>
   </div>
 </footer>
+<script src="{raiz}listas.js" defer></script>
 {cuenta}</body>
 </html>
 '''
@@ -468,6 +471,7 @@ def pagina_juego(gr, sysn, libretro, base, ctx):
       <p class="lede">{'Hay una traducción al español hecha por aficionados' if n == 1 else f'Hay {n} traducciones al español hechas por aficionados'}{f": {e(quien)}" if quien else ''}.</p>
       <a class="btn primario grande" href="{INSTALADOR}" data-goatcounter-click="descarga-juego">Descargar el programa para Windows</a>
       {compra}
+      <div class="juego-acciones" data-ruta="{e(gr["ruta"])}" data-sis="{e(s)}" data-sisn="{e(nombre_sis)}" data-titulo="{e(titulo)}" data-port="{e(" ".join(absolutas[:3]))}"><button type="button" class="fav" aria-pressed="false" aria-label="Añadir a Favoritos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7.5-4.6-9.3-9.2C1.4 7.4 3.6 4 7 4c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.4 0 5.6 3.4 4.3 6.8C19.5 15.4 12 20 12 20z"/></svg></button><button type="button" class="btn" id="guardar-lista">Guardar en una lista</button></div>
     </div>
   </div>
   <section class="bloque">
@@ -590,6 +594,8 @@ def pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version):
     <img class="captura" src="img/captura-listas.png" width="1360" height="860" alt="La Biblioteca de traducciones con juegos de diez plataformas: Game Boy Advance, PlayStation, Super Nintendo, Mega CD, Dreamcast, Saturn, Nintendo DS, PlayStation 2, Nintendo 64 y PC">
   </section>
 
+  <div id="favoritos-inicio"></div>
+
   <section class="cifras" aria-label="El catálogo en cifras">
     <div><b>{n_trad:,}</b><span>traducciones</span></div>
     <div><b>{n_juegos:,}</b><span>juegos</span></div>
@@ -658,6 +664,17 @@ def pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version):
          'downloadUrl': INSTALADOR, 'license': 'https://www.gnu.org/licenses/gpl-3.0.html', 'image': base + 'img/vista-previa.png',
          'offers': {'@type': 'Offer', 'price': '0', 'priceCurrency': 'EUR'}}]}
     return pagina(raiz, 'Biblioteca de traducciones: juega en español a juegos que nunca salieron traducidos', desc, '', cuerpo, base, ld=ld)
+
+
+def pagina_listas(base):
+    raiz = '../'
+    cuerpo = f'''<main class="listas">
+  <p class="migas"><a href="{raiz}">Inicio</a> › Mis listas</p>
+  <h1>Mis listas</h1>
+  <p class="lede">Tus favoritos y las listas que hagas, guardados en este navegador. Pulsa el corazón de cualquier juego para añadirlo a Favoritos; en su ficha, «Guardar en una lista» para ponerlo donde quieras.</p>
+  <div id="listas"></div>
+</main>'''
+    return pagina(raiz, 'Mis listas · Biblioteca de traducciones', 'Tus juegos favoritos y tus listas de traducciones, guardados en tu navegador.', 'mis-listas/', cuerpo, base)
 
 
 def pagina_404(base):
@@ -806,6 +823,7 @@ def main():
     os.makedirs(os.path.join(salida, 'parchear'))
     for nombre in ('motor.js', 'parchear.js'):
         shutil.copy(os.path.join(WEB, nombre), os.path.join(salida, 'parchear', nombre))
+    shutil.copy(os.path.join(WEB, 'listas.js'), os.path.join(salida, 'listas.js'))
     if dominio:
         shutil.copy(cname, os.path.join(salida, 'CNAME'))
     for nombre in os.listdir(WEB):
@@ -826,6 +844,7 @@ def main():
     escribir(salida, 'catalogo/juegos.json', json.dumps(indice, ensure_ascii=False, separators=(',', ':')))
     escribir(salida, 'catalogo/parches.json', parches_json(filas))
     escribir(salida, 'parchear/index.html', pagina_parchear(base, sysn))
+    escribir(salida, 'mis-listas/index.html', pagina_listas(base))
     for s, gs in por_sis.items():
         escribir(salida, f'sistema/{s}/index.html', miles(pagina_sistema(s, gs, sysn, base)))
     escribir(salida, '404.html', pagina_404(base))

@@ -523,9 +523,10 @@ function tarjetaMio(g, t, tipo) {
   const directa = t.d.length > 0 && !A_MANO.has(t.s) && g.k !== 'sheet' && g.k !== 'chd' && g.it.file.size <= M.MAX_EN_MEMORIA;
   const cuantas = (g.exactos.length + g.posibles.length);
   const meta = [esc(nombreSis(t.s)), tipo === 'exacto' ? '<span class="ok">Tu versión vale</span>' : '<span class="warn">Sin comprobar</span>', cuantas > 1 ? `${cuantas} traducciones` : esc(t.g || '')].filter(Boolean).join(' · ');
-  return `<li class="tarjeta con-acc" data-n="${n}"><a href="../${esc(t.p)}" title="${esc(g.it.ruta)}"><span class="port${img ? '' : ' sin'}">${img}<span class="ph">${esc(t.j)}</span></span>
+  return `<li class="tarjeta con-acc" data-n="${n}" data-ruta="${esc(t.p)}" data-sis="${esc(t.s)}" data-sisn="${esc(nombreSis(t.s))}" data-titulo="${esc(t.j)}"><a href="../${esc(t.p)}" title="${esc(g.it.ruta)}"><span class="port${img ? '' : ' sin'}">${img}<span class="ph">${esc(t.j)}</span></span>
     <span class="cuerpo"><span class="t">${esc(t.j)}</span><span class="m">${meta}</span><span class="m">${esc(g.it.file.name)}</span></span></a>
-    <div class="acc">${directa ? `<button class="btn primario" data-mio="${n}">Traducir</button>` : ''}<a class="btn" href="../${esc(t.p)}">Ficha</a></div></li>`;
+    <div class="acc">${directa ? `<button class="btn primario" data-mio="${n}">Traducir</button>` : ''}<a class="btn" href="../${esc(t.p)}">Ficha</a></div>
+    <button type="button" class="fav" aria-pressed="false" aria-label="Añadir a Favoritos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7.5-4.6-9.3-9.2C1.4 7.4 3.6 4 7 4c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.4 0 5.6 3.4 4.3 6.8C19.5 15.4 12 20 12 20z"/></svg></button></li>`;
 }
 
 async function pintarMios(juegos, traducidos, total, saltados, seg) {

@@ -212,3 +212,27 @@ main { display: block; max-width: var(--ancho); margin: 0 auto; padding: 0 var(-
 .tarjeta .acc .btn { flex: 1; padding: 6px 8px; font-size: 0.82rem; border-radius: 8px; }
 .tarjeta .m .ok { color: var(--verde); }
 .tarjeta .m .warn { color: var(--amarillo-t); }
+
+/* Favoritos y listas */
+.tarjeta { position: relative; }
+.fav { position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; border-radius: 50%; border: 0; background: rgba(10, 13, 18, 0.72); color: #fff; display: grid; place-items: center; cursor: pointer; padding: 0; }
+.fav svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; }
+.fav:hover { background: rgba(10, 13, 18, 0.9); }
+.fav[aria-pressed="true"] svg { fill: var(--rojo-2); stroke: var(--rojo-2); }
+.juego-acciones { position: relative; display: flex; align-items: center; gap: 10px; margin-top: 14px; }
+.juego-acciones .fav { position: static; background: var(--panel); border: 1px solid var(--linea); width: 40px; height: 40px; }
+.juego-acciones .btn { margin-top: 0; }
+.menu-listas { position: absolute; top: 100%; left: 50px; z-index: 5; margin-top: 8px; min-width: 240px; padding: 12px 14px; background: var(--panel); border: 1px solid var(--linea); border-radius: 12px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45); display: grid; gap: 8px; }
+.menu-listas p { margin: 0; }
+.menu-listas label { display: flex; gap: 8px; align-items: center; }
+.nueva { display: flex; gap: 8px; margin-top: 4px; }
+.nueva input { flex: 1; min-width: 0; font: 1rem var(--sans); color: var(--texto); background: var(--tinta); border: 1px solid var(--linea); border-radius: 8px; padding: 6px 10px; }
+.nueva .btn { padding: 6px 12px; }
+.lista-b { margin-top: 36px; }
+.lista-h { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 14px; }
+.lista-h h2 { font-size: 1.4rem; }
+.btn.ghost { background: none; border-color: transparent; color: var(--suave); padding: 4px 8px; }
+.btn.ghost:hover { color: var(--amarillo-t); }
+.acciones-l { display: flex; flex-wrap: wrap; gap: 10px; }
+.aviso-flot { position: fixed; left: 16px; bottom: 16px; z-index: 20; padding: 10px 14px; background: var(--panel-2); border: 1px solid var(--linea); border-radius: 10px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4); opacity: 0; transform: translateY(8px); transition: opacity .2s, transform .2s; pointer-events: none; }
+.aviso-flot.ver { opacity: 1; transform: none; }
