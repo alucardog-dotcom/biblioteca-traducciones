@@ -10,6 +10,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::Mutex;
 
 const RUTA_REPOSITORIO: &str = "src-tauri/recursos/catalogo";
 const CSV: &str = "traducciones_fan.csv";
@@ -62,9 +63,14 @@ fn valido(csv_: &Path, centro: &Path) -> bool {
     filas.unwrap_or(0) >= 1000 && json_ok
 }
 
+/// Solo una comprobación a la vez: la de cada seis horas y la del botón «Buscar actualizaciones» pueden
+/// coincidir, y las dos escriben en la misma carpeta.
+static CERROJO: Mutex<()> = Mutex::new(());
+
 /// Mira en GitHub si hay un catálogo distinto del que se usa y, si lo hay, lo descarga. Devuelve true si
 /// ha cambiado el catálogo que se usa (la ventana tiene que volver a cargarlo).
 pub fn actualizar(r: &Rutas) -> Result<bool, String> {
+    let _solo_uno = CERROJO.lock().unwrap_or_else(|e| e.into_inner());
     let remoto = descarga::carpeta_repositorio(RUTA_REPOSITORIO)?;
     let (Some(rc), Some(rj)) = (remoto.get(CSV), remoto.get(CENTRO)) else {
         return Err("El repositorio no tiene el catálogo.".into());
@@ -92,7 +98,7 @@ pub fn actualizar(r: &Rutas) -> Result<bool, String> {
             let f = nuevo.join(nombre);
             descarga::bajar_a(url, &f)?;
             if sha_git(&f).as_deref() != Some(sha.as_str()) {
-                return Err("El catálogo descargado no está entero.".into());
+                return Err("El catálogo descargado no está entero: si acaba de cambiar, inténtalo en unos minutos.".into());
             }
         }
         if !valido(&nuevo.join(CSV), &nuevo.join(CENTRO)) {

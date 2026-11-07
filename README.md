@@ -42,7 +42,7 @@ Descarga el instalador (`…_x64-setup.exe`) de la [última versión](../../rele
 
 El instalador no está firmado, así que Windows puede avisar con «Windows protegió su PC». Para instalarlo, pulsa **Más información** y luego **Ejecutar de todas formas**.
 
-Al abrirlo por primera vez te pregunta en qué carpetas tienes tus juegos. El catálogo se pone al día solo cada vez que lo abres, sin reinstalar nada. Cuando sale una versión nueva del programa, aparece un aviso abajo a la izquierda.
+Al abrirlo por primera vez te pregunta en qué carpetas tienes tus juegos. El catálogo se pone al día solo cada vez que lo abres, y cada seis horas mientras siga abierto, sin reinstalar nada. Cuando sale una versión nueva del programa, aparece un aviso abajo a la izquierda. Si no quieres esperar, en Ajustes › Acerca de el botón **Buscar actualizaciones** comprueba las dos cosas al momento.
 
 ## De dónde salen las traducciones
 

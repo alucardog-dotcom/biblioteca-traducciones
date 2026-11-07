@@ -251,6 +251,25 @@ async fn version_nueva() -> Value {
     tauri::async_runtime::spawn_blocking(|| descarga::version_nueva(env!("CARGO_PKG_VERSION"))).await.ok().flatten().unwrap_or(Value::Null)
 }
 
+/// El botón «Buscar actualizaciones»: mira si hay un catálogo más nuevo (y lo descarga) y si hay una versión
+/// más nueva del programa. Devuelve {catalogo: "nuevo" | "al_dia" | {error}, version: {version, url} | null};
+/// la ventana recarga el catálogo ella misma con lo que recibe, sin esperar al evento.
+#[tauri::command]
+async fn buscar_actualizaciones(app: Estado<'_>) -> Result<Value, String> {
+    let app = app.inner().clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        let catalogo = match catalogo::actualizar(&app.rutas) {
+            Ok(true) => json!("nuevo"),
+            Ok(false) => json!("al_dia"),
+            Err(e) => json!({"error": e}),
+        };
+        let version = descarga::version_nueva(env!("CARGO_PKG_VERSION")).unwrap_or(Value::Null);
+        json!({"catalogo": catalogo, "version": version})
+    })
+    .await
+    .map_err(|_| "No se ha podido comprobar.".to_string())
+}
+
 /// Una imagen pegada con Ctrl+V: llega tal cual (sin pasar a JSON) y la clave del juego, en una cabecera.
 #[tauri::command]
 fn pegar_portada(app: Estado, request: tauri::ipc::Request<'_>) -> Result<Value, String> {
@@ -283,12 +302,17 @@ fn vigilante(h: AppHandle, app: Arc<App>) {
     });
 }
 
-/// Al poco de abrir, mira si hay un catálogo más nuevo en GitHub; si lo descarga, la ventana lo recarga.
+/// Al poco de abrir, y luego cada seis horas mientras el programa siga abierto, mira si hay un catálogo más
+/// nuevo en GitHub; si lo descarga, la ventana lo recarga.
 fn catalogo_al_dia(h: AppHandle, app: Arc<App>) {
     std::thread::spawn(move || {
-        std::thread::sleep(Duration::from_secs(5));
-        if let Ok(true) = catalogo::actualizar(&app.rutas) {
-            let _ = h.emit("catalogo", ());
+        let mut espera = Duration::from_secs(5);
+        loop {
+            std::thread::sleep(espera);
+            espera = Duration::from_secs(6 * 60 * 60);
+            if let Ok(true) = catalogo::actualizar(&app.rutas) {
+                let _ = h.emit("catalogo", ());
+            }
         }
     });
 }
@@ -329,7 +353,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             datos, mis_juegos, estado, escanear, traducir, esperar, cancelar_espera, jugar, ver_carpeta, abrir_web, ajustes,
-            guardar_ajustes, elegir_carpeta, elegir_imagen, portadas_propias, poner_portada, quitar_portada, pegar_portada, version_nueva,
+            guardar_ajustes, elegir_carpeta, elegir_imagen, portadas_propias, poner_portada, quitar_portada, pegar_portada, version_nueva, buscar_actualizaciones,
             mis_listas, guardar_listas
         ])
         .run(tauri::generate_context!())

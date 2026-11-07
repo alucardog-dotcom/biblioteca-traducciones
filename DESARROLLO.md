@@ -9,7 +9,7 @@ Está hecha con [Tauri 2](https://tauri.app): el motor en Rust (`src-tauri/`) y 
 | Qué | Dónde |
 |---|---|
 | Catálogo | Va dentro del programa, en `src-tauri/recursos/catalogo`: `traducciones_fan.csv` (las traducciones) y `centro_datos.json` (portadas, descargas directas y AppID de Steam de cada ficha) |
-| Catálogo al día | `catalogo.rs`. Al abrir, compara el sha de git de esos dos ficheros con los de la rama `main` de este repositorio (API de GitHub). Si son otros, baja los nuevos a `<datos>\catalogo`, comprueba su sha y que se leen bien, y la ventana los recarga. Una versión nueva del programa vuelve a usar el suyo. Las portadas a mano que aún no lleva dentro el programa se traen de `ui/portadas` del repositorio |
+| Catálogo al día | `catalogo.rs`. Al abrir, y luego cada seis horas (`catalogo_al_dia` en `lib.rs`), compara el sha de git de esos dos ficheros con los de la rama `main` de este repositorio (API de GitHub). Si son otros, baja los nuevos a `<datos>\catalogo`, comprueba su sha y que se leen bien, y la ventana los recarga. Una versión nueva del programa vuelve a usar el suyo. El botón «Buscar actualizaciones» de Ajustes (comando `buscar_actualizaciones`) hace esa misma comprobación a mano junto con la de versión nueva del programa. Las portadas a mano que aún no lleva dentro el programa se traen de `ui/portadas` del repositorio |
 | Ventana | `ui/app.js`. Junta las fichas en juegos (mismo sistema y título, o mismo AppID de Steam), empareja tus juegos con las traducciones (por CRC32, por AppID o por el nombre) y pinta las secciones |
 | Buscar tus juegos | `escaneo.rs`. Saca el CRC32 de cada ROM, lee el índice de los .zip sin descomprimirlos y usa 7-Zip para los .7z y .rar. Guarda una caché para que las siguientes búsquedas vayan rápidas. Los juegos de PC salen del registro y los manifiestos de Steam, GOG y Epic |
 | Bajar el parche | `descarga.rs`. Solo de Traducciones Wave, archive.org y GitHub (también la API de versiones de GitHub), comprobando cada redirección. De los paquetes de RetroAchievements saca solo los ficheros de la ficha |
@@ -52,7 +52,7 @@ El catálogo se mantiene aparte, con unos scripts de Python que todavía no est�
 
 Las portadas que alguien pone a mano en el programa pueden pasar al catálogo para que las vea todo el mundo. Se guardan por clave de juego, la misma con la que la ventana junta las traducciones (`claveJuego` en `ui/app.js`).
 
-Para poner al día el catálogo de todos basta con subir a `main` los ficheros nuevos de `src-tauri/recursos/catalogo` (y las portadas de `ui/portadas`): los programas ya instalados los descargan al abrirse. No hace falta publicar una versión.
+Para poner al día el catálogo de todos basta con subir a `main` los ficheros nuevos de `src-tauri/recursos/catalogo` (y las portadas de `ui/portadas`): los programas ya instalados los descargan al abrirse, cada seis horas o al pulsar «Buscar actualizaciones». No hace falta publicar una versión.
 
 ## La web
 

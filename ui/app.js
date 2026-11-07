@@ -602,11 +602,14 @@ function pintarAjustes() {
       </section>
       <section><h2>Acerca de</h2>
         <p>Biblioteca de traducciones ${esc(ajustes.version || '')}. Nunca descarga juegos: solo parches de traducción para tu propia copia. Guarda sus datos (trabajos y parches descargados) en tu carpeta de usuario.</p>
+        <p>El catálogo se pone al día solo al abrir el programa y cada seis horas; las versiones nuevas del programa se avisan abajo a la izquierda. Si no quieres esperar:</p>
+        <div class="line"><button class="btn" id="buscar-act">Buscar actualizaciones</button><span class="muted" id="buscar-act-res" aria-live="polite"></span></div>
         <p>Es gratuita y de código abierto. Si te resulta útil, puedes invitarme a un café: las donaciones son para el desarrollo del programa (las traducciones son de sus autores).</p>
         <div class="line"><a class="btn primary" href="${DONAR}">Invitar a un café (PayPal)</a><a class="btn" href="${WEB}">La web</a><a class="btn" href="https://github.com/alucardog-dotcom/biblioteca-traducciones">El proyecto en GitHub</a><button class="btn" data-ruta="${esc(ajustes.datos || '')}">Abrir la carpeta de datos</button></div>
       </section>
     </div>`;
   const elegir = async titulo => api('elegir_carpeta', {titulo}).catch(e => { aviso(e.message, 'bad'); return null; });
+  $('buscar-act').onclick = buscarActualizaciones;
   $('anyadir').onclick = async () => {
     const c = await elegir('Elige una carpeta con tus juegos');
     if (c && !b.carpetas.includes(c)) { b.carpetas.push(c); pintarAjustes(); }
@@ -1106,17 +1109,49 @@ T.event.listen('juegos', async () => {
   sondear();
 });
 T.event.listen('trabajo', () => sondear());
-// Ha llegado un catálogo más nuevo de GitHub: se vuelve a cargar sin cerrar nada.
+// Ha llegado un catálogo más nuevo de GitHub: se vuelve a cargar sin cerrar nada. Devuelve el texto del aviso.
+async function recargarCatalogo() {
+  const antes = filas.length;
+  cargarDatos(await api('datos'));
+  emparejar();
+  if (!$('ficha').open && vista !== 'ajustes') pintar(); else contadores();
+  const mas = filas.length - antes;
+  return `Catálogo actualizado${mas > 0 ? `: ${mas} ${mas === 1 ? 'traducción nueva' : 'traducciones nuevas'}` : ''}.`;
+}
 T.event.listen('catalogo', async () => {
-  try {
-    const antes = filas.length;
-    cargarDatos(await api('datos'));
-    emparejar();
-    if (!$('ficha').open && vista !== 'ajustes') pintar(); else contadores();
-    const mas = filas.length - antes;
-    aviso(`Catálogo actualizado${mas > 0 ? `: ${mas} ${mas === 1 ? 'traducción nueva' : 'traducciones nuevas'}` : ''}.`, 'ok');
-  } catch (e) { aviso(e.message, 'bad'); }
+  try { aviso(await recargarCatalogo(), 'ok'); } catch (e) { aviso(e.message, 'bad'); }
 });
+
+// Hay una versión más nueva en GitHub: sale un botón abajo a la izquierda para ir a descargarla.
+function versionNueva(v) {
+  if (!v || !v.url) return false;
+  const b = $('nueva');
+  b.textContent = `Versión ${v.version} disponible: descárgala`;
+  b.onclick = () => api('abrir_web', {url: v.url}).catch(e => aviso(e.message, 'bad'));
+  b.hidden = false;
+  return true;
+}
+
+// El botón «Buscar actualizaciones» de Ajustes: catálogo y versión del programa, y un solo aviso con el resultado.
+async function buscarActualizaciones() {
+  const b = $('buscar-act'), res = $('buscar-act-res');
+  b.disabled = true;
+  b.textContent = 'Buscando…';
+  res.textContent = '';
+  let texto, tipo = 'ok';
+  try {
+    const r = await api('buscar_actualizaciones');
+    if (r.catalogo === 'nuevo') texto = await recargarCatalogo();
+    else if (r.catalogo && r.catalogo.error) { texto = `No se ha podido comprobar el catálogo: ${r.catalogo.error}`; tipo = 'bad'; }
+    else texto = 'El catálogo está al día.';
+    if (versionNueva(r.version)) texto += ` Hay una versión nueva del programa, la ${r.version.version}: descárgala con el botón de abajo a la izquierda.`;
+    else if (tipo === 'ok') texto = r.catalogo === 'nuevo' ? `${texto} El programa está en su última versión.` : 'Todo al día: tienes el último catálogo y la última versión del programa.';
+  } catch (e) { texto = e.message; tipo = 'bad'; }
+  aviso(texto, tipo);
+  res.textContent = texto;
+  b.disabled = false;
+  b.textContent = 'Buscar actualizaciones';
+}
 
 (async function inicio() {
   try { vista = localStorage.getItem('vista') || 'inicio'; } catch (e) { }
@@ -1133,12 +1168,5 @@ T.event.listen('catalogo', async () => {
   sondear();
   recordarZoom();
   // ¿Hay una versión más nueva en GitHub? Sale un botón abajo a la izquierda para ir a descargarla.
-  setTimeout(async () => {
-    const v = await api('version_nueva').catch(() => null);
-    if (!v || !v.url) return;
-    const b = $('nueva');
-    b.textContent = `Versión ${v.version} disponible: descárgala`;
-    b.onclick = () => api('abrir_web', {url: v.url}).catch(e => aviso(e.message, 'bad'));
-    b.hidden = false;
-  }, 4000);
+  setTimeout(async () => versionNueva(await api('version_nueva').catch(() => null)), 4000);
 })();
