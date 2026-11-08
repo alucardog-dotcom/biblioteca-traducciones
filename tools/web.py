@@ -18,6 +18,11 @@ INSTALADOR = REPO + '/releases/latest/download/Biblioteca-de-traducciones-setup.
 # Estadísticas anónimas y sin cookies con GoatCounter: el código del sitio (lo que va antes de .goatcounter.com).
 # Vacío, la web no carga ningún script de estadísticas.
 GOATCOUNTER = 'bibliotecadetraducciones'
+# Las listas de los bloqueadores de anuncios (EasyPrivacy) cortan gc.zgo.at y goatcounter.com como terceros. Por eso
+# el script va en la propia web (web/estadisticas.js, el count.js de GoatCounter, licencia ISC) y las visitas se
+# mandan a un subdominio propio, un CNAME a <código>.goatcounter.com puesto también en los ajustes de GoatCounter.
+# Vacío, se usan gc.zgo.at y <código>.goatcounter.com.
+GOATCOUNTER_DOMINIO = 'stats.bibliotecadetraducciones.com'
 INCIDENCIAS = REPO + '/issues'
 DONAR = 'https://paypal.me/btraducciones'
 # Enlace de afiliado: la búsqueda de Instant Gaming con el código del autor (igr).
@@ -133,7 +138,13 @@ def agrupar(filas):
 def fecha_iso(f):
     """La fecha de la traducción como AAAA-MM-DD, o '' si no está entera."""
     d = f['fecha'].strip()
-    return d if re.fullmatch(r'\d{4}-\d{2}-\d{2}', d) else ''
+    if not re.fullmatch(r'\d{4}-\d{2}-\d{2}', d):
+        return ''
+    try:
+        # Search Console marca el sitemap con error si una fecha es imposible, y «0018-11-08» no es una fecha.
+        return d if date.fromisoformat(d).year >= 1990 else ''
+    except ValueError:
+        return ''
 
 
 def anio(f):
@@ -637,8 +648,11 @@ def migas_ld(base, pasos):
 def pagina(raiz, titulo, descripcion, ruta, cuerpo, base, imagen='img/vista-previa.png', tipo='website', ld=None):
     canon = base + ruta
     og_imagen = imagen if imagen.startswith('http') else base + imagen
-    cuenta = (f'<script data-goatcounter="https://{GOATCOUNTER}.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>\n'
-              if GOATCOUNTER else '')
+    cuenta = ''
+    if GOATCOUNTER:
+        destino = f'https://{GOATCOUNTER_DOMINIO or GOATCOUNTER + ".goatcounter.com"}/count'
+        script = f'{raiz}estadisticas.js' if os.path.isfile(os.path.join(WEB, 'estadisticas.js')) else '//gc.zgo.at/count.js'
+        cuenta = f'<script data-goatcounter="{destino}" async src="{script}"></script>\n'
     nota_cuenta = ' Estadísticas anónimas y sin cookies con <a href="https://www.goatcounter.com/">GoatCounter</a>.' if GOATCOUNTER else ''
     return f'''<!doctype html>
 <html lang="es">
@@ -1588,6 +1602,8 @@ def main():
     icono = os.path.join(WEB, 'icono.svg')
     shutil.copy(icono if os.path.isfile(icono) else os.path.join(RAIZ, 'ui', 'icono.svg'), os.path.join(salida, 'icono.svg'))
     shutil.copy(os.path.join(WEB, 'estilo.css'), os.path.join(salida, 'estilo.css'))
+    if os.path.isfile(os.path.join(WEB, 'estadisticas.js')):
+        shutil.copy(os.path.join(WEB, 'estadisticas.js'), os.path.join(salida, 'estadisticas.js'))
     os.makedirs(os.path.join(salida, 'catalogo'))
     shutil.copy(os.path.join(WEB, 'catalogo.js'), os.path.join(salida, 'catalogo', 'catalogo.js'))
     os.makedirs(os.path.join(salida, 'parchear'))
