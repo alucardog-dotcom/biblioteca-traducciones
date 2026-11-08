@@ -177,6 +177,7 @@ nes|Mega Man|danuffo	87	lb:484 +6trad
 nes|Ninja Gaiden II: The Dark Sword of Chaos|TransGen	87	lb:255 +ts +4trad
 pc|Don't Starve|Aivan	87	lb:62 st:97319 +2trad
 pc|Don't Starve|Nohemi	87	lb:62 st:97319 +2trad
+pc|Sonic Adventure 2|Ecos del doblaje	87	lb:156 st:23946 +ts +3trad
 psx|Resident Evil 2|Traducciones del Tío Víctor / Reviviendo En Castellano	87	lb:396 +ts
 snes|Contra III: The Alien Wars|Traducciones Wave	87	lb:565 +2trad
 snes|Secret of Mana|Pkt	87	lb:455 +3trad
@@ -407,6 +408,8 @@ pc|Digimon Story Cyber Sleuth: Complete Edition|Cross Game Frontier	79	lb:26 st:
 pc|NEEDY GIRL OVERDOSE|Taikutsu Translations (TaikutsuTL)	79	st:55121
 pc|Rivals of Aether|=El_Geri= con Swag	79	lb:52 st:33477 +2trad
 pc|Rivals of Aether|Enrip99	79	lb:52 st:33477 +2trad
+pc|Sonic Adventure 2 (traducción y doblaje al castellano)|kawaiikaorichan	79	lb:156 st:23946 +3trad
+pc|Sonic Adventure 2|Starmimi	79	lb:156 st:23946 +3trad
 pc|The Wolf Among Us (traducción mejorada)|darkpadawan (Clan DLAN)	79	lb:91 st:32652 +2trad
 pc|The Wolf Among Us|Liono 07	79	lb:91 st:32652 +2trad
 pc|Torchlight II (Trans Torchlight 2 Spanish)|Autor no indicado (foro de Runic Games); difundido por ibermarc	79	lb:97 st:33328 +2trad
@@ -428,6 +431,8 @@ nes|Excitebike|Traducciones Wave	78	lb:369
 pc|ATRI -My Dear Moments-|Sharin-Sub	78	lb:1 st:21635 +3trad
 pc|ATRI -My Dear Moments-|Taikutsu Translations (Koyomi)	78	lb:1 st:21635 +3trad
 pc|ATRI -My Dear Moments-|Taikutsu Translations (TaikutsuTL)	78	lb:1 st:21635 +3trad
+pc|Final Fantasy VII Remake Intergrade|Voice Emotions	78	lb:226 st:45702
+pc|Resident Evil 5|IG Studios	78	lb:175 st:49876
 pc|Trails in the Sky FC|Tradusquare	78	st:8840 +ts +2trad
 ps2|Silent Hill 4: The Room|Traducciones del Tío Víctor	78	lb:153 +ts +2trad
 psx|Medal of Honor (y Underground)|Traducciones del Tío Víctor	78	lb:204 +ts
@@ -480,8 +485,6 @@ pc|BattleTech|	77	lb:41 st:23183 +2trad
 pc|Gujian 3|	77	lb:2 st:40879
 pc|Library Of Ruina|CieloAoi	77	lb:2 st:41654
 pc|STEINS;GATE|NecaX (port de la traducción de GateOfSteiner / TraduSquare)	77	lb:23 st:25634 +2trad
-pc|Sonic Adventure 2 (traducción y doblaje al castellano)|kawaiikaorichan	77	lb:156 st:23946 +2trad
-pc|Sonic Adventure 2|Starmimi	77	lb:156 st:23946 +2trad
 pc|Steins;Gate (versión japonesa de PC)|TraduSquare	77	lb:23 st:25634 +2trad
 pc|Yakuza Kiwami (Legacy)|Daveyy	77	lb:68 st:17259 +3trad
 pc|Yakuza Kiwami (Legacy)|Malaquito; guía de Vuka	77	lb:68 st:17259 +3trad
@@ -1939,6 +1942,7 @@ pc|SiNiSistar 2|Skyline-core	60	lb:4 st:4006
 pc|Songs for a Hero|Abandon Socios	60	st:2433 +2trad
 pc|Songs for a Hero|sergiozar	60	st:2433 +2trad
 pc|Sonic 3 A.I.R.|Seeth	60	lb:94
+pc|Sonic Lost World|señorDane y Sonic Sunset	60	lb:73 st:4173
 pc|Sovereign Tower|Eider	60	st:4169
 pc|Three Kingdoms Zhao Yun|	60	st:3846
 pc|Tower of Time|	60	lb:8 st:2339 +2trad

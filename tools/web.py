@@ -158,6 +158,17 @@ def variante(f):
     return ''
 
 
+# El doblaje: las notas del catálogo lo dicen con una frase fija («Doblaje al castellano.», «Traducción y doblaje al
+# español latino.», «Doblaje parcial al…»; ver catalogo\LEEME_catalogo.txt). 'doblaje' si solo pone voces (el juego ya
+# tenía los textos en español), 'ambos' si traduce y dobla.
+RE_DOBLAJE = re.compile(r'(Traducción y doblaje|Doblaje)( parcial)? al (castellano|español)')
+
+
+def doblaje(f):
+    m = RE_DOBLAJE.search(f['notas'])
+    return '' if not m else ('doblaje' if m.group(1) == 'Doblaje' else 'ambos')
+
+
 def adulto(f):
     """Traducción de un juego para adultos (+18): la marca a18 de centro_datos (de cache\adultos.tsv)."""
     return bool(f['x'].get('a18'))
@@ -170,12 +181,13 @@ def juego_adulto(g):
 
 def banderas(g):
     """Lo que filtra el buscador (catalogo.js): 1 alguna completa, 2 alguna sin IA, 4 se vende en Steam, 8 para adultos,
-    16 alguna en español latino o neutro."""
+    16 alguna en español latino o neutro, 32 alguna con doblaje."""
     return ((1 if any(f['estado'].strip().lower().startswith('complet') for f in g['filas']) else 0)
             | (2 if any(not es_ia(f) for f in g['filas']) else 0)
             | (4 if any(f['x'].get('steam') for f in g['filas']) else 0)
             | (8 if juego_adulto(g) else 0)
-            | (16 if any(variante(f) in ('latino', 'neutro') for f in g['filas']) else 0))
+            | (16 if any(variante(f) in ('latino', 'neutro') for f in g['filas']) else 0)
+            | (32 if any(doblaje(f) for f in g['filas']) else 0))
 
 
 def directa(f):
@@ -234,10 +246,13 @@ def titulo_original(gr):
 def frase_trad(f):
     """Una frase con lo que se sabe de la traducción: quién, de cuándo, cómo está y cómo se aplica."""
     quien = f['grupo'].strip() or 'autor desconocido'
+    tipo = doblaje(f)
     datos = []
     if anio(f):
         datos.append(f'es de {anio(f)}')
     est, ver = ESTADOS.get(f['estado'].strip().lower()), f['version'].strip()
+    if est and tipo == 'doblaje':  # «el doblaje está completo»
+        est = est.replace('completa', 'completo').replace('publicada', 'publicado').replace('abandonada', 'abandonado')
     if est:
         datos.append(est + (f' (versión {ver})' if ver else ''))
     elif ver:
@@ -248,13 +263,15 @@ def frase_trad(f):
         datos.append(f'viene como {fmt}' + (f' para la versión {" o ".join(roms)}' if roms else ''))
     elif roms:
         datos.append(f'pide la versión {" o ".join(roms)}')
-    frase = f'La traducción de {quien}' + (', hecha con IA o con traducción automática,' if es_ia(f) else '')
+    sujeto = {'doblaje': 'El doblaje', 'ambos': 'La traducción con doblaje'}.get(tipo, 'La traducción')
+    frase = f'{sujeto} de {quien}' + ((', hecho con voces generadas por IA,' if tipo == 'doblaje' else ', hecha con IA o con traducción automática,')
+                                      if es_ia(f) else '')
     if datos:
         frase += ' ' + (datos[0] if len(datos) == 1 else ', '.join(datos[:-1]) + ' y ' + datos[-1])
     else:
         frase += ' no tiene más datos en el catálogo'
     if directa(f):
-        frase += '; la Biblioteca de traducciones la descarga y la aplica con un clic'
+        frase += '; la Biblioteca de traducciones ' + ('lo descarga y lo aplica' if tipo == 'doblaje' else 'la descarga y la aplica') + ' con un clic'
     return frase + '.'
 
 
@@ -264,10 +281,18 @@ def resumen_juego(gr, nombre_sis):
     orig, n = titulo_original(gr), len(fs)
     vars_ = sorted({VARIANTES[v] for v in (variante(f) for f in fs) if v})
     esp = 'al español' + (f' ({" y ".join(vars_)})' if vars_ else '')
-    intro = (f'{titulo} es un juego de {nombre_sis}' + (f' (título original: {orig})' if orig else '') + '. '
-             + (f'Esta ficha reúne su traducción {esp}, hecha por aficionados, con sus datos y cómo aplicarla a tu copia.'
-                if n == 1 else
-                f'Esta ficha reúne sus {n} traducciones {esp}, hechas por aficionados, con sus datos y cómo aplicarlas a tu copia.'))
+    tipos = [doblaje(f) for f in fs]
+    k = sum(1 for t in tipos if t)
+    if n == 1:
+        cosa, hecha, aplicar = {'doblaje': ('su doblaje', 'hecho', 'aplicarlo'),
+                                'ambos': ('su traducción con doblaje', 'hecha', 'aplicarla')}.get(tipos[0], ('su traducción', 'hecha', 'aplicarla'))
+        reune = f'Esta ficha reúne {cosa} {esp}, {hecha} por aficionados, con sus datos y cómo {aplicar} a tu copia.'
+    elif all(t == 'doblaje' for t in tipos):
+        reune = f'Esta ficha reúne sus {n} doblajes {esp}, hechos por aficionados, con sus datos y cómo aplicarlos a tu copia.'
+    else:
+        reune = (f'Esta ficha reúne sus {n} traducciones {esp}, hechas por aficionados' + (f' ({"una" if k == 1 else k} con doblaje)' if k else '')
+                 + ', con sus datos y cómo aplicarlas a tu copia.')
+    intro = f'{titulo} es un juego de {nombre_sis}' + (f' (título original: {orig})' if orig else '') + '. ' + reune
     frases = [frase_trad(f) for f in fs[:4]] + ([f'Y hay {n - 4} más, abajo.'] if n > 4 else [])
     return f'<p class="texto">{e(intro)}</p>\n    <p class="texto">{e(" ".join(frases))}</p>'
 
@@ -527,6 +552,7 @@ def pagina(raiz, titulo, descripcion, ruta, cuerpo, base, imagen='img/vista-prev
   <nav aria-label="Principal">
     <a href="{raiz}catalogo/">Catálogo</a>
     <a href="{raiz}novedades/">Novedades</a>
+    <a href="{raiz}doblajes/">Doblajes</a>
     <a href="{raiz}mis-listas/" id="nav-listas">Mis listas</a>
     <a href="{REPO}">GitHub</a>
     <a class="btn primario" href="{INSTALADOR}" data-goatcounter-click="descarga-cabecera">Descargar</a>
@@ -558,6 +584,10 @@ def chips_trad(f):
         out.append('<span class="chip ia" title="Hecha con IA o con traducción automática">IA</span>')
     if variante(f):
         out.append(f'<span class="chip var" title="La variante del español, según sus autores">Español {VARIANTES[variante(f)]}</span>')
+    if doblaje(f):
+        parcial = bool(RE_DOBLAJE.search(f['notas']).group(2))
+        out.append(f'<span class="chip dob" title="Lleva voces en español{" en una parte del juego" if parcial else ""}">'
+                   f'{"Doblaje" if doblaje(f) == "doblaje" else "Con doblaje"}{" parcial" if parcial else ""}</span>')
     return ''.join(out)
 
 
@@ -582,8 +612,9 @@ def tarjeta_trad(f):
         datos.append(('CRC32', ' · '.join(f'<code>{c}</code>' for c in crcs)))
     dl = ''.join(f'<dt>{k}</dt><dd>{v}</dd>' for k, v in datos)
     nota = re.sub(r'^\[IA\]\s*', '', f['notas']).strip()
-    enlace = (f'<a class="btn" href="{e(f["url"])}" target="_blank" rel="noopener">Página de la traducción</a>'
-              if web_segura(f['url']) else '<p class="suave">No se conoce la página de esta traducción.</p>')
+    cosa = 'del doblaje' if doblaje(f) == 'doblaje' else 'de la traducción'
+    enlace = (f'<a class="btn" href="{e(f["url"])}" target="_blank" rel="noopener">Página {cosa}</a>'
+              if web_segura(f['url']) else f'<p class="suave">No se conoce la página {"de este doblaje" if doblaje(f) == "doblaje" else "de esta traducción"}.</p>')
     return f'''<article class="trad">
   <div class="trad-h"><h3>{e(f['grupo'] or 'Autor desconocido')}</h3><div class="chips">{chips_trad(f)}</div></div>
   {f'<dl>{dl}</dl>' if dl else ''}
@@ -631,7 +662,21 @@ def pagina_juego(gr, sysn, libretro, base, ctx):
         f0 = gr['filas'][0]
         bits = [b for b in (anio(f0), f0['estado'].strip().lower()) if b]
         detalle = f' ({", ".join(bits)})' if bits else ''
-    desc = (f'{"Traducción" if n == 1 else f"{n} traducciones"} al español de {titulo} para {nombre_sis}'
+    # Traducción, doblaje o las dos cosas: cambia el título, la entradilla y la descripción.
+    tipos = [doblaje(f) for f in gr['filas']]
+    k_dob = sum(1 for t in tipos if t)
+    solo_dob = all(t == 'doblaje' for t in tipos)
+    que = 'doblaje' if solo_dob else 'traducción y doblaje' if k_dob else 'traducción'
+    if n == 1:
+        cuantas = {'doblaje': 'Doblaje', 'ambos': 'Traducción y doblaje'}.get(tipos[0], 'Traducción')
+        hay = {'doblaje': 'Hay un doblaje al español hecho por aficionados',
+               'ambos': 'Hay una traducción con doblaje al español hecha por aficionados'}.get(tipos[0], 'Hay una traducción al español hecha por aficionados')
+    elif solo_dob:
+        cuantas, hay = f'{n} doblajes', f'Hay {n} doblajes al español hechos por aficionados'
+    else:
+        cuantas = f'{n} traducciones' + (' (con doblaje)' if k_dob else '')
+        hay = f'Hay {n} traducciones al español hechas por aficionados' + (f', {"una" if k_dob == 1 else k_dob} con doblaje' if k_dob else '')
+    desc = (f'{cuantas} al español de {titulo} para {nombre_sis}'
             + (f', de {quien}' if quien else '') + detalle
             + ('. Se instala a mano; la Biblioteca de traducciones te lleva a su página.' if s in PC | MODERNAS
                else '. Aplícala sobre tu copia con un clic con la Biblioteca de traducciones.'))
@@ -663,14 +708,15 @@ def pagina_juego(gr, sysn, libretro, base, ctx):
       <p class="eti">{e(nombre_sis)}{' <span class="chip aviso" title="Juego para adultos">+18</span>' if juego_adulto(gr) else ''}</p>
       <h1>{e(titulo)} <span>en español</span></h1>
       {f'<p class="orig">Título original: {e(orig)}</p>' if orig else ''}
-      <p class="lede">{'Hay una traducción al español hecha por aficionados' if n == 1 else f'Hay {n} traducciones al español hechas por aficionados'}{f": {e(quien)}" if quien else ''}.</p>
+      <p class="lede">{hay}{f": {e(quien)}" if quien else ''}.</p>
       <a class="btn primario grande" href="{INSTALADOR}" data-goatcounter-click="descarga-juego">Descargar el programa para Windows</a>
       {compra}
       <div class="juego-acciones" data-ruta="{e(gr["ruta"])}" data-sis="{e(s)}" data-sisn="{e(nombre_sis)}" data-titulo="{e(titulo)}" data-port="{e(" ".join(absolutas[:3]))}"><button type="button" class="fav" aria-pressed="false" aria-label="Añadir a Favoritos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7.5-4.6-9.3-9.2C1.4 7.4 3.6 4 7 4c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.4 0 5.6 3.4 4.3 6.8C19.5 15.4 12 20 12 20z"/></svg></button><button type="button" class="btn" id="guardar-lista">Guardar en una lista</button></div>
     </div>
   </div>
   <section class="bloque">
-    <h2>{'La traducción' if n == 1 else 'Las traducciones'}</h2>
+    <h2>{({'doblaje': 'El doblaje', 'ambos': 'La traducción y el doblaje'}.get(tipos[0], 'La traducción') if n == 1
+          else 'Los doblajes' if solo_dob else 'Las traducciones')}</h2>
     <div class="trads">{''.join(tarjeta_trad(f) for f in gr['filas'])}</div>
   </section>
   <section class="bloque">
@@ -684,7 +730,7 @@ def pagina_juego(gr, sysn, libretro, base, ctx):
   {relacionados(gr, ctx, raiz, nombre_sis)}
   <p class="suave">¿Algún dato está mal o eres el autor y quieres cambiar algo? <a href="{INCIDENCIAS}">Avísame en GitHub</a>.</p>
 </main>"""
-    titulo_pagina = f'{titulo} ({nombre_sis}): traducción al español · Biblioteca de traducciones'
+    titulo_pagina = f'{titulo} ({nombre_sis}): {que} al español · Biblioteca de traducciones'
     canon = base + gr['ruta']
     juego = {'@type': 'VideoGame', 'name': titulo, 'gamePlatform': nombre_sis, 'url': canon}
     if orig:
@@ -760,6 +806,7 @@ def pagina_catalogo(por_sis, sysn, base, n_trad, n_juegos, filas):
     <button type="button" class="chip" data-f="sinia" aria-pressed="false" title="Sin traducciones hechas con IA">Sin IA</button>
     <button type="button" class="chip" data-f="steam" aria-pressed="false" title="Solo los juegos que se venden en Steam">En Steam</button>
     <button type="button" class="chip" data-f="latino" aria-pressed="false" title="Traducciones en español latino o neutro, según sus autores">Español latino</button>
+    <button type="button" class="chip" data-f="doblaje" aria-pressed="false" title="Juegos con voces en español hechas por aficionados">Doblajes</button>
     <label class="chip-l"><input type="checkbox" id="adultos"> Mostrar juegos para adultos (+18)</label>
   </div>
   <p class="suave" id="cuenta" aria-live="polite"></p>
@@ -798,6 +845,19 @@ def pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version, dias, filas, p
     <div class="cab"><h2>Últimas traducciones</h2><p class="suave"><a href="catalogo/">Todo el catálogo</a></p></div>
     {recientes(filas, raiz, sysn, 12, True)}
   </section>'''
+    # Los doblajes de más tirón, un juego por título (Resident Evil 3 tiene tres sistemas).
+    dob, vistos = [], set()
+    for f in sorted((f for f in filas if doblaje(f) and not juego_adulto(f['gr'])), key=lambda f: -f['pop']):
+        t = sin_acentos(f['gr']['titulo']).lower()
+        if t not in vistos and portadas(f['gr'], LIBRETRO, raiz):
+            vistos.add(t)
+            dob.append(tarjeta_juego(f['gr'], raiz, sysn, True, fila=f))
+    n_dob = len({id(f['gr']) for f in filas if doblaje(f)})
+    bloque_dob = f'''<section class="bloque novedades doblajes">
+    <div class="cab"><h2>Doblajes al español</h2><p class="suave"><a href="doblajes/">Los {n_dob} doblajes</a></p></div>
+    <p class="texto suave">Juegos con voces en español gracias a grupos de aficionados, de Resident Evil y Silent Hill a Lies of P.</p>
+    <ul class="tarjetas">{''.join(dob[:6])}</ul>
+  </section>''' if dob else ''
     cuerpo = f'''<main>
   <section class="heroe {'mosaico-h' if mosaico else 'uno'}">
     <div class="heroe-t">
@@ -821,6 +881,8 @@ def pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version, dias, filas, p
   <div id="favoritos-inicio"></div>
 
   {bloque_nov}
+
+  {bloque_dob}
 
   <section class="cifras" aria-label="El catálogo en cifras">
     <div><b>{n_trad:,}</b><span>traducciones</span></div>
@@ -915,6 +977,47 @@ def pagina_novedades(dias, filas, sysn, base):
     desc = 'Las últimas traducciones al español añadidas al catálogo de la Biblioteca de traducciones, día a día.'
     ld = {'@context': 'https://schema.org', '@graph': [migas_ld(base, [('Inicio', ''), ('Novedades', 'novedades/')])]}
     return pagina(raiz, 'Novedades: últimas traducciones añadidas · Biblioteca de traducciones', desc, 'novedades/', cuerpo, base, ld=ld)
+
+
+def pagina_doblajes(filas, sysn, base):
+    """Los doblajes al español hechos por aficionados: primero los que ponen voces a juegos que ya tenían los textos en
+    español y luego las traducciones que también doblan; en cada grupo, los de más tirón primero."""
+    raiz = '../'
+    # Un juego por apartado, con la traducción de ese tipo que más tirón tiene (Sonic Adventure 2 de PC sale en los dos:
+    # el mod de Ecos del doblaje solo pone voces y el de kawaiikaorichan también traduce).
+    por_tipo = {'doblaje': {}, 'ambos': {}}
+    for f in filas:
+        t = doblaje(f)
+        if t:
+            actual = por_tipo[t].get(id(f['gr']))
+            if not actual or f['pop'] > actual['pop']:
+                por_tipo[t][id(f['gr'])] = f
+    juegos = {id(f['gr']): f for d in por_tipo.values() for f in d.values()}
+
+    def lista(fs):
+        fs = sorted(fs, key=lambda f: (-f['pop'], sin_acentos(f['gr']['titulo']).lower()))
+        return '<ul class="tarjetas">' + ''.join(tarjeta_juego(f['gr'], raiz, sysn, True, fila=f) for f in fs) + '</ul>'
+    solo, ambos = list(por_tipo['doblaje'].values()), list(por_tipo['ambos'].values())
+    latinos = sum(1 for f in juegos.values() if variante(f) == 'latino')
+    cuerpo = f'''<main class="sistema doblajes-p">
+  <p class="migas"><a href="{raiz}">Inicio</a> › Doblajes</p>
+  <h1>Doblajes al español</h1>
+  <p class="lede">{len(juegos)} juegos con voces en español gracias a grupos de aficionados{f", {latinos} de ellos en español latino" if latinos else ""}. Unos doblan juegos que ya tenían los textos en español; otros traducen y doblan a la vez. Cada ficha dice qué pide el doblaje y te lleva a su página.</p>
+  <section class="bloque">
+    <h2>Traducciones con doblaje <span class="n">{len(ambos)}</span></h2>
+    <p class="texto suave">Textos y voces en español, del mismo grupo o de dos que trabajan juntos.</p>
+    {lista(ambos)}
+  </section>
+  <section class="bloque">
+    <h2>Doblajes de juegos con textos en español <span class="n">{len(solo)}</span></h2>
+    <p class="texto suave">El juego ya venía traducido, pero con voces en inglés o en japonés: estos mods le ponen voces en español.</p>
+    {lista(solo)}
+  </section>
+  <p class="suave">¿Conoces un doblaje de aficionados que falta? <a href="{INCIDENCIAS}">Avísame en GitHub</a>.</p>
+</main>'''
+    desc = f'{len(juegos)} juegos con doblaje al español hecho por aficionados: voces en castellano y en latino para juegos de PlayStation, Dreamcast, PC y más.'
+    ld = {'@context': 'https://schema.org', '@graph': [migas_ld(base, [('Inicio', ''), ('Doblajes', 'doblajes/')])]}
+    return pagina(raiz, 'Doblajes al español hechos por fans · Biblioteca de traducciones', desc, 'doblajes/', cuerpo, base, ld=ld)
 
 
 def feed_novedades(dias, sysn, base):
@@ -1115,6 +1218,7 @@ def main():
     escribir(salida, 'catalogo/index.html', miles(pagina_catalogo(por_sis, sysn, base, n_trad, n_juegos, filas)))
     escribir(salida, 'novedades/index.html', miles(pagina_novedades(dias, filas, sysn, base)))
     escribir(salida, 'novedades.xml', feed_novedades(dias_publicas, sysn, base))
+    escribir(salida, 'doblajes/index.html', miles(pagina_doblajes(filas, sysn, base)))
     indice = []
     for g in juegos:
         escribir(salida, g['ruta'] + 'index.html', pagina_juego(g, sysn, libretro, base, ctx))
@@ -1133,7 +1237,7 @@ def main():
     # La fecha de cada página es la de su última traducción (los buscadores ignoran un lastmod que siempre es hoy);
     # la portada y el catálogo cambian cada vez que se genera la web.
     hoy = date.today().isoformat()
-    rutas = ([('', hoy), ('catalogo/', hoy), ('novedades/', hoy), ('parchear/', hoy)]
+    rutas = ([('', hoy), ('catalogo/', hoy), ('novedades/', hoy), ('doblajes/', hoy), ('parchear/', hoy)]
              + [(f'sistema/{s}/', max((g['fecha'] for g in gs), default='')) for s, gs in por_sis.items()]
              + [(g['ruta'], g['fecha']) for g in juegos])
     escribir(salida, 'sitemap.xml', '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'

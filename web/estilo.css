@@ -137,6 +137,7 @@ main { display: block; max-width: var(--ancho); margin: 0 auto; padding: 0 var(-
 .chip.clic { background: var(--amarillo); color: #141922; border-color: transparent; }
 .chip.ia { color: #FF8C96; border-color: rgba(255, 107, 120, 0.45); }
 .chip.var { color: #9FD3FF; border-color: rgba(159, 211, 255, 0.4); }
+.chip.dob { color: #FFB27A; border-color: rgba(255, 138, 61, 0.45); }
 .como .pasos { max-width: 75ch; }
 
 /* ---- catálogo */
@@ -284,3 +285,7 @@ html:not(.adultos) .tarjeta[data-a18] { display: none; }
   .mosaico a:nth-child(n+7) { display: none; }
   .mosaico a:nth-child(3n+2) { transform: none; }
 }
+
+/* Página de doblajes */
+.doblajes-p .bloque h2 .n { font-size: 0.8rem; vertical-align: middle; margin-left: 8px; color: var(--suave); }
+.doblajes-p .bloque .texto { margin: -8px 0 0; }
