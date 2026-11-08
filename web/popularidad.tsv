@@ -1,9 +1,10 @@
 # Tirón de cada juego (0-100) para elegir las portadas de la web: votos en LaunchBox (lb), reseñas en Steam (st),
 # proyecto de TraduSquare (+ts) y varias traducciones (+Ntrad). Lo hace herramientas\mantenimiento\tiron.py.
 # clave de la ficha	puntos	de dónde salen
-n64|Super Mario 64|Blade133bo	100	lb:1701 +ts +3trad
-n64|Super Mario 64|Mistergame	100	lb:1701 +3trad
-n64|Super Mario 64|Thircase	100	lb:1701 +3trad
+n64|Super Mario 64|Blade133bo	100	lb:1701 +ts +4trad
+n64|Super Mario 64|Mistergame	100	lb:1701 +4trad
+n64|Super Mario 64|Reonu	100	lb:1701 +4trad
+n64|Super Mario 64|Thircase	100	lb:1701 +4trad
 n64|The Legend of Zelda – Ocarina of Time|Blade133bo	100	lb:1330 +ts +2trad
 nes|Super Mario Bros. 3|Suikazeraider	100	lb:1107 +ts +7trad
 nes|Super Mario Bros.|Chilensis	100	lb:1240 +8trad
@@ -727,8 +728,8 @@ pc|Amnesia: The Dark Descent - The Great Work (historia personalizada)|darkpadaw
 pc|Amnesia: The Dark Descent - The Streets of London (historia personalizada)|darkpadawan (Clan DLAN)	72	st:20574
 pc|Danganronpa V3: Killing Harmony|ManuelCMS	72	lb:19 st:22371
 pc|Hatsune Miku: Project DIVA Mega Mix+|Dark_Kudoh	72	lb:12 st:19788
-pc|Little Witch in the Woods|shadowman1	72	lb:5 st:11891 +2trad
 pc|Little Witch in the Woods|mbmarlon	72	lb:5 st:11891 +2trad
+pc|Little Witch in the Woods|shadowman1	72	lb:5 st:11891 +2trad
 pc|Monster Train|shadowman1	72	lb:25 st:19992
 pc|Solasta: Crown of the Magister (traducciones automáticas)|eku2703	72	lb:14 st:20015
 pc|Solasta|shadowman1	72	st:20015
@@ -865,8 +866,8 @@ nes|The Guardian Legend|Traducciones Wave	70	lb:152 +2trad
 pcengine|Alien Crush|Traducciones Wave	70	lb:198
 pc|1000xRESIST|Tradusquare	70	lb:12 st:5440 +ts
 pc|CrossCode: A New Home|shadowman1	70	st:16509
-pc|Esoteric Ebb|shadowman1	70	lb:4 st:9341 +2trad
 pc|Esoteric Ebb|gortiz (sobre la traducción de Jordison)	70	lb:4 st:9341 +2trad
+pc|Esoteric Ebb|shadowman1	70	lb:4 st:9341 +2trad
 pc|Nuclear Throne Together (mod multijugador)|ElTormakzXD (sobre la de polifonika!studio)	70	st:15122
 pc|Sonic Adventure DX (retraducción al español latino)|kawaiikaorichan (sobre la de Windii)	70	lb:43 st:15861
 pc|Sword and Fairy 7|shadowman1	70	lb:19 st:15611
@@ -1017,8 +1018,8 @@ nes|Track and Field|Terwilf	68	lb:124 +2trad
 nes|Urban Champion|Pikachumanson	68	lb:113 +3trad
 nes|Urban Champion|Terwilf	68	lb:113 +3trad
 nes|Urban Champion|Traducciones Wave	68	lb:113 +3trad
-pc|Age of Wonders III|shadowman1	68	lb:37 st:7096 +2trad
 pc|Age of Wonders III|EspAion	68	lb:37 st:7096 +2trad
+pc|Age of Wonders III|shadowman1	68	lb:37 st:7096 +2trad
 pc|Cave Story+ (español latino)|CrisXolt	68	lb:62 st:5274 +3trad
 pc|Cave Story+|pbaeza (adaptación de la traducción de ShyPhy de ElOtroLado)	68	lb:62 st:5274 +3trad
 pc|Caves of Qud|Vergara92	68	lb:15 st:12046
@@ -1299,8 +1300,8 @@ pc|Kingdom Hearts Final Mix|Ecos del doblaje	65	lb:76 +ts
 pc|Magical Princess|CepitaUva	65	st:7929
 pc|Mahoutsukai no Yoru (Witch on the Holy Night)|Taikutsu Translations	65	st:7516
 pc|NEKOPARA Vol. 4|Sharin-Sub	65	lb:2 st:8273
-pc|Rubinite|shadowman1	65	st:4530 +2trad
 pc|Rubinite|Vizpok	65	st:4530 +2trad
+pc|Rubinite|shadowman1	65	st:4530 +2trad
 pc|Sunless Sea (con Zubmariner)|HoJu	65	lb:26 st:7650
 pc|Yakuza 3 Remastered|Dragones de Dojima (Crazy56, KARU y Kcat0)	65	lb:34 st:7907
 psx|Apocalypse|PeterDelta	65	lb:144
@@ -1934,8 +1935,8 @@ pcengine|Shockman|Lukas	60	lb:69 +2trad
 pcengine|Shockman|Traducciones Wave	60	lb:69 +2trad
 pcengine|Vigilante|Traducciones Wave	60	lb:93
 pc|Amnesia: Memories|lil meow meow	60	lb:3 st:3883
-pc|Beholder 3|shadowman1	60	lb:6 st:2307 +2trad
 pc|Beholder 3|muermo	60	lb:6 st:2307 +2trad
+pc|Beholder 3|shadowman1	60	lb:6 st:2307 +2trad
 pc|Dear Esther|Francisco J. Galdo y José Francisco Castellano	60	lb:20 st:3968
 pc|Doki Doki Literature Club! - mod Our Time|Alejoglez	60	lb:97
 pc|Drag'n Wash (mod multilingüe con español)|TomXV	60	st:4086
@@ -1953,8 +1954,8 @@ pc|Sonic 3 A.I.R.|Seeth	60	lb:94
 pc|Sonic Lost World|señorDane y Sonic Sunset	60	lb:73 st:4173
 pc|Sovereign Tower|Eider	60	st:4169
 pc|Three Kingdoms Zhao Yun|shadowman1	60	st:3846
-pc|Tower of Time|shadowman1	60	lb:8 st:2339 +2trad
 pc|Tower of Time|darkpadawan (Clan DLAN; script de shadowman1)	60	lb:8 st:2339 +2trad
+pc|Tower of Time|shadowman1	60	lb:8 st:2339 +2trad
 pc|Trails in the Sky SC|locoroco96	60	st:3768
 pc|eden*|Sharin-Sub	60	lb:4 st:4147
 psx|Final Fantasy VI|Pablito's	60	lb:67 +2trad
@@ -2794,8 +2795,8 @@ pcengine|Space Harrier|Traducciones Wave	55	lb:63
 pcengine|Tiger Road|Traducciones Wave	55	lb:66
 pcengine|Victory Run|Traducciones Wave	55	lb:63
 pc|Atelier Ryza 3: Alchemist of the End & the Secret Key|ryudo261276	55	lb:7 st:1927
-pc|Cavern of Dreams|shadowman1	55	lb:9 st:1214 +2trad
 pc|Cavern of Dreams|TheNayek	55	lb:9 st:1214 +2trad
+pc|Cavern of Dreams|shadowman1	55	lb:9 st:1214 +2trad
 pc|Dead Pixels|cireja	55	lb:8 st:1990
 pc|Detective Di: The Silk Rose Murders|ExLibris	55	lb:1 st:1104 +2trad
 pc|Detective Di: The Silk Rose Murders|locoroco96	55	lb:1 st:1104 +2trad
@@ -3277,6 +3278,7 @@ megadrive|Todd's Adventures in Slime World|Traducciones Wave	52	lb:53
 megadrive|Toxic Crusaders|Traducciones Wave	52	lb:51
 megadrive|VR Troopers|Traducciones Wave	52	lb:51
 megadrive|Wimbledon Championship Tennis|Traducciones Wave	52	lb:51
+n64|Super Mario Star Road|Paco Home Videos / DLizard	52	lb:51
 nds|Digimon World DS|trevort, Belwar, Franvi y Alex	52	lb:50
 nes|Arkanoid II|Traducciones Wave	52	lb:51
 nes|Armadillo|Traducciones Wave	52	lb:51
