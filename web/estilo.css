@@ -74,7 +74,7 @@ main { display: block; max-width: var(--ancho); margin: 0 auto; padding: 0 var(-
 .heroe-t { display: grid; gap: 4px; }
 .acciones { display: flex; flex-wrap: wrap; gap: 12px; margin: 26px 0 12px; }
 .captura { width: 100%; height: auto; border-radius: 14px; border: 1px solid var(--linea); box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55); }
-.cifras { margin-top: 56px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.cifras { margin-top: 56px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .cifras div { background: var(--panel); border: 1px solid var(--linea); border-radius: 14px; padding: 18px 20px; display: grid; gap: 2px; }
 .cifras b { font: 800 2rem/1.1 var(--display); color: var(--amarillo); font-variant-numeric: tabular-nums; }
 .cifras span { color: var(--suave); font-size: 0.95rem; }
@@ -169,7 +169,9 @@ main { display: block; max-width: var(--ancho); margin: 0 auto; padding: 0 var(-
 @media (max-width: 860px) {
   .heroe, .doble { grid-template-columns: minmax(0, 1fr); }
   .pasos.grandes { grid-template-columns: minmax(0, 1fr); }
-  .cifras { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cifras { gap: 8px; }
+  .cifras div { padding: 14px 12px; }
+  .cifras b { font-size: 1.5rem; }
   .juego-h { grid-template-columns: minmax(0, 1fr); }
   .portada { width: 180px; }
 }

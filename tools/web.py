@@ -1056,7 +1056,6 @@ def pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version, dias, filas, p
     <div><b>{n_trad:,}</b><span>traducciones</span></div>
     <div><b>{n_juegos:,}</b><span>juegos</span></div>
     <div><b>{len(por_sis)}</b><span>sistemas</span></div>
-    <div><b>0</b><span>juegos descargados: solo parches</span></div>
   </section>
 
   <section class="bloque">
