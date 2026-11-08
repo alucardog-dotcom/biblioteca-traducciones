@@ -191,7 +191,7 @@ def tiene_logros(f):
 
 
 # ---------------------------------------------------------------- grupos de traducción
-GRUPO_ALIAS = {'Wave': 'Traducciones Wave'}
+GRUPO_ALIAS = {'Wave': 'Traducciones Wave', 'Charnego': 'CharnegoTranslations'}
 MIN_GRUPO = 3  # traducciones que necesita un grupo para tener página propia
 
 
