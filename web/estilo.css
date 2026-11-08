@@ -244,3 +244,22 @@ button.chip:hover { border-color: var(--suave); }
 button.chip[aria-pressed="true"] { background: var(--amarillo); color: #141922; border-color: transparent; font-weight: 700; }
 .chip-l { display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; color: var(--suave); margin-left: auto; }
 html:not(.adultos) .tarjeta[data-a18] { display: none; }
+
+/* Portada: el buscador en la cabecera, las novedades, el programa y el cierre */
+.heroe.uno { grid-template-columns: minmax(0, 1fr); padding-top: 48px; }
+.heroe.uno .lede { max-width: 68ch; }
+.heroe .buscador { margin-top: 28px; max-width: 760px; }
+.heroe .buscador input { font-size: 1.15rem; }
+.heroe .buscador .btn { flex: 0 0 auto; }
+.heroe .acciones { margin: 14px 0 0; }
+.cab { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; }
+.cab p { margin: 0; }
+.novedades .texto { margin: -8px 0 0; }
+.novedades .tarjetas { margin-top: 0; }
+.tarjeta .alta { color: var(--amarillo-t); }
+.programa .eti { margin: 0 0 -8px; }
+.programa .acciones { margin: 4px 0 0; }
+.programa .suave { margin: 0; }
+.final .acciones { margin: 0; justify-content: center; }
+.novedades-p .letra h2 .n { font-size: 0.8rem; vertical-align: middle; margin-left: 8px; color: var(--suave); }
+@media (max-width: 480px) { .heroe .buscador .btn { flex: 1 1 100%; } }

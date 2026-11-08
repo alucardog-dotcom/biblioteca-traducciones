@@ -3,7 +3,7 @@
 # Uso: python tools/web.py [carpeta de salida, _web por defecto]
 # El dominio va en web/CNAME; si no está, la web queda en la dirección de GitHub Pages. Los ficheros de
 # verificación de Google Search Console (google….html) y Bing (BingSiteAuth.xml) se dejan en web/ y van a la raíz.
-import collections, csv, html, json, os, re, shutil, sys, unicodedata
+import collections, csv, html, io, json, os, re, shutil, subprocess, sys, unicodedata
 from datetime import date
 from urllib.parse import quote
 
@@ -248,7 +248,7 @@ def item_juego(g, raiz, sysn, con_sistema=False):
     return f'<li><a href="{raiz}{g["ruta"]}">{e(g["titulo"])}</a>{extra}</li>'
 
 
-def tarjeta_juego(g, raiz, sysn, con_sistema=True, fila=None, extra=''):
+def tarjeta_juego(g, raiz, sysn, con_sistema=True, fila=None, extra='', pie=''):
     """Un juego como en el programa: la portada (con las alternativas por si una falla), el título, el sistema
     y sus traducciones. El título queda debajo mientras la portada carga, y se queda si no hay ninguna."""
     urls = portadas(g, LIBRETRO, raiz)
@@ -262,7 +262,7 @@ def tarjeta_juego(g, raiz, sysn, con_sistema=True, fila=None, extra=''):
               '<b>Un clic</b>' if any(directa(x) for x in g['filas']) else '']
     return (f'<li class="tarjeta" data-ruta="{e(g["ruta"])}" data-sis="{e(g["s"])}" data-sisn="{e(sysn.get(g["s"], g["s"]))}" data-titulo="{e(g["titulo"])}"{' data-a18="1"' if juego_adulto(g) else ''}>'
             f'<a href="{raiz}{g["ruta"]}"><span class="port{"" if img else " sin"}">{img}<span class="ph">{e(g["titulo"])}</span></span>'
-            f'<span class="cuerpo"><span class="t">{e(g["titulo"])}</span><span class="m">{" · ".join(p for p in partes if p)}{extra}</span></span></a><button type="button" class="fav" aria-pressed="false" aria-label="Añadir a Favoritos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7.5-4.6-9.3-9.2C1.4 7.4 3.6 4 7 4c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.4 0 5.6 3.4 4.3 6.8C19.5 15.4 12 20 12 20z"/></svg></button></li>')
+            f'<span class="cuerpo"><span class="t">{e(g["titulo"])}</span><span class="m">{" · ".join(p for p in partes if p)}{extra}</span>{pie}</span></a><button type="button" class="fav" aria-pressed="false" aria-label="Añadir a Favoritos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7.5-4.6-9.3-9.2C1.4 7.4 3.6 4 7 4c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.4 0 5.6 3.4 4.3 6.8C19.5 15.4 12 20 12 20z"/></svg></button></li>')
 
 
 def portada_spec(g):
@@ -309,6 +309,86 @@ def recientes(filas, raiz, sysn, k, con_sistema):
     return f'<ul class="tarjetas">{"".join(items)}</ul>' if items else ''
 
 
+# ---------------------------------------------------------------- novedades
+DIAS_NOVEDADES = 120  # cuántos días atrás se mira el historial del catálogo para las novedades
+MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
+
+
+def fecha_larga(d):
+    """2026-11-08 -> 8 de noviembre de 2026."""
+    a, m, dd = d.split('-')
+    return f'{int(dd)} de {MESES[int(m) - 1]} de {a}'
+
+
+def fecha_corta(d):
+    """2026-11-08 -> 8 nov."""
+    a, m, dd = d.split('-')
+    return f'{int(dd)} {MESES[int(m) - 1][:3]}'
+
+
+def clave_fila(f):
+    return f"{f['sistema']}|{f['juego']}|{f['grupo']}"
+
+
+def fechas_alta():
+    """Cuándo entró cada traducción en el catálogo, según el historial de git del CSV: clave de la fila -> AAAA-MM-DD.
+    Se miran los commits de los últimos DIAS_NOVEDADES días; las filas que ya estaban en el más antiguo de ellos no
+    llevan fecha, porque no se sabe cuándo entraron. Sin git o sin historial (un clon superficial), no hay fechas."""
+    ruta = 'src-tauri/recursos/catalogo/traducciones_fan.csv'
+
+    def git(*args):
+        return subprocess.run(['git', '-C', RAIZ, *args], capture_output=True, check=True).stdout
+
+    try:
+        commits = [l.split() for l in git('log', '--format=%H %cs', f'--since={DIAS_NOVEDADES} days ago', '-n', '500', '--', ruta)
+                   .decode().splitlines() if l.strip()]
+        if len(commits) < 2:
+            return {}
+        altas, viejas = {}, None
+        for sha, fecha in reversed(commits):  # del más antiguo al más nuevo
+            claves = {clave_fila(f) for f in csv.DictReader(io.StringIO(git('show', f'{sha}:{ruta}').decode('utf-8-sig')))}
+            if viejas is None:
+                viejas = claves
+                continue
+            for c in claves:
+                if c not in viejas and c not in altas:
+                    altas[c] = fecha
+        return altas
+    except (OSError, subprocess.CalledProcessError, UnicodeDecodeError, KeyError):
+        return {}
+
+
+def novedades(filas, sin_adultos=False):
+    """Las filas con fecha de alta por días, del más nuevo al más antiguo: [(AAAA-MM-DD, [filas])]. Dentro de un día,
+    primero las que tienen portada y no son de IA, y luego por la fecha de la traducción, para que la portada luzca."""
+    dias = {}
+    for f in filas:
+        if f.get('alta') and not (sin_adultos and juego_adulto(f['gr'])):
+            dias.setdefault(f['alta'], []).append(f)
+    for fs in dias.values():
+        fs.sort(key=fecha_iso, reverse=True)
+        fs.sort(key=lambda f: (not con_portada(f), es_ia(f)))
+    return sorted(dias.items(), reverse=True)
+
+
+def tarjetas_novedades(dias, raiz, sysn, k=None, con_fecha=True):
+    """Las tarjetas de las novedades, un juego por tarjeta con su traducción nueva, hasta k. Con k (la portada), el
+    mismo título en dos sistemas sale una sola vez."""
+    vistos, titulos, items = set(), set(), []
+    for fecha, fs in dias:
+        for f in fs:
+            g = f['gr']
+            if id(g) in vistos or (k and sin_acentos(g['titulo']).lower() in titulos):
+                continue
+            vistos.add(id(g))
+            titulos.add(sin_acentos(g['titulo']).lower())
+            pie = f'<span class="m alta">Añadido el {fecha_corta(fecha)}</span>' if con_fecha else ''
+            items.append(tarjeta_juego(g, raiz, sysn, True, fila=f, pie=pie))
+            if k and len(items) == k:
+                return items
+    return items
+
+
 def jsonld(datos):
     return '<script type="application/ld+json">' + json.dumps(datos, ensure_ascii=False).replace('<', '\\u003c') + '</script>'
 
@@ -336,6 +416,7 @@ def pagina(raiz, titulo, descripcion, ruta, cuerpo, base, imagen='img/vista-prev
 <link rel="canonical" href="{e(canon)}">
 <link rel="icon" href="{raiz}icono.svg" type="image/svg+xml">
 <link rel="stylesheet" href="{raiz}estilo.css">
+<link rel="alternate" type="application/atom+xml" title="Novedades del catálogo" href="{raiz}novedades.xml">
 <meta property="og:type" content="{tipo}">
 <meta property="og:title" content="{e(titulo)}">
 <meta property="og:description" content="{e(descripcion)}">
@@ -352,6 +433,7 @@ def pagina(raiz, titulo, descripcion, ruta, cuerpo, base, imagen='img/vista-prev
   <a class="marca" href="{raiz or './'}"><img src="{raiz}icono.svg" alt="" width="32" height="32"><span>Biblioteca de traducciones</span></a>
   <nav aria-label="Principal">
     <a href="{raiz}catalogo/">Catálogo</a>
+    <a href="{raiz}novedades/">Novedades</a>
     <a href="{raiz}mis-listas/" id="nav-listas">Mis listas</a>
     <a href="{REPO}">GitHub</a>
     <a class="btn primario" href="{INSTALADOR}" data-goatcounter-click="descarga-cabecera">Descargar</a>
@@ -602,24 +684,42 @@ def pagina_catalogo(por_sis, sysn, base, n_trad, n_juegos, filas):
     return pagina(raiz, 'Catálogo de traducciones al español · Biblioteca de traducciones', desc, 'catalogo/', cuerpo, base)
 
 
-def pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version):
+def pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version, dias, filas):
+    """La portada: el buscador, las últimas novedades del catálogo (o, sin historial de git, las últimas traducciones
+    por su fecha), las cifras, los sistemas y, ya después, el programa para Windows."""
     raiz = ''
+    if dias:
+        bloque_nov = f'''<section class="bloque novedades">
+    <div class="cab"><h2>Últimas novedades</h2><p class="suave"><a href="novedades/">Todas las novedades</a> · <a href="novedades.xml">Canal RSS</a></p></div>
+    <p class="texto suave">Lo último que ha entrado en el catálogo. Cada tarjeta lleva a la ficha del juego y de ahí a la traducción.</p>
+    <ul class="tarjetas">{''.join(tarjetas_novedades(dias, raiz, sysn, 12))}</ul>
+  </section>'''
+    else:
+        bloque_nov = f'''<section class="bloque novedades">
+    <div class="cab"><h2>Últimas traducciones</h2><p class="suave"><a href="catalogo/">Todo el catálogo</a></p></div>
+    {recientes(filas, raiz, sysn, 12, True)}
+  </section>'''
     cuerpo = f'''<main>
-  <section class="heroe">
+  <section class="heroe uno">
     <div class="heroe-t">
       <h1>Juega en español a juegos que nunca salieron traducidos</h1>
-      <p class="lede">Más de {n_trad // 1000 * 1000:,} traducciones hechas por aficionados, de la NES a la Switch y los juegos de PC de hoy. La Biblioteca de traducciones busca tus juegos, te dice cuáles tienen traducción y la aplica con un clic.</p>
+      <p class="lede">{n_trad:,} traducciones hechas por aficionados, de la NES a la Switch y los juegos de PC de hoy, reunidas en un solo catálogo. Cada ficha te lleva a la traducción y te dice qué copia del juego pide; muchas se aplican en el navegador o con el programa en un clic.</p>
+      <form class="buscador" role="search" action="catalogo/" method="get">
+        <label class="sr" for="q">Buscar un juego</label>
+        <input id="q" name="q" type="search" placeholder="¿Qué juego quieres jugar en español?" autocomplete="off">
+        <button class="btn primario grande" type="submit">Buscar</button>
+      </form>
       <div class="acciones">
-        <a class="btn primario grande" href="{INSTALADOR}" data-goatcounter-click="descarga-portada">Descargar para Windows</a>
-        <a class="btn grande" href="catalogo/">Buscar mi juego</a>
-        <a class="btn grande" href="parchear/">Parchear en el navegador</a>
+        <a class="btn" href="catalogo/">Todo el catálogo</a>
+        <a class="btn" href="parchear/">Parchear en el navegador</a>
+        <a class="btn" href="{INSTALADOR}" data-goatcounter-click="descarga-portada">Programa para Windows</a>
       </div>
-      <p class="suave">Gratis y de código libre · Windows 10 y 11 · versión {e(version)} · <a href="{DESCARGA}">todas las versiones</a></p>
     </div>
-    <img class="captura" src="img/captura-listas.png" width="1360" height="860" alt="La Biblioteca de traducciones con juegos de diez plataformas: Game Boy Advance, PlayStation, Super Nintendo, Mega CD, Dreamcast, Saturn, Nintendo DS, PlayStation 2, Nintendo 64 y PC">
   </section>
 
   <div id="favoritos-inicio"></div>
+
+  {bloque_nov}
 
   <section class="cifras" aria-label="El catálogo en cifras">
     <div><b>{n_trad:,}</b><span>traducciones</span></div>
@@ -629,57 +729,56 @@ def pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version):
   </section>
 
   <section class="bloque">
-    <h2>Cómo funciona</h2>
-    <ol class="pasos grandes">
-      <li><b>Dile dónde están tus juegos.</b> Busca ROMs sueltas o en .zip, .7z y .rar, discos .cue/.bin, .gdi y .chd, y los juegos de PC que tienes en Steam, GOG y Epic.</li>
-      <li><b>Mira cuáles tienen traducción.</b> Por su CRC32 sabe si tu copia es la versión que pide cada traducción.</li>
-      <li><b>Pulsa Traducir y luego Jugar.</b> Descarga el parche de su sitio original y lo aplica. El traducido queda junto al original con la etiqueta [T-Es]; tu copia no se toca.</li>
-    </ol>
-  </section>
-
-  <section class="bloque doble">
-    <div>
-      <h2>Lo que hace por ti</h2>
-      <ul class="lista-puntos">
-        <li><b>Aplica los parches él solo:</b> IPS, BPS, UPS, PPF, APS y xdelta. Saca el juego de su comprimido o de su .chd y devuelve los discos traducidos en .chd.</li>
-        <li><b>Sin descarga directa,</b> abre la página de la traducción y, en cuanto bajas el parche, lo aplica.</li>
-        <li><b>Comprueba tu copia</b> con el CRC32 de la ficha o del léame de la traducción, y te avisa si es otra versión.</li>
-        <li><b>Portadas, favoritos y listas</b> para apuntar lo que quieres jugar.</li>
-        <li><b>Con RetroBat,</b> el botón Jugar abre el juego traducido con su emulador.</li>
-        <li><b>Marca las traducciones hechas con IA</b> y te deja ocultarlas.</li>
-      </ul>
-    </div>
-    <img class="captura" src="img/captura-ficha.png" width="1360" height="860" loading="lazy" alt="La ficha de Suikoden con sus tres traducciones y el menú para guardarlo en una lista">
-  </section>
-
-  <section class="bloque">
     <h2>Busca por sistema</h2>
     <div class="sistemas">{chips_sistemas(por_sis, sysn, raiz)}</div>
   </section>
 
+  <section class="bloque doble programa">
+    <div>
+      <p class="eti">El programa para Windows</p>
+      <h2>Si prefieres que lo haga todo él</h2>
+      <p class="texto">Dile dónde están tus juegos: ROMs sueltas o en .zip, .7z y .rar, discos .cue/.bin, .gdi y .chd, y los de PC que tienes en Steam, GOG y Epic. Te dice cuáles tienen traducción comprobando el CRC32 de tu copia, descarga el parche de su sitio original y lo aplica. El traducido queda junto al original con la etiqueta [T-Es]; tu copia no se toca.</p>
+      <ul class="lista-puntos">
+        <li><b>Parches IPS, BPS, UPS, PPF, APS y xdelta,</b> también dentro de comprimidos y de .chd, con los discos traducidos de vuelta en .chd.</li>
+        <li><b>Portadas, favoritos y listas</b> para apuntar lo que quieres jugar, y aviso de las traducciones hechas con IA, que puedes ocultar.</li>
+        <li><b>Con RetroBat,</b> el botón Jugar abre el juego traducido con su emulador.</li>
+      </ul>
+      <div class="acciones">
+        <a class="btn primario grande" href="{INSTALADOR}" data-goatcounter-click="descarga-programa">Descargar para Windows</a>
+        <a class="btn grande" href="{DESCARGA}">Todas las versiones</a>
+      </div>
+      <p class="suave">Gratis y de código libre · Windows 10 y 11 · versión {e(version)}</p>
+    </div>
+    <img class="captura" src="img/captura-listas.png" width="1360" height="860" loading="lazy" alt="La Biblioteca de traducciones con juegos de diez plataformas: Game Boy Advance, PlayStation, Super Nintendo, Mega CD, Dreamcast, Saturn, Nintendo DS, PlayStation 2, Nintendo 64 y PC">
+  </section>
+
   <section class="bloque">
     <h2>De dónde salen las traducciones</h2>
-    <p class="texto">Las traducciones son de sus autores. El catálogo se ha hecho con los listados de romhacking.net, Traducciones Wave, Romhack Plaza, TraduSquare, Romhack Hispano, El Otro Lado, Steam Community, RetroAchievements, Parches en Castellano y blogs y repositorios de traductores. Cada ficha lleva a la página de su traducción, y el programa solo descarga los parches de los sitios que lo permiten.</p>
+    <p class="texto">Las traducciones son de sus autores. El catálogo se ha hecho con los listados de romhacking.net, Traducciones Wave, Romhack Plaza, TraduSquare, Romhack Hispano, El Otro Lado, Steam Community, RetroAchievements, Parches en Castellano y blogs y repositorios de traductores. Cada ficha lleva a la página de su traducción, y la web y el programa solo descargan los parches de los sitios que lo permiten.</p>
     <p class="texto">No se enlazan los sitios que reparten juegos ya parcheados o completos. Si eres autor de una traducción y quieres corregir su ficha o que no aparezca, <a href="{INCIDENCIAS}">abre una incidencia</a>.</p>
   </section>
 
   <section class="bloque preguntas">
     <h2>Preguntas</h2>
-    <details><summary>¿Descarga juegos?</summary><p>No. Solo descarga los parches de traducción y los aplica sobre la copia que ya tienes.</p></details>
+    <details><summary>¿Hace falta instalar algo?</summary><p>No. La web busca en el mismo catálogo que el programa, cada ficha enlaza a la traducción y la página <a href="parchear/">Parchear</a> aplica los parches en el navegador sin subir nada a ningún sitio. El programa para Windows añade buscar tus juegos él solo, comprobar tu copia por su CRC32, portadas y listas, y el botón Jugar con RetroBat.</p></details>
+    <details><summary>¿Descarga juegos?</summary><p>No. Ni la web ni el programa descargan juegos: solo los parches de traducción, que se aplican sobre la copia que ya tienes.</p></details>
     <details><summary>¿Cuánto cuesta?</summary><p>Nada. Es gratuito y de código libre, con licencia GPL-3.0. Si te resulta útil, puedes <a href="{DONAR}">invitarme a un café</a>.</p></details>
+    <details><summary>Falta una traducción o una ficha está mal</summary><p><a href="{INCIDENCIAS}">Avísame en GitHub</a>. El catálogo se pone al día en la web y en el programa sin reinstalar nada.</p></details>
     <details><summary>Windows dice «Windows protegió su PC». ¿Es seguro?</summary><p>El instalador no está firmado y por eso Windows avisa. Pulsa «Más información» y «Ejecutar de todas formas». El código está en <a href="{REPO}">GitHub</a> para quien quiera revisarlo.</p></details>
-    <details><summary>¿Necesito RetroBat?</summary><p>No. Funciona solo y traduce los juegos que tengas en cualquier carpeta. Si usas RetroBat, el botón Jugar abre el juego traducido con su emulador.</p></details>
-    <details><summary>¿Envía datos míos a algún sitio?</summary><p>No. Solo se conecta para traer portadas, descargar parches y ver si hay una versión o un catálogo nuevos. Tus ajustes y tus listas se quedan en tu equipo.</p></details>
-    <details><summary>Falta una traducción o una ficha está mal</summary><p><a href="{INCIDENCIAS}">Avísame en GitHub</a>. El catálogo se pone al día solo en todos los equipos, sin reinstalar nada.</p></details>
+    <details><summary>¿Necesito RetroBat?</summary><p>No. El programa funciona solo y traduce los juegos que tengas en cualquier carpeta. Si usas RetroBat, el botón Jugar abre el juego traducido con su emulador.</p></details>
+    <details><summary>¿Envía datos míos a algún sitio?</summary><p>No. La web solo pide las portadas y los parches; el programa, además, mira si hay una versión o un catálogo nuevos. Tus ajustes y tus listas se quedan en tu equipo.</p></details>
   </section>
 
   <section class="final">
     <h2>¿Qué juego vas a jugar en español?</h2>
-    <a class="btn primario grande" href="{INSTALADOR}" data-goatcounter-click="descarga-final">Descargar para Windows</a>
+    <div class="acciones">
+      <a class="btn primario grande" href="catalogo/">Buscar mi juego</a>
+      <a class="btn grande" href="{INSTALADOR}" data-goatcounter-click="descarga-final">Descargar para Windows</a>
+    </div>
   </section>
 </main>'''
-    desc = (f'Juega en español a juegos que nunca salieron traducidos: {n_trad:,} traducciones de aficionados, de la NES a la Switch y el PC. '
-            'Programa gratuito para Windows que busca tus juegos y aplica la traducción con un clic.')
+    desc = (f'{n_trad:,} traducciones al español de juegos hechas por aficionados, de la NES a la Switch y el PC, con las novedades de cada día. '
+            'Cada ficha lleva a la traducción; aplícala en el navegador o con el programa gratuito para Windows.')
     ld = {'@context': 'https://schema.org', '@graph': [
         {'@type': 'WebSite', 'url': base, 'name': 'Biblioteca de traducciones', 'inLanguage': 'es',
          'potentialAction': {'@type': 'SearchAction', 'target': {'@type': 'EntryPoint', 'urlTemplate': base + 'catalogo/?q={q}'},
@@ -689,6 +788,48 @@ def pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version):
          'downloadUrl': INSTALADOR, 'license': 'https://www.gnu.org/licenses/gpl-3.0.html', 'image': base + 'img/vista-previa.png',
          'offers': {'@type': 'Offer', 'price': '0', 'priceCurrency': 'EUR'}}]}
     return pagina(raiz, 'Biblioteca de traducciones: juega en español a juegos que nunca salieron traducidos', desc, '', cuerpo, base, ld=ld)
+
+
+def pagina_novedades(dias, filas, sysn, base):
+    """Lo que ha entrado en el catálogo, por días (los juegos para adultos van ocultos, como en el catálogo)."""
+    raiz = '../'
+    if dias:
+        n = sum(len(fs) for _, fs in dias)
+        bloques = ''.join(
+            f'<section class="letra" id="d{fecha}"><h2>{fecha_larga(fecha)} <span class="n">{len(fs)} {"traducción" if len(fs) == 1 else "traducciones"}</span></h2>'
+            f'<ul class="tarjetas">{"".join(tarjetas_novedades([(fecha, fs)], raiz, sysn, con_fecha=False))}</ul></section>\n'
+            for fecha, fs in dias)
+        intro = (f'Las {n:,} traducciones que han entrado en el catálogo en los últimos {DIAS_NOVEDADES} días, de la más reciente a la más antigua. '
+                 'Cada tarjeta lleva a la ficha del juego y de ahí a la traducción.')
+    else:
+        bloques = f'<section class="bloque"><h2>Últimas traducciones</h2>{recientes(filas, raiz, sysn, 60, True)}</section>'
+        intro = 'Las últimas traducciones publicadas, por su fecha.'
+    cuerpo = f'''<main class="sistema novedades-p">
+  <p class="migas"><a href="{raiz}">Inicio</a> › Novedades</p>
+  <h1>Novedades del catálogo</h1>
+  <p class="lede">{intro} También como <a href="{raiz}novedades.xml">canal RSS</a>.</p>
+  {bloques}
+</main>'''
+    desc = 'Las últimas traducciones al español añadidas al catálogo de la Biblioteca de traducciones, día a día.'
+    ld = {'@context': 'https://schema.org', '@graph': [migas_ld(base, [('Inicio', ''), ('Novedades', 'novedades/')])]}
+    return pagina(raiz, 'Novedades: últimas traducciones añadidas · Biblioteca de traducciones', desc, 'novedades/', cuerpo, base, ld=ld)
+
+
+def feed_novedades(dias, sysn, base):
+    """Canal Atom de las novedades: una entrada por día con sus juegos (sin los de adultos)."""
+    entradas = []
+    for fecha, fs in dias[:30]:
+        lista = ''.join(f'<li><a href="{e(base + f["ruta"])}">{e(f["juego"])}</a> ({e(sysn.get(f["sistema"], f["sistema"]))})'
+                        + (f' · {e(f["grupo"].strip())}' if f['grupo'].strip() else '') + '</li>' for f in fs)
+        n = len(fs)
+        entradas.append(f'<entry><title>{e(fecha_larga(fecha))}: {n} {"traducción nueva" if n == 1 else "traducciones nuevas"}</title>'
+                        f'<link href="{e(base)}novedades/#d{fecha}"/><id>{e(base)}novedades/#d{fecha}</id><updated>{fecha}T00:00:00Z</updated>'
+                        f'<content type="html">{e("<ul>" + lista + "</ul>")}</content></entry>\n')
+    actualizado = (dias[0][0] if dias else date.today().isoformat()) + 'T00:00:00Z'
+    return ('<?xml version="1.0" encoding="utf-8"?>\n<feed xmlns="http://www.w3.org/2005/Atom">\n'
+            f'<title>Novedades del catálogo · Biblioteca de traducciones</title><link href="{e(base)}novedades/"/>'
+            f'<link rel="self" href="{e(base)}novedades.xml"/><id>{e(base)}novedades.xml</id><updated>{actualizado}</updated>'
+            '<author><name>Biblioteca de traducciones</name></author>\n' + ''.join(entradas) + '</feed>\n')
 
 
 def pagina_listas(base):
@@ -834,6 +975,10 @@ def main():
         for grupo in dict.fromkeys(f['grupo'].strip() for f in g['filas'] if f['grupo'].strip()):
             por_grupo.setdefault(grupo, []).append(g)
     ctx = {'sysn': sysn, 'por_sis': por_sis, 'por_grupo': por_grupo}
+    altas = fechas_alta()
+    for f in filas:
+        f['alta'] = altas.get(clave_fila(f), '')
+    dias, dias_publicas = novedades(filas), novedades(filas, sin_adultos=True)
 
     if os.path.isdir(salida):
         shutil.rmtree(salida)
@@ -862,8 +1007,10 @@ def main():
     escribir(salida, '.nojekyll', '')
 
     n_trad, n_juegos = len(filas), len(juegos)
-    escribir(salida, 'index.html', miles(pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version)))
+    escribir(salida, 'index.html', miles(pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version, dias_publicas, filas)))
     escribir(salida, 'catalogo/index.html', miles(pagina_catalogo(por_sis, sysn, base, n_trad, n_juegos, filas)))
+    escribir(salida, 'novedades/index.html', miles(pagina_novedades(dias, filas, sysn, base)))
+    escribir(salida, 'novedades.xml', feed_novedades(dias_publicas, sysn, base))
     indice = []
     for g in juegos:
         escribir(salida, g['ruta'] + 'index.html', pagina_juego(g, sysn, libretro, base, ctx))
@@ -882,13 +1029,13 @@ def main():
     # La fecha de cada página es la de su última traducción (los buscadores ignoran un lastmod que siempre es hoy);
     # la portada y el catálogo cambian cada vez que se genera la web.
     hoy = date.today().isoformat()
-    rutas = ([('', hoy), ('catalogo/', hoy), ('parchear/', hoy)]
+    rutas = ([('', hoy), ('catalogo/', hoy), ('novedades/', hoy), ('parchear/', hoy)]
              + [(f'sistema/{s}/', max((g['fecha'] for g in gs), default='')) for s, gs in por_sis.items()]
              + [(g['ruta'], g['fecha']) for g in juegos])
     escribir(salida, 'sitemap.xml', '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
              + ''.join(f'<url><loc>{e(base + r)}</loc>' + (f'<lastmod>{d}</lastmod>' if d else '') + '</url>\n' for r, d in rutas) + '</urlset>\n')
     escribir(salida, 'robots.txt', f'User-agent: *\nAllow: /\nSitemap: {base}sitemap.xml\n')
-    print(f'Web en {salida}: {n_juegos} juegos, {len(por_sis)} sistemas, {len(rutas)} páginas. Dirección: {base}')
+    print(f'Web en {salida}: {n_juegos} juegos, {len(por_sis)} sistemas, {len(rutas)} páginas; novedades: {len(altas)} altas en {len(dias)} días. Dirección: {base}')
 
 
 if __name__ == '__main__':

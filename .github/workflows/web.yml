@@ -34,6 +34,9 @@ jobs:
       url: ${{ steps.publicar.outputs.page_url }}
     steps:
       - uses: actions/checkout@v5
+        with:
+          # Todo el historial: las novedades de la portada salen de los commits del catálogo (fechas_alta en tools/web.py).
+          fetch-depth: 0
       - name: Generar la web
         run: python3 tools/web.py _site
       - uses: actions/upload-pages-artifact@v3
