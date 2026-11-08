@@ -1291,15 +1291,16 @@ def selecciones(juegos, sysn):
     return out
 
 
-def tarjeta_seleccion(sel, raiz):
+def tarjeta_seleccion(sel, raiz, href=None, sub=None):
+    """Una selección como tarjeta: tres portadas (con las alternativas de sig() por si una falla), el título y cuántos juegos."""
     sl, titulo, intro, gs = sel
     ports = ''
     for g in [g for g in gs if portadas(g, LIBRETRO, raiz) and not juego_adulto(g)][:3]:
         u = portadas(g, LIBRETRO, raiz)
         ports += (f'<img loading="lazy" src="{e(u[0])}" data-alt="{e(" ".join(u[1:]))}" alt="" referrerpolicy="no-referrer" '
-                  f'onerror="if(this.dataset.alt){{var r=this.dataset.alt.split(' ');this.src=r.shift();this.dataset.alt=r.join(' ')}}else this.remove()">')
-    return (f'<a class="sel" href="{raiz}selecciones/{e(sl)}/"><span class="sel-port">{ports}</span>'
-            f'<b>{e(titulo)}</b><span class="suave">{len(gs)} juegos</span></a>')
+                  f'onerror="sig(this)">')
+    return (f'<a class="sel" href="{href or f"{raiz}selecciones/{e(sl)}/"}"><span class="sel-port">{ports}</span>'
+            f'<b>{e(titulo)}</b><span class="suave">{e(sub) if sub else f"{len(gs)} juegos"}</span></a>')
 
 
 def pagina_seleccion(sel, sysn, base):
@@ -1321,7 +1322,7 @@ def pagina_seleccion(sel, sysn, base):
     return pagina(raiz, f'{titulo} · Biblioteca de traducciones', desc, f'selecciones/{sl}/', cuerpo, base, ld=ld)
 
 
-def pagina_selecciones(sels, base):
+def pagina_selecciones(sels, base, doblados=()):
     raiz = '../'
     sistemas = [s for s in sels if s[0].startswith('imprescindibles-')]
     otras = [s for s in sels if not s[0].startswith('imprescindibles-')]
@@ -1329,7 +1330,7 @@ def pagina_selecciones(sels, base):
   <p class="migas"><a href="{raiz}">Inicio</a> › Selecciones</p>
   <h1>Selecciones</h1>
   <p class="lede">Juegos con traducción al español agrupados por género y por sistema, de los más conocidos a los menos. Para descubrir qué jugar.</p>
-  <section class="bloque"><h2>Por género</h2><div class="sels">{''.join(tarjeta_seleccion(s, raiz) for s in otras)}<a class="sel" href="{raiz}doblajes/"><span class="sel-port"></span><b>Doblajes al español</b><span class="suave">Juegos con voces en español</span></a></div></section>
+  <section class="bloque"><h2>Por género</h2><div class="sels">{''.join(tarjeta_seleccion(s, raiz) for s in otras)}{tarjeta_seleccion(('doblajes', 'Doblajes al español', '', doblados), raiz, href=f'{raiz}doblajes/', sub=f'{len(doblados)} juegos con voces en español') if doblados else ''}</div></section>
   <section class="bloque"><h2>Imprescindibles por sistema</h2><div class="sels">{''.join(tarjeta_seleccion(s, raiz) for s in sistemas)}</div></section>
 </main>'''
     desc = 'Selecciones de juegos con traducción al español: RPG japoneses, aventuras gráficas, terror, novelas visuales e imprescindibles de cada consola.'
@@ -1600,7 +1601,7 @@ def main():
     escribir(salida, 'grupos/index.html', miles(pagina_grupos(grupos, base)))
     for n, items in grupos.items():
         escribir(salida, ruta_grupo(n) + 'index.html', miles(pagina_grupo(n, items, sysn, base)))
-    escribir(salida, 'selecciones/index.html', miles(pagina_selecciones(sels, base)))
+    escribir(salida, 'selecciones/index.html', miles(pagina_selecciones(sels, base, sorted({id(f['gr']): f['gr'] for f in filas if doblaje(f)}.values(), key=lambda g: -max(x['pop'] for x in g['filas'])))))
     for sel in sels:
         escribir(salida, f'selecciones/{sel[0]}/index.html', miles(pagina_seleccion(sel, sysn, base)))
     escribir(salida, 'en-camino/index.html', miles(pagina_en_camino(juegos, sysn, base)))
