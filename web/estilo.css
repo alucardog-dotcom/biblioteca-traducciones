@@ -138,6 +138,7 @@ main { display: block; max-width: var(--ancho); margin: 0 auto; padding: 0 var(-
 .chip.ia { color: #FF8C96; border-color: rgba(255, 107, 120, 0.45); }
 .chip.var { color: #9FD3FF; border-color: rgba(159, 211, 255, 0.4); }
 .chip.dob { color: #FFB27A; border-color: rgba(255, 138, 61, 0.45); }
+.chip.ra { color: #C9A7FF; border-color: rgba(185, 140, 255, 0.45); }
 .como .pasos { max-width: 75ch; }
 
 /* ---- catálogo */
@@ -289,3 +290,37 @@ html:not(.adultos) .tarjeta[data-a18] { display: none; }
 /* Página de doblajes */
 .doblajes-p .bloque h2 .n { font-size: 0.8rem; vertical-align: middle; margin-left: 8px; color: var(--suave); }
 .doblajes-p .bloque .texto { margin: -8px 0 0; }
+
+/* Ficha: el juego (datos, capturas y vídeo) y los dos botones de arriba */
+.acciones-j { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+.juego-t .acciones-j .btn { margin-top: 0; }
+.el-juego .datos { margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 16px; max-width: 520px; font-size: 0.95rem; }
+.el-juego .datos dt { color: var(--suave); }
+.el-juego .datos dd { margin: 0; }
+.capturas { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); gap: 10px; }
+.capturas a { display: block; border-radius: 10px; overflow: hidden; border: 1px solid var(--linea); background: var(--panel-2); aspect-ratio: 4 / 3; }
+.capturas img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.el-juego p.suave { margin: 0; }
+button.video { position: relative; display: block; width: 100%; max-width: 640px; aspect-ratio: 16 / 9; padding: 0; border: 1px solid var(--linea); border-radius: 12px; overflow: hidden; background: #000; cursor: pointer; }
+button.video img { width: 100%; height: 100%; object-fit: cover; opacity: .75; }
+button.video span { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); padding: 12px 20px 12px 44px; border-radius: 999px; background: var(--rojo); color: #fff; font: 700 1rem var(--sans); white-space: nowrap; }
+button.video span::before { content: ""; position: absolute; left: 20px; top: 50%; transform: translateY(-50%); border: 8px solid transparent; border-left: 13px solid #fff; border-right: 0; }
+button.video:hover img { opacity: .9; }
+iframe.video { display: block; width: 100%; max-width: 640px; aspect-ratio: 16 / 9; border: 0; border-radius: 12px; }
+
+/* Selecciones, grupos y traducciones en camino */
+.sels { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 12px; }
+.sel { display: grid; gap: 4px; padding: 14px; border-radius: 14px; background: var(--panel); border: 1px solid var(--linea); color: var(--texto); text-decoration: none; }
+.sel:hover { border-color: var(--amarillo); }
+.sel b { font: 700 1.02rem/1.25 var(--display); }
+.sel-port { display: flex; gap: 6px; height: 92px; margin-bottom: 6px; }
+.sel-port img { height: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 6px; background: var(--panel-2); }
+.explora-l { margin: 18px 0 0; }
+.grupo-p .letra h2 .n, .seleccion-p h2 .n, .en-camino-p h2 .n { font-size: 0.8rem; vertical-align: middle; margin-left: 8px; color: var(--suave); }
+.en-camino-p .bloque .texto { margin: -8px 0 0; }
+.proys { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 8px; }
+.proy { display: grid; gap: 2px; padding: 12px 14px; border-radius: 10px; background: var(--panel); border: 1px solid var(--linea); }
+.proy > a { color: var(--texto); text-decoration: none; }
+.proy > a:hover b { color: var(--amarillo-t); }
+.proy .suave { font-size: 0.85rem; }
+html:not(.adultos) .proy[data-a18] { display: none; }

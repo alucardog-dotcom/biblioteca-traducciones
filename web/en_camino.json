@@ -1,0 +1,485 @@
+{
+"fecha": "2026-11-08",
+"fuente": "https://tradusquare.es/traducciones/",
+"proyectos": [
+{
+"n": "Danganronpa V3: Killing Harmony",
+"slug": "danganronpa-v3",
+"p": [
+"PC"
+],
+"g": "V3ducciones",
+"i": "castellano",
+"x": false,
+"m": "2026-11-01"
+},
+{
+"n": "MESMALIE",
+"slug": "mesmalie",
+"p": [
+"PC"
+],
+"g": "MESMALIE (¡En español!)",
+"i": "castellano",
+"x": false,
+"m": "2026-10-31"
+},
+{
+"n": "Ace Attorney Investigations Collection",
+"slug": "ace-attorney-investigations-collection",
+"p": [
+"PC"
+],
+"g": "XabierRyXta",
+"i": "castellano",
+"x": false,
+"m": "2026-10-27"
+},
+{
+"n": "Class of ’09",
+"slug": "class-of-09",
+"p": [
+"PC"
+],
+"g": "Heroaureo, Horchata Scans, ChocoDobs y Shino",
+"i": "castellano",
+"x": false,
+"m": "2026-10-27"
+},
+{
+"n": "of the Devil: Episodio 0",
+"slug": "of-the-devil-episodio-0",
+"p": [
+"PC"
+],
+"g": "otdTradus",
+"i": "castellano",
+"x": false,
+"m": "2026-10-15"
+},
+{
+"n": "Catan: La Primera Isla",
+"slug": "catan-la-primera-isla",
+"p": [
+"Nintendo DS"
+],
+"g": "Team Omega N",
+"i": "castellano",
+"x": false,
+"m": "2026-10-13"
+},
+{
+"n": "MINDWAVE DEMO",
+"slug": "mindwave-demo",
+"p": [
+"PC"
+],
+"g": "Shino",
+"i": "castellano",
+"x": false,
+"m": "2026-10-11"
+},
+{
+"n": "Rune Factory 4 Special",
+"slug": "rune-factory-4-special",
+"p": [
+"PC"
+],
+"g": "Rune Translation",
+"i": "latino",
+"x": false,
+"m": "2026-10-10"
+},
+{
+"n": "Puyo Pop",
+"slug": "puyo-pop-gba",
+"p": [
+"Gameboy Advance"
+],
+"g": "GodotWolf",
+"i": "latino",
+"x": false,
+"m": "2026-10-09"
+},
+{
+"n": "Rance 01",
+"slug": "rance-01-18",
+"p": [
+"PC"
+],
+"g": "Rance en castellano",
+"i": "castellano",
+"x": true,
+"m": "2026-09-25"
+},
+{
+"n": "Corpse Party: Sweet Sachiko’s Hysteric Birthday Bash",
+"slug": "corpse-party-sweet-sachikos-hysteric-birthday-bash",
+"p": [
+"PC"
+],
+"g": "JoseKenshin Traducciones",
+"i": "castellano",
+"x": false,
+"m": "2026-09-24"
+},
+{
+"n": "ULTRAKILL",
+"slug": "ultrakill",
+"p": [
+"PC"
+],
+"g": "UltraEspTeam",
+"i": "latino",
+"x": false,
+"m": "2026-09-24"
+},
+{
+"n": "Inazuma Eleven GO Galaxy: Big Bang/Supernova",
+"slug": "inazuma-eleven-go-galaxy",
+"p": [
+"Nintendo 3DS"
+],
+"g": "Ina11 Translations",
+"i": "castellano",
+"x": false,
+"m": "2026-09-21"
+},
+{
+"n": "Muramasa Rebirth",
+"slug": "muramasa-rebirth",
+"p": [
+"PS Vita"
+],
+"g": "Muramasa Team",
+"i": "castellano",
+"x": false,
+"m": "2026-09-21"
+},
+{
+"n": "Persona 4: Dancing All Night",
+"slug": "persona-4-dancing-all-night",
+"p": [
+"PS Vita",
+"Ps4"
+],
+"g": "A2Workshop",
+"i": "latino",
+"x": false,
+"m": "2026-09-21"
+},
+{
+"n": "Pokémon Conquest",
+"slug": "pokemon-conquest",
+"p": [
+"Nintendo DS"
+],
+"g": "",
+"i": "castellano",
+"x": false,
+"m": "2026-09-21"
+},
+{
+"n": "Policenauts",
+"slug": "policenauts",
+"p": [
+"PlayStation",
+"Saturn"
+],
+"g": "Traducciones del Tío Víctor",
+"i": "castellano",
+"x": false,
+"m": "2026-09-21"
+},
+{
+"n": "Shin Megami Tensei if…",
+"slug": "shin-megami-tensei-if",
+"p": [
+"Super Nintendo"
+],
+"g": "Orden y AMALA",
+"i": "castellano",
+"x": false,
+"m": "2026-09-21"
+},
+{
+"n": "Sid Meier´s Railroad Tycoon Deluxe",
+"slug": "sid-meiers-railroad-tycoon-deluxe",
+"p": [
+"Msdos",
+"PC"
+],
+"g": "Rhaul",
+"i": "castellano",
+"x": false,
+"m": "2026-09-21"
+},
+{
+"n": "The Granstream Saga",
+"slug": "granstream-saga",
+"p": [
+"PlayStation"
+],
+"g": "JoseKenshin Traducciones",
+"i": "castellano",
+"x": false,
+"m": "2026-09-21"
+},
+{
+"n": "Apollo Justice: Ace Attorney Trilogy",
+"slug": "apollo-justice-ace-attorney-trilogy",
+"p": [
+"PC"
+],
+"g": "Traducciones Kurain",
+"i": "castellano",
+"x": false,
+"m": "2026-09-20"
+},
+{
+"n": "Treasure Hunter G",
+"slug": "treasure-hunter-g",
+"p": [
+"Super Nintendo"
+],
+"g": "Traducciones Magno",
+"i": "castellano",
+"x": false,
+"m": "2026-09-20"
+},
+{
+"n": "Baten Kaitos Origins",
+"slug": "baten-kaitos-origins",
+"p": [
+"GameCube"
+],
+"g": "Gadesx Scene",
+"i": "castellano",
+"x": false,
+"m": "2026-09-17"
+},
+{
+"n": "Super Robot Taisen: OG Saga Endless Frontier EXCEED",
+"slug": "super-robot-taisen-exceed",
+"p": [
+"Nintendo DS"
+],
+"g": "Artema Translations",
+"i": "castellano",
+"x": false,
+"m": "2026-09-17"
+},
+{
+"n": "Jump Ultimate Stars",
+"slug": "jump-ultimate-stars",
+"p": [
+"Nintendo DS"
+],
+"g": "TranScene",
+"i": "castellano",
+"x": false,
+"m": "2026-09-16"
+},
+{
+"n": "Death Note: The Kira Game",
+"slug": "death-note-the-kira-game",
+"p": [
+"Nintendo DS"
+],
+"g": "PokeAJ Traducciones",
+"i": "latino",
+"x": false,
+"m": "2026-09-15"
+},
+{
+"n": "Yo-Kai Watch 4++",
+"slug": "yokai-watch-4",
+"p": [
+"Switch",
+"Ps4"
+],
+"g": "Bin o'Coders",
+"i": "castellano",
+"x": false,
+"m": "2026-08-31"
+},
+{
+"n": "Fire Emblem: Mystery of the Emblem",
+"slug": "fe-mystery-emblem",
+"p": [
+"Super Nintendo"
+],
+"g": "Klint Proguctions",
+"i": "castellano",
+"x": false,
+"m": "2026-08-29"
+},
+{
+"n": "Hyperdimension Neptunia Re;Birth3: V Generation",
+"slug": "rebirth-3",
+"p": [
+"PC",
+"PS Vita"
+],
+"g": "Hypertraducciones",
+"i": "castellano",
+"x": false,
+"m": "2026-08-16"
+},
+{
+"n": "Homestuck: Saliendo del canon",
+"slug": "homestuck-saliendo-del-canon",
+"p": [
+"Novela Ligera"
+],
+"g": "Homestuck en español",
+"i": "castellano",
+"x": false,
+"m": "2026-08-11"
+},
+{
+"n": "Root Film",
+"slug": "root-film",
+"p": [
+"Switch"
+],
+"g": "V3ducciones",
+"i": "castellano",
+"x": false,
+"m": "2026-08-06"
+},
+{
+"n": "Jade Cocoon 2",
+"slug": "jade-cocoon-2",
+"p": [
+"Ps2"
+],
+"g": "SwitchCord Traducciones",
+"i": "castellano",
+"x": false,
+"m": "2026-04-05"
+},
+{
+"n": "Devilman",
+"slug": "devilman",
+"p": [
+"PlayStation"
+],
+"g": "JoseKenshin Traducciones",
+"i": "castellano",
+"x": false,
+"m": "2026-03-21"
+},
+{
+"n": "Hiveswap: De colegueo",
+"slug": "hiveswap-de-colegueo",
+"p": [
+"PC"
+],
+"g": "Homestuck en español",
+"i": "castellano",
+"x": false,
+"m": "2025-09-14"
+},
+{
+"n": "OverBlood",
+"slug": "overblood",
+"p": [
+"PlayStation"
+],
+"g": "SwitchCord Traducciones",
+"i": "castellano",
+"x": false,
+"m": "2025-02-16"
+},
+{
+"n": "Chained Echoes",
+"slug": "chained-echoes",
+"p": [
+"PC",
+"Switch"
+],
+"g": "SwitchCord Traducciones",
+"i": "castellano",
+"x": false,
+"m": "2025-02-06"
+},
+{
+"n": "Sengoku Rance (Rance VII)",
+"slug": "sengoku-rance-rance-vii",
+"p": [
+"PC"
+],
+"g": "Rance en castellano",
+"i": "castellano",
+"x": true,
+"m": "2024-03-06"
+},
+{
+"n": "Never7 Eternal Edition",
+"slug": "never7-eternal-edition",
+"p": [
+"PC"
+],
+"g": "",
+"i": "castellano",
+"x": false,
+"m": "2023-03-27"
+},
+{
+"n": "The Legend of Heroes: Trails of Cold Steel",
+"slug": "trails-of-cold-steel-i",
+"p": [
+"PC"
+],
+"g": "Ancalagon",
+"i": "castellano",
+"x": false,
+"m": "2022-11-04"
+},
+{
+"n": "Mother 1",
+"slug": "mother",
+"p": [
+"Gameboy Advance"
+],
+"g": "",
+"i": "castellano",
+"x": false,
+"m": "2022-08-21"
+},
+{
+"n": "Digimon Story: Super Xros Wars",
+"slug": "digimon-story-super-xros-wars",
+"p": [
+"Nintendo DS"
+],
+"g": "Darukeru",
+"i": "latino",
+"x": false,
+"m": "2022-08-15"
+},
+{
+"n": "UnderRail",
+"slug": "underrail",
+"p": [
+"PC"
+],
+"g": "Malakito",
+"i": "castellano",
+"x": false,
+"m": "2022-07-28"
+},
+{
+"n": "Shin Megami Tensei: Devil Summoner: Soul Hackers",
+"slug": "smt-soul-hackers",
+"p": [
+"Nintendo 3DS"
+],
+"g": "AMALA y TraduSquare",
+"i": "castellano",
+"x": false,
+"m": "2022-04-07"
+}
+]
+}
