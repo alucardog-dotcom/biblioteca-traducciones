@@ -39,6 +39,12 @@ jobs:
           fetch-depth: 0
       - name: Generar la web
         run: python3 tools/web.py _site
+      # IndexNow (Bing, DuckDuckGo, Ecosia, Yandex…): antes de subir la web se pone la clave en su raíz y se guarda el
+      # sitemap publicado; después de desplegar, tools/indexnow.py avisa solo de las páginas nuevas o cambiadas. Si
+      # falla, la web se publica igual.
+      - name: Preparar IndexNow
+        continue-on-error: true
+        run: python3 tools/indexnow.py --preparar "$RUNNER_TEMP/sitemap-anterior.xml" _site
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
@@ -47,3 +53,7 @@ jobs:
         with:
           # Son 5.400 páginas y las miniaturas: a GitHub Pages le cuesta a veces más de los 10 minutos por defecto.
           timeout: 1800000
+      - name: Avisar a IndexNow
+        continue-on-error: true
+        timeout-minutes: 5
+        run: python3 tools/indexnow.py --anterior "$RUNNER_TEMP/sitemap-anterior.xml" _site
