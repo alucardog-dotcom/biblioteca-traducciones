@@ -558,7 +558,9 @@ def destacados(filas, dias, pins, k=9):
 def fechas_alta():
     """Cuándo entró cada traducción en el catálogo, según el historial de git del CSV: clave de la fila -> AAAA-MM-DD.
     Se miran los commits de los últimos DIAS_NOVEDADES días; las filas que ya estaban en el más antiguo de ellos no
-    llevan fecha, porque no se sabe cuándo entraron. Sin git o sin historial (un clon superficial), no hay fechas."""
+    llevan fecha, porque no se sabe cuándo entraron. Si en un commit desaparece una fila y aparece la del mismo juego con
+    los mismos autores y alguno más (se acredita a quien no constaba, o se suma quien la retocó), es la misma ficha:
+    conserva su fecha y no sale como novedad. Sin git o sin historial (un clon superficial), no hay fechas."""
     ruta = 'src-tauri/recursos/catalogo/traducciones_fan.csv'
 
     def git(*args):
@@ -569,15 +571,22 @@ def fechas_alta():
                    .decode().splitlines() if l.strip()]
         if len(commits) < 2:
             return {}
-        altas, viejas = {}, None
-        for sha, fecha in reversed(commits):  # del más antiguo al más nuevo
+        altas, conocidas, previas = {}, set(), set()
+        for i, (sha, fecha) in enumerate(reversed(commits)):  # del más antiguo al más nuevo
             claves = {clave_fila(f) for f in csv.DictReader(io.StringIO(git('show', f'{sha}:{ruta}').decode('utf-8-sig')))}
-            if viejas is None or fecha < NOVEDADES_DESDE:
-                viejas = claves if viejas is None else viejas | claves
-                continue
-            for c in claves:
-                if c not in viejas and c not in altas:
-                    altas[c] = fecha
+            base = i == 0 or fecha < NOVEDADES_DESDE
+            idas = previas - claves  # las filas que desaparecen en este commit: borradas o con otro grupo
+            for c in claves - conocidas:
+                if not base:
+                    sis, jue, gru = c.split('|', 2)
+                    autores = set(gru.split())
+                    antes = next((k for k in idas if k.startswith(f'{sis}|{jue}|') and set(k.split('|', 2)[2].split()) <= autores), None)
+                    if antes is None:
+                        altas[c] = fecha
+                    elif antes in altas:
+                        altas[c] = altas[antes]
+                conocidas.add(c)
+            previas = claves
         return altas
     except (OSError, subprocess.CalledProcessError, UnicodeDecodeError, KeyError):
         return {}
