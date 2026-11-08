@@ -742,7 +742,7 @@ def nombre_grupo_html(grupo, raiz):
     return ' / '.join(f'<a href="{raiz}{ruta_grupo(p)}">{e(p)}</a>' if p in GRUPOS_CON_PAGINA else e(p) for p in partes)
 
 
-def tarjeta_trad(f, raiz='../../../'):
+def tarjeta_trad(f, raiz='../../../', ruta=''):
     datos = []
     if f['version']:
         datos.append(('Versión', e(f['version'])))
@@ -759,7 +759,10 @@ def tarjeta_trad(f, raiz='../../../'):
     dl = ''.join(f'<dt>{k}</dt><dd>{v}</dd>' for k, v in datos)
     nota = re.sub(r'^\[IA\]\s*', '', f['notas']).strip()
     cosa = 'del doblaje' if doblaje(f) == 'doblaje' else 'de la traducción'
-    enlace = (f'<a class="btn" href="{e(f["url"])}" target="_blank" rel="noopener">Página {cosa}</a>'
+    # GoatCounter cuenta los clics como el evento «trad-<sistema>/<juego>»: es lo más parecido a las descargas de cada ficha.
+    evento = (f' data-goatcounter-click="trad-{e(ruta.removeprefix("juego/").strip("/"))}" '
+              f'data-goatcounter-title="{e(f["juego"])} ({e(f["grupo"][:60])})"') if ruta and GOATCOUNTER else ''
+    enlace = (f'<a class="btn" href="{e(f["url"])}" target="_blank" rel="noopener"{evento}>Página {cosa}</a>'
               if web_segura(f['url']) else f'<p class="suave">No se conoce la página {"de este doblaje" if doblaje(f) == "doblaje" else "de esta traducción"}.</p>')
     return f'''<article class="trad">
   <div class="trad-h"><h3>{nombre_grupo_html(f['grupo'], raiz)}</h3><div class="chips">{chips_trad(f)}</div></div>
@@ -865,7 +868,7 @@ def pagina_juego(gr, sysn, libretro, base, ctx):
   <section class="bloque">
     <h2>{({'doblaje': 'El doblaje', 'ambos': 'La traducción y el doblaje'}.get(tipos[0], 'La traducción') if n == 1
           else 'Los doblajes' if solo_dob else 'Las traducciones')}</h2>
-    <div class="trads">{''.join(tarjeta_trad(f) for f in gr['filas'])}</div>
+    <div class="trads">{''.join(tarjeta_trad(f, ruta=gr['ruta']) for f in gr['filas'])}</div>
   </section>
   {seccion_juego(gr, nombre_sis)}
   <section class="bloque">
