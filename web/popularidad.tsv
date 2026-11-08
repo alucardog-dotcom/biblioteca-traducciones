@@ -410,6 +410,7 @@ pc|Rivals of Aether|=El_Geri= con Swag	79	lb:52 st:33477 +2trad
 pc|Rivals of Aether|Enrip99	79	lb:52 st:33477 +2trad
 pc|Sonic Adventure 2 (traducción y doblaje al castellano)|kawaiikaorichan	79	lb:156 st:23946 +3trad
 pc|Sonic Adventure 2|Starmimi	79	lb:156 st:23946 +3trad
+pc|The Henry Stickmin Collection|Streamly	79	lb:30 st:56458
 pc|The Wolf Among Us (traducción mejorada)|darkpadawan (Clan DLAN)	79	lb:91 st:32652 +2trad
 pc|The Wolf Among Us|Liono 07	79	lb:91 st:32652 +2trad
 pc|Torchlight II (Trans Torchlight 2 Spanish)|Autor no indicado (foro de Runic Games); difundido por ibermarc	79	lb:97 st:33328 +2trad
@@ -663,6 +664,8 @@ nes|Gun.Smoke|Tanero	73	lb:189 +2trad
 nes|Gun.Smoke|Traducciones Wave	73	lb:189 +2trad
 nes|Mario Bros.|Traducciones Wave	73	lb:256
 nes|Spartan X|Wave	73	lb:250
+pc|Detention!|cireja	73	lb:12 st:13125 +2trad
+pc|Detention|Tropicana Traducciones	73	lb:12 st:13125 +2trad
 pc|Gamble With Your Friends|MyFiurerJose	73	st:22651
 pc|NEKOPARA Vol. 1|Sharin-Sub	73	lb:12 st:23489
 pc|Okami HD|Tradusquare	73	lb:50 st:8295 +ts
@@ -783,6 +786,7 @@ nes|The Battle of Olympus|dmlan2000	71	lb:156 +2trad
 nes|The Battle of Olympus|jackic	71	lb:156 +2trad
 nes|The Immortal|Rod Merida	71	lb:85 +ts +2trad
 pc|ATLYSS|TheCyberCafeMAN	71	st:19408
+pc|Bigfoot|cireja	71	lb:5 st:17905
 pc|Digimon Story Cyber Sleuth: Complete Edition|LoudKuyuki	71	lb:26 st:10959 +2trad
 pc|Half-Life: Blue Shift|Ghost1432802	71	lb:80 st:18868
 pc|Kimi to Kanojo to Kanojo no Koi (Totono)|Eientei Translations	71	lb:4 st:6140 +ts
@@ -936,6 +940,7 @@ pc|Chained Echoes|shadowman1 (ElOtroLado); hilo de Vintage_Gamer	69	lb:27 st:786
 pc|Fallout 2 Restoration Project (RPU) con traducción al castellano|BGforge (comunidad)	69	lb:120 st:13972
 pc|Fallout 2 Unofficial Patch (UPU) con traducción al castellano|BGforge (comunidad)	69	lb:120 st:13972
 pc|Fallout 2: A Post Nuclear Role Playing Game|Clan DLAN; guía de Wfsschar°	69	lb:120 st:13972
+pc|Gone Home|darkpadawan	69	lb:57 st:13657
 pc|Look Outside|	69	lb:1 st:14391
 pc|MechWarrior 5: Mercenaries|MetakWAR	69	lb:23 st:13693
 pc|NEKOPARA Vol. 0|Sharin-Sub	69	lb:11 st:14768
@@ -1388,6 +1393,7 @@ pc|Berserk and the Band of the Hawk|Azulard	64	lb:23 st:3759 +2trad
 pc|CHAOS;CHILD|Chaos Gate Team	64	lb:6 st:3929 +2trad
 pc|Chaos;Child|Taikutsu Translations (TaikutsuTL)	64	lb:6 st:3929 +2trad
 pc|Diablo (retraducción)|bbypka	64	lb:124
+pc|Grim Fandango Remastered|Alfrex	64	lb:74 st:7238
 pc|HighFleet|Darien999	64	st:7094
 pc|Marco & The Galaxy Dragon|Sharin-Sub	64	st:7260
 pc|Potionomics|	64	lb:3 st:7032
@@ -1626,6 +1632,7 @@ pc|Café Stella and the Reaper's Butterflies|Taikutsu Translations (TaikutsuTL)	
 pc|Dread Delusion|	62	lb:1 st:5028
 pc|Fatal Frame: Maiden of Black Water|darkxex, Angel Xex, Jonaand y Vagrant	62	lb:21 st:5473
 pc|Fate/Samurai Remnant|Yuzuy	62	st:5052
+pc|Haven|cireja	62	lb:13 st:5327
 pc|Lucid Blocks|Puzzku	62	st:4918
 pc|Monolith|Abandonsocios	62	lb:6 st:3205 +2trad
 pc|Sakuna: Of Rice and Ruin|shin21 (Malakito)	62	lb:17 st:5023
@@ -1929,6 +1936,7 @@ pcengine|Vigilante|Traducciones Wave	60	lb:93
 pc|Amnesia: Memories|lil meow meow	60	lb:3 st:3883
 pc|Beholder 3|	60	lb:6 st:2307 +2trad
 pc|Beholder 3|muermo	60	lb:6 st:2307 +2trad
+pc|Dear Esther|Francisco J. Galdo y José Francisco Castellano	60	lb:20 st:3968
 pc|Doki Doki Literature Club! - mod Our Time|Alejoglez	60	lb:97
 pc|Drag'n Wash (mod multilingüe con español)|TomXV	60	st:4086
 pc|Helltaker|TraduSquare	60	lb:32 st:406 +ts +6trad
@@ -2273,6 +2281,7 @@ pc|CARIMARA: Beneath the forlorn limbs (español neutro)|BenoAbarcaS	58	st:2950
 pc|Caribbean Legend|Jtem-esp	58	lb:1 st:2994
 pc|Contradiction: Spot the Liar!|Artemis y Pakolmo	58	lb:5 st:2841
 pc|Disgaea 5|CepitaUva	58	st:3094
+pc|Dreamfall Chapters|darkpadawan	58	lb:7 st:3222
 pc|Hylics 2 (español latino)|AlanDaniel500	58	lb:3 st:3197
 pc|King's Quest (episodios 1 y 2)|MetakWAR	58	st:1314 +3trad
 pc|King's Quest (episodios 3 a 6)|ogromanas	58	st:1314 +3trad
@@ -2433,6 +2442,7 @@ pcengine|Cyber Core|Traducciones Wave	57	lb:77
 pcengine|Double Dungeons - W|Traducciones Wave	57	lb:74
 pc|Crystal Project|CepitaUva	57	lb:4 st:2546
 pc|Edna & Harvey: Harvey's New Eyes|walas74	57	lb:14 st:2777
+pc|Fall|cireja	57	lb:18 st:2791
 pc|GINKA|Taikutsu Translations (TaikutsuTL)	57	st:2689
 pc|Grandia II HD Remaster|vacio	57	lb:25 st:2525
 pc|Higurashi When They Cry Hou - Ch.1 Onikakushi|TheAcidJoker972 y Renka	57	lb:6 st:1433 +2trad
@@ -2786,6 +2796,7 @@ pcengine|Victory Run|Traducciones Wave	55	lb:63
 pc|Atelier Ryza 3: Alchemist of the End & the Secret Key|ryudo261276	55	lb:7 st:1927
 pc|Cavern of Dreams|	55	lb:9 st:1214 +2trad
 pc|Cavern of Dreams|TheNayek	55	lb:9 st:1214 +2trad
+pc|Dead Pixels|cireja	55	lb:8 st:1990
 pc|Detective Di: The Silk Rose Murders|ExLibris	55	lb:1 st:1104 +2trad
 pc|Detective Di: The Silk Rose Murders|locoroco96	55	lb:1 st:1104 +2trad
 pc|Divinity: Dragon Commander|Memnoch (Clan DLAN)	55	lb:7 st:1984
@@ -2960,6 +2971,7 @@ pc|Lands of Lore: The Throne of Chaos (CD)|SkaZZ	54	lb:60
 pc|Parquet|Taikutsu Translations (TaikutsuTL)	54	st:1784
 pc|STEINS;GATE: My Darling's Embrace|Chaos Gate Team; guía de Waldo y Arthurian King	54	lb:4 st:1823
 pc|Star Ocean The Divine Force|Yuzuy	54	lb:10 st:1695
+pc|The Basement|cireja	54	lb:6 st:1688
 pc|Tomb Raider 4: The Last Revelation|Suikazeraider	54	lb:33 +ts
 ps2|Disaster Report|atchuss	54	lb:58
 ps2|Evil Dead: Regeneration|	54	lb:58
@@ -3462,6 +3474,7 @@ pcengine|Mr. Heli No Daibouken|Traducciones Wave	51	lb:48
 pcengine|Super Volleyball|Traducciones Wave	51	lb:47
 pcengine|Veigues Tactical Gladiator|Traducciones Wave	51	lb:47
 pc|Avernum: Escape from the Pit|walas74; raulpuro	51	lb:15 st:1198
+pc|Hiveswap: Friendsim|MSPaint Adventures	51	lb:4 st:1228
 pc|Little Busters! English Edition|Universo When They Cry	51	lb:6 st:1140
 pc|Murder by Numbers|	51	lb:14 st:1161
 pc|Nights of Azure|CepitaUva	51	lb:7 st:644 +2trad
@@ -3641,11 +3654,14 @@ pc|Banquet for Fools|	50	st:976
 pc|Blue Reflection: Second Light|Black99	50	lb:2 st:950
 pc|Death end re;Quest|hesama / PeronchoCraft	50	lb:8 st:1038
 pc|Kingdoms of the Dump|	50	lb:1 st:1042
+pc|Miasmata|David Talavera e Ian Munsie	50	lb:6 st:1066
 pc|Old Skies|	50	lb:4 st:989
 pc|Paradigm|pakolmo	50	lb:15 st:984
 pc|Sea Bed|Sharin-Sub	50	st:1011
 pc|The Fruit of Grisaia|Sharin-Sub	50	lb:6 st:1035
+pc|The Inner World|darkpadawan	50	lb:8 st:934
 pc|The Necromancer's Tale|	50	st:980
+pc|The Void|darkpadawan	50	lb:7 st:945
 pc|Tom Clancy’s Rainbow Six|Traducciones del Tío Víctor	50	lb:23 +ts
 pc|Trails to Azure|locoroco96	50	st:1008
 pc|Troublemaker|locoroco96	50	lb:5 st:946
@@ -4135,6 +4151,7 @@ pc|Deep Sleep: Labyrinth of the Forsaken|	47	st:621
 pc|ENA: Dream BBQ|LoboSarnoso	47	lb:12 st:691
 pc|Flowers: Le volume sur automne|locoroco96	47	st:702
 pc|Gurumin|locoroco96	47	st:694
+pc|Hollywood Monsters 2|gen13_dv8	47	lb:5 st:666
 pc|Lunarium|	47	st:660
 pc|Making Lovers|Sharin-Sub	47	lb:1 st:635
 pc|Neverwinter (Online)|sharshazo	47	lb:35 st:295
@@ -4148,6 +4165,7 @@ pc|Tales of Monkey Island: capítulo 3|jackic	47	st:675
 pc|Tales of Monkey Island|La Cueva de los Clásicos	47	lb:28 st:675
 pc|The DioField Chronicle|	47	lb:1 st:685
 pc|Trails through Daybreak II|locoroco96	47	st:679
+pc|Wasted|cireja	47	lb:2 st:621
 pc|Welcome to the Game III|AgenteMaxo	47	st:680
 psvita|Persona 4: Golden|AkatsukiDarkx (con Hiperion14)	47	lb:35
 psx|Racing Lagoon|FJVERALV (Fveralv)	47	lb:35
@@ -4281,9 +4299,11 @@ pc|Monolith|walas74	46	lb:12 st:326 +2trad
 pc|Never Grave: The Witch and The Curse|	46	st:559
 pc|POSTAL (español latino)|KrossFate7	46	lb:23 +2trad
 pc|Postal (parche para Steam)|DarkNeo (Ruben Birri)	46	lb:23 +2trad
+pc|Puzzle Agent 2|SunkDevifull	46	lb:9 st:605
 pc|SaGa Frontier Remastered|Larry_Wilco	46	lb:10 st:561
 pc|Shiren the Wanderer: The Mystery Dungeon of Serpentcoil Island|CepitaUva	46	st:544
 pc|Stranded With You|traductorjuegos	46	st:581
+pc|The Charnel House Trilogy|JoseLuis64	46	st:568
 pc|The Coma 2B: Catacomb|locoroco96	46	lb:2 st:596
 pc|The Posthumous Investigation|	46	st:581
 pc|The Raven: Legacy of a Master Thief|lobo.rojo	46	lb:9 st:611
@@ -4392,6 +4412,7 @@ pc|Atelier Firis DX|CepitaUva	45	st:474
 pc|Atelier Lulua|CepitaUva	45	st:535
 pc|Belladonna|ORider	45	lb:5 st:479
 pc|Blackwell 4: Deception|walas74	45	st:519
+pc|Breakdown|cireja	45	lb:30
 pc|Ciconia When They Cry - Phase 1: For You, the Replaceable Ones|Aris Rhiannon	45	st:517
 pc|Clock Tower (Windows 95)|SkaZZ	45	lb:8 st:477
 pc|Fabled Lands|	45	lb:1 st:526
@@ -4429,6 +4450,7 @@ zxspectrum|Arkanoid|Traducciones Wave	45	lb:29
 colecovision|James Bond 007|Traducciones Wave	44	lb:28
 colecovision|Zenji|Traducciones Wave	44	lb:27
 dos|Alien Incident|SkaZZ y asperet	44	lb:28
+dos|Menzoberranzan|L@Zar0	44	lb:27
 dos|Teenagent|SkaZZ	44	lb:27
 dreamcast|Dividead +18|Tales Translations	44	lb:14 +ts
 dreamcast|The King of Fighters 2000|johanderohan (Parches en Castellano)	44	lb:28
@@ -4505,6 +4527,8 @@ pc|Kingdom Hearts Melody of Memory|Ecos del doblaje	44	lb:14 +ts
 pc|Loopmancer|	44	lb:12 st:451
 pc|Metal Max Xeno Reborn|	44	lb:2 st:448
 pc|Night Call|maxeryt15	44	lb:3 st:410
+pc|Silence of the Sleep|Tradupixel	44	lb:2 st:446
+pc|Someday You'll Return|muermo	44	st:454
 pc|TIE Fighter Total Conversion (Classic Edition)|darkpadawan	44	st:415
 pc|X-Wing Redux|darkpadawan	44	st:415
 pc|Yume Nikki|TheFireRed, Lautaro1428 y AegisTrad; guía de V I R A L	44	lb:28
@@ -4595,6 +4619,7 @@ pc|Cognition: An Erica Reed Thriller - Episodio 3: The Oracle|walas74	43	st:381
 pc|Cognition: An Erica Reed Thriller - Episodio 4: The Cain Killer|walas74	43	st:381
 pc|Disgaea 6|CepitaUva	43	st:389
 pc|Emily is Away y Emily is Away <3|jonaslouras	43	st:364
+pc|Graveyard|cireja	43	lb:2 st:370
 pc|Irony Curtain: From Matryoshka with Love|Chuti; Pakolmo (fuentes y parche multirresolución)	43	lb:5 st:398
 pc|Maitetsu|Alei Translations	43	st:358
 pc|Metro Sim Hustle|	43	st:357
@@ -4692,6 +4717,7 @@ pc|Grisaia: Phantom Trigger Vol. 1|Sharin-Sub	42	st:324
 pc|Kingdom of Night|MetakWAR	42	st:341
 pc|Nancy Drew: Secrets Can Kill (Remastered)|asperet	42	lb:5 st:328
 pc|Oninaki|	42	lb:1 st:335
+pc|Pat & Mat|Tradupixel	42	lb:1 st:326
 pc|Pharaoh Rebirth+|Gross (TraduSquare)	42	lb:6 st:333
 pc|Slay the Alice (traducciones al español, francés y alemán)|GalaxyRe	42	st:322
 pc|Submarine Titans|Foro de Clan DLAN (autor no indicado)	42	lb:2 st:351
@@ -4765,8 +4791,10 @@ pc|Atelier Ryza DX|CepitaUva	41	st:279
 pc|Atelier Ryza: Ever Darkness & the Secret Hideout DX|Soap1080	41	lb:2 st:279
 pc|GTA: London 1969|DarkNeo (Ruben Birri)	41	lb:21
 pc|Hero-U: Rogue to Redemption|	41	lb:3 st:280
+pc|Hitchhiker's Guide to the Galaxy: Towel Day|cireja	41	lb:22
 pc|I Walk Among Zombies Vol. 3|Cuarentena Team	41	st:288
 pc|Islands of the Caliph|MiguelZamoraRey	41	lb:1 st:278
+pc|Last Hope|cireja	41	lb:5 st:273
 pc|Memory of Memorie: A Chill Story|CepitaUva	41	st:304
 pc|Morningstar: Descent to Deadrock (versión Steam)|koke_ween	41	lb:2 st:283
 pc|Nights of Azure 2|CepitaUva	41	st:296
@@ -4827,12 +4855,14 @@ nes|The P'radikus Conflict|Traducciones Wave	40	lb:20
 nes|Toujin Makyou Den: Heracles no Eikou|Max1323	40	lb:20
 nes|Uchuu Keibitai SDF|Traducciones Wave	40	lb:20
 nes|Valis|Max1323	40	lb:20
+pc|!|cireja	40	lb:15 +2trad
 pc|A Golden Wake|walas74	40	lb:16 st:252
 pc|Avernum II: Crystal Souls|Sinantrax	40	lb:10 st:257
 pc|Bad Mojo Redux|pakolmo	40	lb:4 st:240
 pc|Barrow Hill: The Dark Path|Abandonsocios	40	lb:3 st:141 +2trad
 pc|Barrow Hill: The Dark Path|walas74	40	lb:3 st:141 +2trad
 pc|Chronicle of Innsmouth|walas74	40	lb:6 st:234
+pc|Darkness Within 2: The Dark Lineage|Tradupixel	40	lb:2 st:234
 pc|Desperados 2: Cooper's Revenge (subtítulos)|xblastoise99	40	lb:10 st:264
 pc|Earth Must Die|locoroco96	40	st:249
 pc|Gaia Beyond|	40	st:240
@@ -4844,10 +4874,13 @@ pc|Neofeud|locoroco96	40	st:264
 pc|Perfect Tides: Station to Station|locoroco96	40	st:238
 pc|Rabbit Hole|MiWiMiN0	40	lb:1 st:265
 pc|Slobbish Dragon Princess|Taikutsu Translations (TaikutsuTL)	40	st:247
+pc|The 7th Guest: 25th Anniversary Edition|pakolmo	40	lb:20 st:267
 pc|The 7th Guest: 25th Anniversary|pakolmo	40	lb:20 st:267
 pc|The Alliance Alive HD|CepitaUva	40	st:263
 pc|The Night Is Grey|	40	lb:2 st:243
 pc|Tom Clancy’s Rainbow Six: Rogue Spear|Traducciones del Tío Víctor	40	lb:10 +ts
+pc|Trauma|darkpadawan	40	lb:6 st:237
+pc|^_^|tatapindi	40	lb:15 +2trad
 ps2|Appleseed EX|Veridico Modding	40	lb:20
 psp|Boku no Natsuyasumi Portable|TraduSquare	40	lb:10 +ts
 switch|Baten Kaitos I & II HD Remaster|Gadesx Scene	40	lb:10 +ts
@@ -4902,6 +4935,7 @@ pc|Dark Auction|	39	st:210
 pc|Dark Light|	39	lb:19
 pc|Future Wars (CD)|raulpuro	39	lb:1 st:230
 pc|GTA: London 1961|DarkNeo (Ruben Birri)	39	lb:19
+pc|Heroine's Quest: The Herald of Ragnarok|Langostino Tabas	39	lb:18
 pc|Inspector Waffles|locoroco96	39	lb:1 st:227
 pc|Lost Horizon 2|Asperet y Pakolmo	39	lb:6 st:212
 pc|Majikoi! Love Me Seriously!|Sharin-Sub	39	lb:3 st:215
@@ -4927,6 +4961,7 @@ snes|Lupin III Densetsu No Hihou O Oe!|Jackic, Bunkai	39	lb:18
 snes|SD Kidou Senshi Gundam 2|PaladinKnights	39	lb:18
 snes|Soreyuke Ebisumaru Karakuri Meiro - Kieta Goemon No Nazo!!|Jackic	39	lb:18
 snes|Super Loopz|Traducciones Wave	39	lb:19
+xbox360|Half-Life 2 (The Orange Box)|Metalex y Gromber (ElOtroLado)	39	lb:19
 xbox360|Tales of Vesperia|Tales Translations	39	lb:19
 xbox|Return to Castle Wolfenstein: Tides of War|Veridico Modding	39	lb:18
 zxspectrum|Chaos|Traducciones Wave	39	lb:18
@@ -5015,6 +5050,9 @@ nes|Street Fighter II - The World Warrior|Traducciones Wave	37	lb:16
 nes|Taiyou No Yuusha - Fighbird|Traducciones Wave	37	lb:16
 nes|Taiyou no Yuusha Firebird|Wave	37	lb:16
 nes|Takahashi Meijin no Bugutte Honey|Traducciones Wave	37	lb:16
+pc|<3|cireja	37	st:159
+pc|Beacon|cireja	37	lb:3 st:159
+pc|Ceville|Tradupixel	37	lb:5 st:169
 pc|Gore Screaming Show|Taikutsu Translations (TaikutsuTL)	37	st:173
 pc|Grisaia: Phantom Trigger Vol. 2|Taikutsu Translations (TaikutsuTL)	37	st:158
 pc|Grisaia: Phantom Trigger Vol. 3|Taikutsu Translations (TaikutsuTL)	37	lb:2 st:158
@@ -5094,6 +5132,7 @@ nes|Pocket Zaurus: Ju Ouken No Nazo|Max1323	36	lb:14
 nes|SD Hero Soukessen: Taose! Aku no Gundan|Max1323	36	lb:15
 nes|Tashiro Masashi no Princess ga Ippai|Traducciones Wave	36	lb:15
 pcenginecd|Emerald Dragon|johanderohan (Parches en Castellano)	36	lb:15
+pc|Beyond Reality|cireja	36	st:141
 pc|Blue Reflection Quartet|CepitaUva	36	st:149
 pc|Detective Hayseed: Hollywood|Marta 'Chuti' Cornet y Pakolmo	36	st:136
 pc|Detective from the Crypt|ExLibris	36	st:140
@@ -5103,6 +5142,7 @@ pc|King's Quest - Chapter 1: A Knight to Remember|walas74	36	lb:14
 pc|Life and Death II: The Brain|DarkNeo (Ruben Birri)	36	lb:15
 pc|Pajama Sam 4: Life Is Rough When You Lose Your Stuff!|Pakolmo	36	lb:6 st:135
 pc|Phantom of Inferno Nitro Archive|locoroco96	36	st:142
+pc|Sam & Max: Season 3|jackic	36	lb:14
 pc|Sam & Max: The Devil's Playhouse Remastered|Pakolmo	36	lb:15
 pc|Sherlock Holmes: The Awakening|Killogy	36	lb:14
 pc|The Innsmouth Case|	36	st:136
@@ -5209,10 +5249,12 @@ pc|Culpa Innata|walas74	34	lb:1 st:103
 pc|Delores: A Thimbleweed Park Mini-Adventure|pakolmo	34	lb:12
 pc|Dragon History|BeleG	34	lb:12
 pc|Heaven's Hope|Marta 'Chuti' Cornet y Marta García	34	st:105
+pc|Hector: Badge of Carnage!|SunkDevifull	34	lb:11 st:111
 pc|Island Diary|Taikutsu Translations (TaikutsuTL)	34	st:104
 pc|King's Quest I VGA Remake|raulpuro	34	lb:12
 pc|King's Quest I: Quest for the Crown|SkaZZ	34	lb:12
 pc|Secret Mission|ANZ	34	lb:12
+pc|Sherlock Holmes: La Aventura (Steam/GOG)|Valten7, WeirdZod, Sh4rkill3r y Killogy	34	lb:12
 pc|Super Roboy|	34	st:110
 pc|The Mystery of the Druids|Marta 'Chuti' Cornet	34	lb:8 st:105
 pc|The Severed Gods|locoroco96	34	st:113
@@ -5232,6 +5274,7 @@ zxspectrum|Starquake|Traducciones Wave	34	lb:12
 zxspectrum|Three Weeks In Paradise (128K)|Traducciones Wave	34	lb:12
 zxspectrum|Three Weeks In Paradise - 128k|Traducciones Wave	34	lb:12
 zxspectrum|Who Dares Wins II|Traducciones Wave	34	lb:12
+dos|Fallen Angel|cireja	33	lb:11
 fds|Meikyuu Jiin Dababa|Traducciones Wave	33	lb:11
 fds|Mysterious Ghost World|Max1323	33	lb:11
 gamegear|Tarzan|Traducciones Wave	33	lb:11
@@ -5292,6 +5335,7 @@ nes|SD Gundam: Gachapon Senshi 2 - Capsule Senki|Max1323	32	lb:10
 nes|Super Contra 7|Ry0G4_, Hammer KeyBoard Studios	32	lb:10
 nes|Super Pang II|Traducciones Wave	32	lb:10
 nes|Wolfling|Traducciones Wave	32	lb:10
+pc|5 Days a Stranger|kurt y raulpuro	32	lb:10
 pc|Full Metal Daemon Muramasa|Eientei Translations	32	lb:5 +ts
 pc|Soltys|IlDucci	32	lb:10
 psp|Dividead +18|Tales Translations	32	lb:5 +ts
@@ -5352,6 +5396,8 @@ zxspectrum|Into The Eagle's Nest|Traducciones Wave	30	lb:9
 zxspectrum|Marauder|Traducciones Wave	30	lb:9
 zxspectrum|Valley of Rains|Traducciones Wave	30	lb:9
 zxspectrum|Wriggler|Traducciones Wave	30	lb:9
+dos|AGI Tetris|mondarina	29	lb:8
+dos|Al Pond: On Holiday|mondarina	29	lb:8
 dos|Heaven's Dawn|ANZ	29	lb:8
 dos|Klass of '99|cireja	29	lb:8
 gb|Mickey Mouse IV: Mahou no Labyrinth|Traducciones Wave	29	lb:8
@@ -5374,6 +5420,8 @@ pc|Al Emmo and the Lost Dutchman's Mine|Pakolmo; Artemis (traducción); walas74	
 pc|Blank Dream|Pixel Horror Traducciones	29	lb:4 +ts
 pc|Chessmaster Grandmaster Edition|pedroVril	29	lb:8
 pc|Delvion Star Interceptor|Grondoval	29	lb:8
+pc|Doctor Who: Blood of the Cybermen|pakolmo	29	lb:8
+pc|Doctor Who: City of the Daleks|pakolmo	29	lb:8
 pc|Doctor Who: The Adventure Games|Pakolmo	29	lb:8
 pc|Dungeon Crawl Stone Soup|Ricard1974	29	lb:8
 pc|Hank's Quest: Victim of Society|Maquiante2491	29	lb:8
@@ -5383,6 +5431,7 @@ pc|Mad Dog McCree (subtítulos de los vídeos)|bbypka	29	lb:8
 pc|Mad TV 2|Johan	29	lb:8
 pc|Mother: Cognitive Dissonance|Tortitraducciones	29	lb:4 +ts
 pc|Sonic.EXE: The Disaster 2D Remake|ismaell47	29	lb:8
+pc|The White Chamber|Gross-Standards	29	lb:8
 ps2|Rockman: Power Battle Fighters|[John]	29	lb:8
 psp|Hajime no Ippo Portable: Victorious Spirits|miguelajhuacho	29	lb:8
 psvita|Lone Survivor Director’s Cut|Varon9	29	lb:4 +ts
@@ -5407,6 +5456,7 @@ zxspectrum|Nether Earth|Traducciones Wave	29	lb:8
 zxspectrum|Switch Blade|Traducciones Wave	29	lb:8
 zxspectrum|Wanted - Monty Mole|Traducciones Wave	29	lb:8
 zxspectrum|Yeti|Traducciones Wave	29	lb:8
+dos|Al Pond: Al Lives Forever|mondarina	27	lb:7
 dos|In the Dead of Night|ANZ	27	lb:7
 fds|Monty on The Run - Monty No Doki Doki Dai Dassou|Traducciones Wave	27	lb:7
 gbc|Pop'n Pop|Lukas	27	lb:7
@@ -5427,9 +5477,14 @@ nes|Sea of Dreamland|Traducciones Wave	27	lb:7
 nes|Street Fighter IV|Traducciones Wave	27	lb:7
 nes|Tasac|Traducciones Wave	27	lb:7
 nes|The Great Gatsby|Traducciones Wave	27	lb:7
+pc|Abducted: 10 Minutes!!!|cireja	27	lb:7
+pc|Automation|cireja	27	lb:7
 pc|Broken Sword 2.5 (doblaje)|IlDucci	27	lb:7
+pc|Broken Sword 2.5: El Retorno de los Templarios|Miguel Herrero Obeso	27	lb:7
 pc|Night of the Hermit (talkie)|Pakolmo	27	lb:7
 pc|Quest for Glory II Remake (AGD Interactive)|Chyron	27	lb:7
+pc|Quest for Glory II: Trial by Fire|Chyron	27	lb:7
+pc|The Lost Crown: A Ghost-Hunting Adventure|Tradupixel	27	lb:7
 pc|Ultima VIII: Pagan|L@Zar0	27	lb:7
 psp|Ore no Imouto ga Konna ni Kawaii Wake ga Nai Portable ga Tsuzuku Wake ga Nai|christ-gm	27	lb:7
 psvita|Catherine: Full Body|froid_san	27	lb:7
@@ -5467,6 +5522,7 @@ pc|Priest Simulator|SrGalletaEXT	26	lb:6
 pc|Simon the Sorcerer 3D|DarkNeo (Ruben Birri)	26	lb:6
 pc|Starsector|vfernandezmeca	26	lb:6
 pc|Steins;Gate: Variant Space Octet|GateofSteiner	26	lb:3 +ts
+pc|The Supper|JoanMon Games	26	lb:6
 ps2|The Tairyou Jigoku|Mr.Nobody	26	lb:6
 psp|Puella Magi Madoka Magica Portable|Christiabel (con Sebox, KanedaVN, Sekaide, IrlyCracker)	26	lb:6
 psvita|Corpse Party: Blood Drive|JoseKenshin Traducciones	26	lb:3 +ts
@@ -5491,6 +5547,7 @@ zxspectrum|The Happiest Days Of Your Life|Traducciones Wave	26	lb:6
 switch|Touhou Luna Nights|JakeMarre	25	lb:4 +2trad
 switch|Touhou Luna Nights|Zeref_Black	25	lb:4 +2trad
 3ds|Parascientific Escape: Cruise in the Distant Seas|Jibaru	24	lb:5
+dos|AGI Combat|mondarina	24	lb:5
 gba|Pokemon Lazarus|SeCaVa	24	lb:5
 gbc|Mega Man World 3 DX|Traducciones Wave	24	lb:5
 gb|Dan Laser|Traducciones Wave	24	lb:5
@@ -5515,15 +5572,18 @@ pc|Heroes of Might & Magic II: The Price of Loyalty|walas74	24	lb:5
 pc|Heroes of Might and Magic: A Strategic Quest (traducción mejorada)|walas74	24	lb:5
 pc|Jack Keane 2: The Fire Within|walas74	24	lb:5
 pc|Kagetsu Tohya|Eternal Flame	24	lb:5
+pc|Kaptain Brawe: A Brawe New World|Tradupixel	24	lb:5
 pc|King's Quest II: Romancing the Stones (AGD Interactive)|Sir Graham, Cireja, Pakolmo, RaulPuro y Tatapindi	24	lb:5
 pc|Marathon (español latino)|exequielpagliari (Marathon Latino)	24	lb:5
 pc|Narcissu 1st & 2nd|enchiladaSuiza	24	lb:5
 pc|Psychotoxic (retraducción)|qualarinder	24	lb:5
 pc|Quest for Glory IV: Shadows of Darkness|SkaZZ	24	lb:5
 pc|Silent Steel (DVD-i)|koke_ween	24	lb:5
+pc|Simon the Sorcerer: Who'd Even Want Contact?!|Tradupixel	24	lb:5
 pc|Strife|SkaZZ	24	lb:5
 pc|The Whisperer|JoanMon Games	24	lb:5
 pc|Torin's Passage (subtítulos de los vídeos)|pakolmo	24	lb:5
+pc|Wall-E|cireja	24	lb:5
 ps4|Yakuza 5 Remastered|Farolito	24	lb:5
 sg1000|Yie Ar Kung-Fu|Traducciones Wave	24	lb:5
 switch|Planescape: Torment: Enhanced Edition|SwitchCord Traducciones (AislingClarke, snakes128, shilien); traducción de Clan DLAN	24	lb:5
@@ -5568,8 +5628,11 @@ pc|Die Höhlenwelt Saga: Der Leuchtende Kristall|Pijin Pastrana	21	lb:4
 pc|Girls' Frontline 2: Exilium (cliente chino)|jhon1466	21	lb:4
 pc|King's Quest IV: The Perils of Rosella Retold|nralsd	21	lb:4
 pc|Order of the Thorne - Episode I: The King's Challenge|walas74	21	lb:4
+pc|Outcry|Tradupixel	21	lb:4
+pc|Patchwork|cireja	21	lb:4
 pc|Project Nomads|pedroVril	21	lb:4
 pc|Space Quest 2 VGA Remake|raulpuro	21	lb:4
+pc|The Reaper|cireja	21	lb:4
 pc|The Watchmaker|luchots	21	lb:4
 pc|Umamusume: Pretty Derby|AorsiniYT (sobre UmaTL)	21	lb:4
 pc|Zak McKracken: A Mansion, a Meteor and the Alien Mindbenders|Tamara Morales	21	lb:4
@@ -5621,17 +5684,25 @@ msx1|Warp & Warp|Traducciones Wave	18	lb:3
 nes|Orphea|Traducciones Wave	18	lb:3
 nes|Porter|Traducciones Wave	18	lb:3
 nes|STING|Traducciones Wave	18	lb:3
+pc|6 Days a Sacrifice|raulpuro	18	lb:3
 pc|Bi-fi Roll: Action in Hollywood|Pijin Pastrana	18	lb:3
 pc|Chronicles of Mystery: The Tree of Life|walas74	18	lb:3
 pc|Cold Zero: The Last Stand|pedroVril	18	lb:3
+pc|Crypt|cireja	18	lb:3
+pc|Darkness Within: In Pursuit of Loath Nolder|Tradupixel	18	lb:3
+pc|Emily Enough: Imprisoned|cireja	18	lb:3
 pc|Face Noir|walas74	18	lb:3
 pc|Gobliiins 5|nralsd	18	lb:3
+pc|Head over Heels|cireja	18	lb:3
 pc|Hexplore|aescuderos	18	lb:3
 pc|Higurashi When They Cry Hou (capítulos 5-8)|Universo When They Cry	18	lb:2 +2trad
+pc|I'll Be Back to the Future with a Terminator: The Fan Game|cireja	18	lb:3
 pc|Kamidori Alchemy Meister|Sharin-Sub	18	lb:3
+pc|Memento Mori 2: Guardians of Immortality|walas74	18	lb:3
 pc|Men of Valor: The Vietnam War|vreyes1981	18	lb:3
 pc|Metaphobia|walas74	18	lb:3
 pc|Reynatis|	18	lb:3
+pc|Snoopy vs. the Red Baron|Cait Sith	18	lb:3
 pc|Subarashiki Hibi ~Furenzoku Sonzai~|07th Inquisition	18	lb:3
 pc|Tex Murphy: Martian Memorandum|Pakolmo	18	lb:3
 pc|The Hardy Boys: The Hidden Theft|asperet, Mike Melanson y Pakolmo	18	lb:3
@@ -5675,6 +5746,7 @@ zxspectrum|Summer Santa|Traducciones Wave	18	lb:3
 zxspectrum|Terminus|Traducciones Wave	18	lb:3
 zxspectrum|Ultimate Combat Mission|Traducciones Wave	18	lb:3
 pc|Battle Moon Wars|Artema Translations	17	lb:1 +ts
+dos|Brian's Quest|mondarina	14	lb:2
 gamegear|Dinobasher - Starring Bignose the Caveman|Traducciones Wave	14	lb:2
 gbc|Super JetPak DX|Traducciones Wave	14	lb:2
 gb|Swordbird Song - Iron Owl Tower|Traducciones Wave	14	lb:2
@@ -5686,20 +5758,26 @@ msx1|Top Roller|Traducciones Wave	14	lb:2
 msx1|Yazzie|Traducciones Wave	14	lb:2
 nds|Croket! DS: Tenkuu no Yuushatachi|Newtype_Dan	14	lb:2
 nes|Splatterworld|Jackic	14	lb:2
+pc|Ancient Aliens: The Roots of Sound|JoanMon Games	14	lb:2
 pc|Baron Wittard: Nemesis of Ragnarok|walas74	14	lb:2
+pc|Casebook: Episode II - The Watcher|Avelino1942	14	lb:2
 pc|Cedric and the Revolution|Pakolmo; Cireja (correcciones)	14	lb:2
+pc|Dead Reefs|Robotnick	14	lb:2
 pc|Galaxy Angel II / Moonlit Lovers|Sharin-Sub	14	lb:2
 pc|Gilbert Goodmate and the Mushroom of Phungoria|Pakolmo	14	lb:2
 pc|Hanachirasu|Sharin-Sub	14	lb:2
 pc|Haunted|asperet, Pakolmo y walas74	14	lb:2
 pc|Missing on Lost Island|walas74, asperet, Pakolmo y cireja	14	lb:2
+pc|Morningstar|Ricardo Rodríguez Palma	14	lb:2
 pc|Scott Whiskers in: the Search for Mr. Fumbleclaw|locoroco96	14	lb:2
 pc|Sharin no Kuni, Himawari no Shoujo|Sharin-Sub	14	lb:2
 pc|Shuffle!|Sharin-Sub	14	lb:2
 pc|Stella Sora|jhon1466	14	lb:2
 pc|TETR.IO|EricRamirezS	14	lb:2
 pc|The Immortals of Terra: A Perry Rhodan Adventure|walas74	14	lb:2
+pc|The Tales of Bingwood - Chapter I: To Save a Princess|pakolmo	14	lb:2
 pc|The Tales of Bingwood|Pakolmo, Muermo y ANZ	14	lb:2
+pc|Well of Souls|Abandojuegos	14	lb:2
 pc|Well of souls - El pozo de las almas|Abandojuegos	14	lb:2
 pc|Yume Miru Kusuri|Tales Translations	14	lb:2
 psp|Digivice Ver. Portable|Bunkai	14	lb:2
@@ -5763,26 +5841,39 @@ nes|Old Towers|Traducciones Wave	9	lb:1
 nes|The Panda Prince|JonaGameplays	9	lb:1
 pc98|Farland Story Denki: Arc Ou no Ensei|AbandoJuegos	9	lb:1
 pcenginecd|YAWARA! 2: A Fashionable Judo Girl!|johanderohan (Parches en Castellano)	9	lb:1
+pc|A Date in the Park|cireja	9	lb:1
+pc|A Walk in the Park|cireja	9	lb:1
 pc|Aiyoku no Eustia|Sharin-Sub	9	lb:1
 pc|Amatsutsumi|Taikutsu Translations (TaikutsuTL)	9	lb:1
 pc|Aokana - Four Rhythms Across the Blue|Taikutsu Translations (TaikutsuTL)	9	lb:1
 pc|Back to the Future III: Timeline of Monkey Island|Pakolmo	9	lb:1
 pc|Back to the Future IV: The Multitasking Crystal|Artemis y Pakolmo	9	lb:1
+pc|Ben Jordan: Paranormal Investigator|cireja	9	lb:1
+pc|Carnivores: Ice Age|nebtauro	9	lb:1
 pc|Conquests of the Longbow|SkaZZ	9	lb:1
 pc|Death end re;Quest 2|hesama / PeronchoCraft	9	lb:1
+pc|Deity|cireja	9	lb:1
 pc|Detective Hayseed: The Clones Madness|Pakolmo	9	lb:1
 pc|Elite Warriors: Vietnam|dape.sw	9	lb:1
+pc|Fragment|cireja	9	lb:1
 pc|Hoshizora no Memoria -Wish upon a Shooting Star-|Sharin-Sub	9	lb:1
+pc|Knights: Learn to Fly|xblastoise99	9	lb:1
+pc|Nancy Drew: The Hidden Staircase|manzanin300	9	lb:1
+pc|Nelson Tethers: Puzzle Agent|SunkDevifull	9	lb:1
 pc|Phantom Brave: The Lost Hero|CepitaUva	9	lb:1
 pc|Police Quest: In Pursuit of the Death Angel VGA|BeleG	9	lb:1
 pc|Rama|pakolmo	9	lb:1
 pc|Scooby-Doo Mystery|cireja	9	lb:1
 pc|Space Quest 0: Replicated|Maquiante2491	9	lb:1
 pc|Space Quest: Incinerations|Maquiante2491	9	lb:1
+pc|The Legend of Crystal Valley|Avelino1942	9	lb:1
 pc|The Melody of Grisaia|Sharin-Sub	9	lb:1
 pc|The Quivering|pakolmo	9	lb:1
+pc|The Terrible Old Man|darkpadawan	9	lb:1
 pc|Yosuga no Sora|Sharin-Sub	9	lb:1
 pc|Yuki「清醒梦」|Riutexu	9	lb:1
+pc|eXperience112|Tradupixel	9	lb:1
+pc|iD|cireja	9	lb:1
 ps2|Strawberry Panic! Girls' School in Fullbloom|innovStudio (Saya-ya)	9	lb:1
 ps4|Date A Live: Rio Reincarnation|DAL_FANSUB (christ-gm); parche de PS4 de Miguel Miguelito ("Shy projects", astaroth19)	9	lb:1
 ps4|Yo-kai Watch 4++|REY3DS (Project Make a Dream)	9	lb:1
