@@ -38,7 +38,8 @@ code { font: 0.9em Consolas, ui-monospace, monospace; background: var(--panel-2)
 .texto { max-width: 70ch; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-.franja { height: 10px; background: linear-gradient(var(--rojo) 0 25%, var(--amarillo) 25% 75%, var(--rojo) 75%); }
+/* La franja de arriba: los colores del logo en degradado, sin forma de bandera, para todos los hispanohablantes. */
+.franja { height: 10px; background: linear-gradient(90deg, var(--rojo), var(--amarillo)); }
 
 /* ---- botones */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 18px; border-radius: 10px;
@@ -135,6 +136,7 @@ main { display: block; max-width: var(--ancho); margin: 0 auto; padding: 0 var(-
 .chip.aviso { color: var(--amarillo-t); border-color: rgba(255, 196, 0, 0.4); }
 .chip.clic { background: var(--amarillo); color: #141922; border-color: transparent; }
 .chip.ia { color: #FF8C96; border-color: rgba(255, 107, 120, 0.45); }
+.chip.var { color: #9FD3FF; border-color: rgba(159, 211, 255, 0.4); }
 .como .pasos { max-width: 75ch; }
 
 /* ---- catálogo */
@@ -263,3 +265,22 @@ html:not(.adultos) .tarjeta[data-a18] { display: none; }
 .final .acciones { margin: 0; justify-content: center; }
 .novedades-p .letra h2 .n { font-size: 0.8rem; vertical-align: middle; margin-left: 8px; color: var(--suave); }
 @media (max-width: 480px) { .heroe .buscador .btn { flex: 1 1 100%; } }
+
+/* El mosaico de portadas de la portada (destacados() en tools/web.py) y la nota sobre las variantes del español */
+.heroe.mosaico-h { grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr); gap: 48px; align-items: center; }
+.nota-var { margin: 14px 0 0; }
+.mosaico { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; padding: 10px 6px 28px; transform: rotate(-4deg); }
+.mosaico a { position: relative; aspect-ratio: 3 / 4; border-radius: 12px; overflow: hidden; background: linear-gradient(160deg, #222A36, #161B23); border: 1px solid var(--linea); box-shadow: 0 18px 40px rgba(0, 0, 0, .5); transition: transform .15s; }
+.mosaico a:hover { transform: scale(1.04); z-index: 1; }
+.mosaico a:nth-child(3n+2) { transform: translateY(22px); }
+.mosaico a:nth-child(3n+2):hover { transform: translateY(22px) scale(1.04); }
+.mosaico img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .2s; }
+.mosaico img.ok { opacity: 1; }
+.mosaico .ph { display: grid; place-items: center; height: 100%; padding: 10px; text-align: center; color: var(--suave); font: 700 .85rem/1.2 var(--display); }
+.mosaico a:has(img.ok) .ph { visibility: hidden; }
+@media (max-width: 860px) {
+  .heroe.mosaico-h { grid-template-columns: minmax(0, 1fr); }
+  .mosaico { grid-template-columns: repeat(6, 1fr); transform: none; gap: 8px; padding: 0; }
+  .mosaico a:nth-child(n+7) { display: none; }
+  .mosaico a:nth-child(3n+2) { transform: none; }
+}

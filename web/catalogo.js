@@ -47,7 +47,7 @@
 
   // Filtros como en el programa: Un clic, Completas, Sin IA y En Steam (chips), y los juegos para adultos
   // ocultos salvo con el ajuste, que vale para toda la web (clase «adultos» en <html>, de localStorage).
-  const filtro = {directa: false, completa: false, sinia: false, steam: false};
+  const filtro = {directa: false, completa: false, sinia: false, steam: false, latino: false};
   const chips = document.querySelectorAll('.filtros .chip[data-f]'), adultos = document.getElementById('adultos');
   let verAdultos = false;
   try { verAdultos = localStorage.getItem('adultos') === '1'; } catch (e) { }
@@ -61,7 +61,7 @@
       if (s.value && j[1] !== s.value) return false;
       if (!palabras.every(p => j.t.includes(p))) return false;
       const b = j[7] || 0;
-      if ((filtro.directa && !j[4]) || (filtro.completa && !(b & 1)) || (filtro.sinia && !(b & 2)) || (filtro.steam && !(b & 4))) return false;
+      if ((filtro.directa && !j[4]) || (filtro.completa && !(b & 1)) || (filtro.sinia && !(b & 2)) || (filtro.steam && !(b & 4)) || (filtro.latino && !(b & 16))) return false;
       if (!verAdultos && (b & 8)) { ocultos++; return false; }
       return true;
     });

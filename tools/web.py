@@ -3,7 +3,7 @@
 # Uso: python tools/web.py [carpeta de salida, _web por defecto]
 # El dominio va en web/CNAME; si no está, la web queda en la dirección de GitHub Pages. Los ficheros de
 # verificación de Google Search Console (google….html) y Bing (BingSiteAuth.xml) se dejan en web/ y van a la raíz.
-import collections, csv, html, io, json, os, re, shutil, subprocess, sys, unicodedata
+import collections, csv, html, io, json, os, random, re, shutil, subprocess, sys, unicodedata
 from datetime import date
 from urllib.parse import quote
 
@@ -70,9 +70,26 @@ def sistemas_app():
 def cargar():
     filas = list(csv.DictReader(open(os.path.join(CAT, 'traducciones_fan.csv'), encoding='utf-8-sig')))
     centro = json.load(open(os.path.join(CAT, 'centro_datos.json'), encoding='utf-8'))
+    # El tirón de cada juego (0-100), de herramientas\mantenimiento\tiron.py: elige las portadas del mosaico de la portada.
+    pop, ruta_pop = {}, os.path.join(WEB, 'popularidad.tsv')
+    if os.path.isfile(ruta_pop):
+        for l in open(ruta_pop, encoding='utf-8'):
+            if not l.startswith('#') and '\t' in l:
+                k, p = l.rstrip('\n').split('\t')[:2]
+                pop[k] = int(p)
     for f in filas:
-        f['x'] = centro['filas'].get(f"{f['sistema']}|{f['juego']}|{f['grupo']}", {})
+        clave = f"{f['sistema']}|{f['juego']}|{f['grupo']}"
+        f['x'] = centro['filas'].get(clave, {})
+        f['pop'] = pop.get(clave, 0)
     return filas, centro['sistemas']
+
+
+def fijados():
+    """Los juegos que van siempre en el mosaico de la portada (web/destacados.txt: sistema|título, uno por línea)."""
+    ruta = os.path.join(WEB, 'destacados.txt')
+    if not os.path.isfile(ruta):
+        return []
+    return [tuple(l.strip().split('|', 1)) for l in open(ruta, encoding='utf-8') if l.strip() and not l.startswith('#') and '|' in l]
 
 
 def web_segura(u):
@@ -123,6 +140,24 @@ def es_ia(f):
     return f['notas'].startswith('[IA]')
 
 
+# La variante del español, cuando las notas o el grupo la dicen. Casi nunca la dicen: entonces no se afirma nada.
+RE_LATINO = re.compile(r'latino|latinoam[eé]ric|español de am[eé]rica|español americano|mexican|argentin|chilen|colombian|venezolan|peruan|uruguay')
+RE_NEUTRO = re.compile(r'\bneutr[oa]\b')
+RE_ESPANA = re.compile(r'español de españa|castellano|peninsular|\bespaña\b')
+VARIANTES = {'latino': 'latino', 'neutro': 'neutro', 'espana': 'de España'}
+
+
+def variante(f):
+    t = (f['notas'] + ' ' + f['grupo']).lower()
+    if RE_LATINO.search(t):
+        return 'latino'
+    if RE_NEUTRO.search(t):
+        return 'neutro'
+    if RE_ESPANA.search(t):
+        return 'espana'
+    return ''
+
+
 def adulto(f):
     """Traducción de un juego para adultos (+18): la marca a18 de centro_datos (de cache\adultos.tsv)."""
     return bool(f['x'].get('a18'))
@@ -134,11 +169,13 @@ def juego_adulto(g):
 
 
 def banderas(g):
-    """Lo que filtra el buscador (catalogo.js): 1 alguna completa, 2 alguna sin IA, 4 se vende en Steam, 8 para adultos."""
+    """Lo que filtra el buscador (catalogo.js): 1 alguna completa, 2 alguna sin IA, 4 se vende en Steam, 8 para adultos,
+    16 alguna en español latino o neutro."""
     return ((1 if any(f['estado'].strip().lower().startswith('complet') for f in g['filas']) else 0)
             | (2 if any(not es_ia(f) for f in g['filas']) else 0)
             | (4 if any(f['x'].get('steam') for f in g['filas']) else 0)
-            | (8 if juego_adulto(g) else 0))
+            | (8 if juego_adulto(g) else 0)
+            | (16 if any(variante(f) in ('latino', 'neutro') for f in g['filas']) else 0))
 
 
 def directa(f):
@@ -225,10 +262,12 @@ def resumen_juego(gr, nombre_sis):
     """Dos párrafos propios de cada juego, con las palabras con las que la gente busca."""
     titulo, fs = gr['titulo'], gr['filas']
     orig, n = titulo_original(gr), len(fs)
+    vars_ = sorted({VARIANTES[v] for v in (variante(f) for f in fs) if v})
+    esp = 'al español' + (f' ({" y ".join(vars_)})' if vars_ else '')
     intro = (f'{titulo} es un juego de {nombre_sis}' + (f' (título original: {orig})' if orig else '') + '. '
-             + ('Esta ficha reúne su traducción al español (castellano), hecha por aficionados, con sus datos y cómo aplicarla a tu copia.'
+             + (f'Esta ficha reúne su traducción {esp}, hecha por aficionados, con sus datos y cómo aplicarla a tu copia.'
                 if n == 1 else
-                f'Esta ficha reúne sus {n} traducciones al español (castellano), hechas por aficionados, con sus datos y cómo aplicarlas a tu copia.'))
+                f'Esta ficha reúne sus {n} traducciones {esp}, hechas por aficionados, con sus datos y cómo aplicarlas a tu copia.'))
     frases = [frase_trad(f) for f in fs[:4]] + ([f'Y hay {n - 4} más, abajo.'] if n > 4 else [])
     return f'<p class="texto">{e(intro)}</p>\n    <p class="texto">{e(" ".join(frases))}</p>'
 
@@ -311,6 +350,9 @@ def recientes(filas, raiz, sysn, k, con_sistema):
 
 # ---------------------------------------------------------------- novedades
 DIAS_NOVEDADES = 120  # cuántos días atrás se mira el historial del catálogo para las novedades
+# Antes de esta fecha el catálogo se estaba reordenando en el repositorio (duplicados, títulos corregidos) y cada
+# retoque parecería una ficha nueva: lo anterior cuenta como fondo, no como novedad.
+NOVEDADES_DESDE = '2026-11-03'
 MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
 
 
@@ -327,7 +369,58 @@ def fecha_corta(d):
 
 
 def clave_fila(f):
-    return f"{f['sistema']}|{f['juego']}|{f['grupo']}"
+    """La clave con la que se sigue una fila por el historial: sistema, título y grupo sin acentos ni signos, para que
+    corregir unas mayúsculas o una coma no la convierta en una ficha nueva."""
+    return f['sistema'] + '|' + re.sub(r'[^a-z0-9]+', ' ', sin_acentos(f['juego']).lower()).strip() + '|' + re.sub(r'[^a-z0-9]+', ' ', sin_acentos(f['grupo']).lower()).strip()
+
+
+FAMILIA = {**dict.fromkeys(['nes', 'fds', 'snes', 'satellaview', 'gb', 'gbc', 'gba', 'n64', 'virtualboy'], 'nintendo clásica'),
+           **dict.fromkeys(['gamecube', 'wii', 'wiiu', 'nds', '3ds', 'switch'], 'nintendo moderna'),
+           **dict.fromkeys(['sg1000', 'mastersystem', 'gamegear', 'megadrive', 'megacd', 'sega32x', 'saturn', 'dreamcast'], 'sega'),
+           **dict.fromkeys(['psx', 'ps2', 'ps3', 'ps4', 'ps5', 'psp', 'psvita'], 'sony'),
+           **dict.fromkeys(['pc', 'dos', 'windows', 'scummvm', 'easyrpg', 'msx', 'msx2', 'pc98', 'amiga', 'c64', 'zxspectrum', 'amstradcpc'], 'ordenador')}
+
+
+def destacados(filas, dias, pins, k=9):
+    """Las portadas del mosaico de la portada: primero los juegos fijados en web/destacados.txt, luego las novedades de
+    los últimos días con tirón (web/popularidad.tsv) y, para completar, los juegos de más tirón de todo el catálogo,
+    que rotan cada día. Sin IA ni juegos para adultos, con portada, y como mucho dos juegos por sistema y tres por
+    familia, para que no salgan nueve de Super Nintendo. Devuelve [(juego, direcciones de la portada)]."""
+    elegidos, titulos, por_sis, por_fam = [], set(), collections.Counter(), collections.Counter()
+
+    def cabe(g):
+        t = sin_acentos(g['titulo']).lower()
+        if t in titulos or juego_adulto(g) or all(es_ia(f) for f in g['filas']):
+            return False
+        fam = FAMILIA.get(g['s'], 'otros')
+        if por_sis[g['s']] >= 2 or por_fam[fam] >= 3:
+            return False
+        urls = portadas(g, LIBRETRO, '')
+        if not urls:
+            return False
+        elegidos.append((g, urls))
+        titulos.add(t)
+        por_sis[g['s']] += 1
+        por_fam[fam] += 1
+        return True
+
+    juegos = list({id(f['gr']): f['gr'] for f in filas}.values())
+    for s, j in pins:
+        g = next((g for g in juegos if g['s'] == s and sin_acentos(g['titulo']).lower() == sin_acentos(j).lower()), None)
+        if g:
+            cabe(g)
+    tope = len(elegidos) + min(4, k - len(elegidos))
+    for f in sorted((f for _, fs in dias for f in fs if f['pop'] >= 60 and not es_ia(f)), key=lambda f: (-f['pop'], f['alta'])):
+        if len(elegidos) >= tope:
+            break
+        cabe(f['gr'])
+    top = sorted((g for g in juegos if any(f['pop'] for f in g['filas'])), key=lambda g: -max(f['pop'] for f in g['filas']))[:60]
+    random.Random(date.today().isoformat()).shuffle(top)
+    for g in top:
+        if len(elegidos) >= k:
+            break
+        cabe(g)
+    return elegidos[:k]
 
 
 def fechas_alta():
@@ -347,8 +440,8 @@ def fechas_alta():
         altas, viejas = {}, None
         for sha, fecha in reversed(commits):  # del más antiguo al más nuevo
             claves = {clave_fila(f) for f in csv.DictReader(io.StringIO(git('show', f'{sha}:{ruta}').decode('utf-8-sig')))}
-            if viejas is None:
-                viejas = claves
+            if viejas is None or fecha < NOVEDADES_DESDE:
+                viejas = claves if viejas is None else viejas | claves
                 continue
             for c in claves:
                 if c not in viejas and c not in altas:
@@ -463,6 +556,8 @@ def chips_trad(f):
         out.append('<span class="chip clic" title="El programa la descarga y la aplica él solo">Un clic</span>')
     if es_ia(f):
         out.append('<span class="chip ia" title="Hecha con IA o con traducción automática">IA</span>')
+    if variante(f):
+        out.append(f'<span class="chip var" title="La variante del español, según sus autores">Español {VARIANTES[variante(f)]}</span>')
     return ''.join(out)
 
 
@@ -664,6 +759,7 @@ def pagina_catalogo(por_sis, sysn, base, n_trad, n_juegos, filas):
     <button type="button" class="chip" data-f="completa" aria-pressed="false">Completas</button>
     <button type="button" class="chip" data-f="sinia" aria-pressed="false" title="Sin traducciones hechas con IA">Sin IA</button>
     <button type="button" class="chip" data-f="steam" aria-pressed="false" title="Solo los juegos que se venden en Steam">En Steam</button>
+    <button type="button" class="chip" data-f="latino" aria-pressed="false" title="Traducciones en español latino o neutro, según sus autores">Español latino</button>
     <label class="chip-l"><input type="checkbox" id="adultos"> Mostrar juegos para adultos (+18)</label>
   </div>
   <p class="suave" id="cuenta" aria-live="polite"></p>
@@ -684,10 +780,13 @@ def pagina_catalogo(por_sis, sysn, base, n_trad, n_juegos, filas):
     return pagina(raiz, 'Catálogo de traducciones al español · Biblioteca de traducciones', desc, 'catalogo/', cuerpo, base)
 
 
-def pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version, dias, filas):
-    """La portada: el buscador, las últimas novedades del catálogo (o, sin historial de git, las últimas traducciones
-    por su fecha), las cifras, los sistemas y, ya después, el programa para Windows."""
+def pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version, dias, filas, pins):
+    """La portada: el buscador con un mosaico de portadas al lado, las últimas novedades del catálogo (o, sin historial
+    de git, las últimas traducciones por su fecha), las cifras, los sistemas y, ya después, el programa para Windows."""
     raiz = ''
+    mosaico = ''.join(f'<a href="{e(g["ruta"])}" title="{e(g["titulo"])}"><img src="{e(u[0])}" data-alt="{e(" ".join(u[1:]))}" alt="" '
+                      f'referrerpolicy="no-referrer" onerror="sig(this)" onload="this.classList.add(\'ok\')"><span class="ph">{e(g["titulo"])}</span></a>'
+                      for g, u in destacados(filas, dias, pins))
     if dias:
         bloque_nov = f'''<section class="bloque novedades">
     <div class="cab"><h2>Últimas novedades</h2><p class="suave"><a href="novedades/">Todas las novedades</a> · <a href="novedades.xml">Canal RSS</a></p></div>
@@ -700,10 +799,10 @@ def pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version, dias, filas):
     {recientes(filas, raiz, sysn, 12, True)}
   </section>'''
     cuerpo = f'''<main>
-  <section class="heroe uno">
+  <section class="heroe {'mosaico-h' if mosaico else 'uno'}">
     <div class="heroe-t">
       <h1>Juega en español a juegos que nunca salieron traducidos</h1>
-      <p class="lede">{n_trad:,} traducciones hechas por aficionados, de la NES a la Switch y los juegos de PC de hoy, reunidas en un solo catálogo. Cada ficha te lleva a la traducción y te dice qué copia del juego pide; muchas se aplican en el navegador o con el programa en un clic.</p>
+      <p class="lede">{n_trad:,} traducciones hechas por aficionados de España y de toda Latinoamérica, de la NES a la Switch y los juegos de PC de hoy, en un solo catálogo. Cada ficha te lleva a la traducción y te dice qué copia del juego pide; muchas se aplican en el navegador o con el programa en un clic.</p>
       <form class="buscador" role="search" action="catalogo/" method="get">
         <label class="sr" for="q">Buscar un juego</label>
         <input id="q" name="q" type="search" placeholder="¿Qué juego quieres jugar en español?" autocomplete="off">
@@ -714,7 +813,9 @@ def pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version, dias, filas):
         <a class="btn" href="parchear/">Parchear en el navegador</a>
         <a class="btn" href="{INSTALADOR}" data-goatcounter-click="descarga-portada">Programa para Windows</a>
       </div>
+      <p class="suave nota-var">Traducciones en español de España, latino y neutro: cuando sus autores indican la variante, la ficha lo dice.</p>
     </div>
+    {'<div class="mosaico" aria-label="Portadas de juegos con traducción">' + mosaico + '</div>' if mosaico else ''}
   </section>
 
   <div id="favoritos-inicio"></div>
@@ -760,6 +861,7 @@ def pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version, dias, filas):
 
   <section class="bloque preguntas">
     <h2>Preguntas</h2>
+    <details><summary>¿Solo hay traducciones en español de España?</summary><p>No. El catálogo recoge todas las traducciones al español que encuentra, hechas en España y en Latinoamérica, y cuando sus autores indican la variante (español de España, latino o neutro) la ficha lo dice; en el catálogo puedes filtrar por «Español latino». Si conoces una traducción latina que falta, <a href="{INCIDENCIAS}">avísame</a>.</p></details>
     <details><summary>¿Hace falta instalar algo?</summary><p>No. La web busca en el mismo catálogo que el programa, cada ficha enlaza a la traducción y la página <a href="parchear/">Parchear</a> aplica los parches en el navegador sin subir nada a ningún sitio. El programa para Windows añade buscar tus juegos él solo, comprobar tu copia por su CRC32, portadas y listas, y el botón Jugar con RetroBat.</p></details>
     <details><summary>¿Descarga juegos?</summary><p>No. Ni la web ni el programa descargan juegos: solo los parches de traducción, que se aplican sobre la copia que ya tienes.</p></details>
     <details><summary>¿Cuánto cuesta?</summary><p>Nada. Es gratuito y de código libre, con licencia GPL-3.0. Si te resulta útil, puedes <a href="{DONAR}">invitarme a un café</a>.</p></details>
@@ -991,7 +1093,9 @@ def main():
     # apunta a ellas en "pu", también para el programa.
     if os.path.isdir(os.path.join(WEB, 'miniaturas')):
         shutil.copytree(os.path.join(WEB, 'miniaturas'), os.path.join(salida, 'miniaturas'))
-    shutil.copy(os.path.join(RAIZ, 'ui', 'icono.svg'), os.path.join(salida, 'icono.svg'))
+    # El icono de la web (web/icono.svg, sin bandera) o, si no está, el del programa.
+    icono = os.path.join(WEB, 'icono.svg')
+    shutil.copy(icono if os.path.isfile(icono) else os.path.join(RAIZ, 'ui', 'icono.svg'), os.path.join(salida, 'icono.svg'))
     shutil.copy(os.path.join(WEB, 'estilo.css'), os.path.join(salida, 'estilo.css'))
     os.makedirs(os.path.join(salida, 'catalogo'))
     shutil.copy(os.path.join(WEB, 'catalogo.js'), os.path.join(salida, 'catalogo', 'catalogo.js'))
@@ -1007,7 +1111,7 @@ def main():
     escribir(salida, '.nojekyll', '')
 
     n_trad, n_juegos = len(filas), len(juegos)
-    escribir(salida, 'index.html', miles(pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version, dias_publicas, filas)))
+    escribir(salida, 'index.html', miles(pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version, dias_publicas, filas, fijados())))
     escribir(salida, 'catalogo/index.html', miles(pagina_catalogo(por_sis, sysn, base, n_trad, n_juegos, filas)))
     escribir(salida, 'novedades/index.html', miles(pagina_novedades(dias, filas, sysn, base)))
     escribir(salida, 'novedades.xml', feed_novedades(dias_publicas, sysn, base))

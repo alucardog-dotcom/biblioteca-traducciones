@@ -1,0 +1,4 @@
+# Juegos que van siempre en el mosaico de la portada de la web (si tienen portada), uno por línea: sistema|título tal como está en el catálogo.
+# El resto del mosaico lo eligen las novedades con tirón y los juegos de más tirón del catálogo (web/popularidad.tsv).
+ps3|Drakengard 3
+pc|Danganronpa V3: Killing Harmony

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- El icono de la web: la Ñ con los colores del logo, sin bandera, para todos los hispanohablantes. -->
+  <rect x="48" y="48" width="928" height="928" rx="208" fill="#141922"/>
+  <rect x="112" y="112" width="800" height="800" rx="160" fill="#C60B1E"/>
+  <g fill="#FFC400" transform="translate(512 512) scale(0.72) translate(-489 -520)">
+    <path d="M318 330c18-34 44-50 76-50 26 0 46 9 66 20 18 10 32 16 48 16 16 0 26-8 34-26l44 22c-18 36-44 52-78 52-26 0-46-9-66-20-18-10-32-16-48-16-14 0-26 8-34 26z"/>
+    <path d="M300 760V420h82l200 228V420h96v340h-82L396 532v228z"/>
+  </g>
+</svg>
