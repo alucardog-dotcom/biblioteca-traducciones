@@ -127,6 +127,8 @@ Las estadísticas de la web van con [GoatCounter](https://www.goatcounter.com/) 
 
 Todas las páginas llevan `<meta name="referrer" content="strict-origin">` (09-11-2026): al pasar de una página de la web a otra, el navegador solo dice que se viene de `bibliotecadetraducciones.com`, sin la ruta. Sin eso, cada página de la web contaba en GoatCounter como un referrer distinto; el panel coge los 24 primeros (con «Cantidad» 6), quita los del propio dominio y se quedaba con dos o tres de fuera, sin «Ver más». A las otras webs les llega lo mismo que antes, solo el dominio. Para saber cuántas visitas trae un anuncio, aunque llegue desde una app que no manda el origen (la de Reddit, Discord, WhatsApp), el enlace lleva `?ref=<etiqueta>` (`?ref=reddit-mx`): GoatCounter lo toma como referrer.
 
+Las capturas de la web para los anuncios en foros (portada, ficha, catálogo y Parchear, en JPG de 1600 px) están en `web/img/capturas/` y se publican en `/img/capturas/`, para enlazarlas con `[img]` desde los foros sin depender de otro alojamiento. Las del programa son las de `docs/`, que `web.py` publica en `/img/`.
+
 ## Pendiente
 
 - Publicar los scripts del catálogo.
