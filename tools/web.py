@@ -33,6 +33,37 @@ PC = {'dos', 'windows', 'scummvm', 'easyrpg', 'pc'}
 MODERNAS = {'switch', 'ps3', 'ps4', 'ps5', 'wiiu', 'xbox360', 'xboxone'}
 e = html.escape
 
+# ---------------------------------------------------------------- SEO
+SITIO = 'Biblioteca de traducciones'
+# Los buscadores cortan el título hacia los 60 caracteres y la descripción hacia los 155. El nombre de la web ya lo
+# enseña Google encima de cada resultado (og:site_name y el WebSite de la portada), así que los títulos no lo repiten.
+MAX_TITULO = 65
+MAX_DESC = 158
+# El nombre corto con el que se busca cada sistema, para el título de las fichas («Chrono Trigger en español (SNES)»).
+# Los que no están aquí van con su nombre de siempre (sistemas_app()).
+SIS_CORTO = {'snes': 'SNES', 'gba': 'GBA', 'gbc': 'GBC', 'n64': 'N64', 'nds': 'NDS', '3ds': '3DS', 'psx': 'PS1',
+             'ps2': 'PS2', 'ps3': 'PS3', 'ps4': 'PS4', 'ps5': 'PS5', 'psvita': 'PS Vita', 'switch': 'Switch',
+             'windows': 'PC', 'fds': 'Famicom Disk', 'ngpc': 'NGPC', 'ngp': 'NGP'}
+
+
+def sis_corto(s, sysn):
+    return SIS_CORTO.get(s, sysn.get(s, s))
+
+
+def recorta(t, maximo=MAX_DESC):
+    """Corta un texto en el último espacio antes de `maximo` y le pone puntos suspensivos."""
+    if len(t) <= maximo:
+        return t
+    return t[:maximo - 1].rsplit(' ', 1)[0].rstrip(',;:· ') + '…'
+
+
+def el_mas_largo_que_quepa(opciones, maximo):
+    """La primera de las opciones (de la más completa a la más corta) que cabe; si ninguna, la última recortada."""
+    for t in opciones:
+        if len(t) <= maximo:
+            return t
+    return recorta(opciones[-1], maximo)
+
 # ---------------------------------------------------------------- nombres (como tokens() en ui/app.js)
 STOP = set('the a an el la los las de del of and y en to traduccion traducido traducida translation translated spanish '
            'espanol castellano es esp spa parche patch fix final rev beta completa completo ips bps ups ppf xdelta aps rom '
@@ -645,9 +676,13 @@ def migas_ld(base, pasos):
 
 
 # ---------------------------------------------------------------- páginas
-def pagina(raiz, titulo, descripcion, ruta, cuerpo, base, imagen='img/vista-previa.png', tipo='website', ld=None):
+def pagina(raiz, titulo, descripcion, ruta, cuerpo, base, imagen='img/vista-previa.png', tipo='website', ld=None, indexar=True, previa=''):
+    """`indexar=False` pide a los buscadores que no guarden la página (Mis listas y la 404, sin contenido propio);
+    `previa` es el origen (https://host) de la imagen principal, para abrir la conexión antes de que el navegador la pida."""
     canon = base + ruta
     og_imagen = imagen if imagen.startswith('http') else base + imagen
+    extra = ('' if indexar else '<meta name="robots" content="noindex, follow">\n') + (
+        f'<link rel="preconnect" href="{e(previa)}">\n' if previa else '')
     cuenta = ''
     if GOATCOUNTER:
         destino = f'https://{GOATCOUNTER_DOMINIO or GOATCOUNTER + ".goatcounter.com"}/count'
@@ -661,10 +696,11 @@ def pagina(raiz, titulo, descripcion, ruta, cuerpo, base, imagen='img/vista-prev
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{e(titulo)}</title>
 <meta name="description" content="{e(descripcion)}">
-<link rel="canonical" href="{e(canon)}">
+{extra}<link rel="canonical" href="{e(canon)}">
 <link rel="icon" href="{raiz}icono.svg" type="image/svg+xml">
 <link rel="stylesheet" href="{raiz}estilo.css">
 <link rel="alternate" type="application/atom+xml" title="Novedades del catálogo" href="{raiz}novedades.xml">
+<meta property="og:site_name" content="{SITIO}">
 <meta property="og:type" content="{tipo}">
 <meta property="og:title" content="{e(titulo)}">
 <meta property="og:description" content="{e(descripcion)}">
@@ -779,8 +815,10 @@ def pagina_juego(gr, sysn, libretro, base, ctx):
     grupos = list(dict.fromkeys(f['grupo'] for f in gr['filas'] if f['grupo']))
     n = len(gr['filas'])
     urls = portadas(gr, libretro, raiz)
+    # La portada es lo más grande que se ve al abrir la ficha (el LCP): se pide la primera y con la conexión ya abierta.
     img = (f'<img src="{e(urls[0])}" data-alt="{e(" ".join(urls[1:]))}" alt="Portada de {e(titulo)}" '
-           f'referrerpolicy="no-referrer" onerror="sig(this)">') if urls else ''
+           f'fetchpriority="high" referrerpolicy="no-referrer" onerror="sig(this)">') if urls else ''
+    previa = re.match(r'https://[^/]+', urls[0]).group(0) if urls and urls[0].startswith('https://') else ''
     # Para las redes y los buscadores, la portada con dirección completa.
     absolutas = portadas(gr, libretro, base)
     imagen = absolutas[0] if absolutas else 'img/vista-previa.png'
@@ -825,10 +863,17 @@ def pagina_juego(gr, sysn, libretro, base, ctx):
     else:
         cuantas = f'{n} traducciones' + (' (con doblaje)' if k_dob else '')
         hay = f'Hay {n} traducciones al español hechas por aficionados' + (f', {"una" if k_dob == 1 else k_dob} con doblaje' if k_dob else '')
-    desc = (f'{cuantas} al español de {titulo} para {nombre_sis}'
-            + (f', de {quien}' if quien else '') + detalle
-            + ('. Se instala a mano; la Biblioteca de traducciones te lleva a su página.' if s in PC | MODERNAS
-               else '. Aplícala sobre tu copia con un clic con la Biblioteca de traducciones.'))
+    # La descripción para los buscadores: de la más completa a la más corta, la primera que quepa en MAX_DESC.
+    if s in PC | MODERNAS:
+        cierre = f'. Descárga{"lo" if solo_dob else "la"} gratis desde la página de su autor.' if n == 1 else '. Con el enlace a la página de cada autor.'
+    else:
+        cierre = '. Parchea tu ROM gratis en el navegador o con el programa.'
+
+    def desc_con(k, det):
+        q = (enumera(grupos) if len(grupos) <= k else ', '.join(grupos[:k]) + ' y otros') if k else ''
+        return f'{cuantas} al español de {titulo} para {nombre_sis}' + (f', de {q}' if q else '') + det + cierre
+    desc = el_mas_largo_que_quepa([desc_con(3, detalle), desc_con(2, detalle), desc_con(1, detalle), desc_con(1, ''),
+                                   desc_con(0, '')], MAX_DESC)
     if s in MODERNAS:
         como = f"""<ol class="pasos">
       <li>Abre la página de la traducción y comprueba qué versión o actualización del juego pide.</li>
@@ -882,7 +927,18 @@ def pagina_juego(gr, sysn, libretro, base, ctx):
   {relacionados(gr, ctx, raiz, nombre_sis)}
   <p class="suave">¿Algún dato está mal o eres el autor y quieres cambiar algo? <a href="{INCIDENCIAS}">Avísame en GitHub</a>.</p>
 </main>"""
-    titulo_pagina = f'{titulo} ({nombre_sis}): {que} al español · Biblioteca de traducciones'
+    # El título, con lo que se busca: «<juego> en español», el sistema por su nombre corto y «parche de traducción».
+    # Dos juegos distintos con el mismo nombre en el mismo sistema (Monolith de 2017 y de 2023) llevan el año.
+    corto = sis_corto(s, sysn)
+    if (titulo, s) in ctx.get('repetidos', ()) and re.fullmatch(r'\d{4}', gr['dj'].get('a', '')):
+        corto += ', ' + gr['dj']['a']
+    # Si no cabe, se quita la coletilla pero nunca el sistema: el mismo juego suele estar en varios.
+    if que == 'doblaje':
+        opciones = [f'{titulo} ({corto}): doblaje al español']
+    else:
+        opciones = [f'{titulo} en español ({corto}): ' + ('parche de traducción' if que == 'traducción' else 'traducción y doblaje'),
+                    f'{titulo} en español ({corto})']
+    titulo_pagina = next((t for t in opciones if len(t) <= MAX_TITULO), opciones[-1])
     canon = base + gr['ruta']
     juego = {'@type': 'VideoGame', 'name': titulo, 'gamePlatform': nombre_sis, 'url': canon}
     if orig:
@@ -901,7 +957,7 @@ def pagina_juego(gr, sysn, libretro, base, ctx):
     ld = {'@context': 'https://schema.org', '@graph': [
         migas_ld(base, [('Inicio', ''), ('Catálogo', 'catalogo/'), (nombre_sis, f'sistema/{s}/'), (titulo, gr['ruta'])]),
         {'@type': 'WebPage', '@id': canon, 'url': canon, 'name': titulo_pagina, 'description': desc, 'inLanguage': 'es', 'about': juego}]}
-    return pagina(raiz, titulo_pagina, desc, gr['ruta'], cuerpo, base, imagen=imagen, tipo='article', ld=ld)
+    return pagina(raiz, titulo_pagina, desc, gr['ruta'], cuerpo, base, imagen=imagen, tipo='article', ld=ld, previa=previa)
 
 
 def pagina_sistema(s, juegos, sysn, base):
@@ -941,7 +997,12 @@ def pagina_sistema(s, juegos, sysn, base):
     desc = (f'{n:,} traducciones al español de juegos de {nombre} hechas por aficionados, '
             + ('reunidas en la Biblioteca de traducciones.' if s in PC | MODERNAS
                else 'listas para aplicar con un clic con la Biblioteca de traducciones.'))
-    return pagina(raiz, f'Juegos de {nombre} en español: traducciones · Biblioteca de traducciones', desc, f'sistema/{s}/', cuerpo, base, ld=ld)
+    corto = sis_corto(s, sysn)
+    nombres = f'{nombre} ({corto})' if corto != nombre and s != 'windows' else nombre
+    titulo = el_mas_largo_que_quepa([f'Juegos de {nombres} en español: {n:,} {"traducción" if n == 1 else "traducciones"}',
+                                     f'Juegos de {nombre} en español: {n:,} {"traducción" if n == 1 else "traducciones"}',
+                                     f'Juegos de {nombre} en español'], MAX_TITULO)
+    return pagina(raiz, titulo, desc, f'sistema/{s}/', cuerpo, base, ld=ld)
 
 
 def chips_sistemas(por_sis, sysn, raiz):
@@ -987,7 +1048,10 @@ def pagina_catalogo(por_sis, sysn, base, n_trad, n_juegos, filas):
 <script>var SYS = {json.dumps(sysn, ensure_ascii=False).replace('<', '\\u003c')};</script>
 <script src="catalogo.js" defer></script>'''
     desc = f'Busca entre {n_trad:,} traducciones al español de juegos hechas por aficionados, de la NES a la Switch y los juegos de PC, y aplícalas con un clic.'
-    return pagina(raiz, 'Catálogo de traducciones al español · Biblioteca de traducciones', desc, 'catalogo/', cuerpo, base)
+    ld = {'@context': 'https://schema.org', '@graph': [
+        migas_ld(base, [('Inicio', ''), ('Catálogo', 'catalogo/')]),
+        {'@type': 'CollectionPage', 'url': base + 'catalogo/', 'name': 'Catálogo de traducciones de juegos al español', 'inLanguage': 'es'}]}
+    return pagina(raiz, 'Catálogo de traducciones de juegos al español', desc, 'catalogo/', cuerpo, base, ld=ld)
 
 
 def pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version, dias, filas, pins, sels=(), n_grupos=0):
@@ -1111,17 +1175,20 @@ def pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version, dias, filas, p
     </div>
   </section>
 </main>'''
-    desc = (f'{n_trad:,} traducciones al español de juegos hechas por aficionados, de la NES a la Switch y el PC, con las novedades de cada día. '
-            'Cada ficha lleva a la traducción; aplícala en el navegador o con el programa gratuito para Windows.')
+    desc = (f'{n_trad:,} traducciones al español de juegos hechas por fans, de la NES a la Switch y el PC. '
+            'Parchea tu ROM gratis en el navegador o con el programa para Windows.')
+    # «Biblioteca de traducciones» a secas es también el nombre de dos portales de la Biblioteca Virtual Miguel de
+    # Cervantes; el nombre alternativo ayuda a Google a no confundirlos al poner el nombre de la web en los resultados.
     ld = {'@context': 'https://schema.org', '@graph': [
-        {'@type': 'WebSite', 'url': base, 'name': 'Biblioteca de traducciones', 'inLanguage': 'es',
+        {'@type': 'WebSite', 'url': base, 'name': SITIO, 'alternateName': ['Biblioteca de traducciones de juegos', 'bibliotecadetraducciones.com'],
+         'inLanguage': 'es',
          'potentialAction': {'@type': 'SearchAction', 'target': {'@type': 'EntryPoint', 'urlTemplate': base + 'catalogo/?q={q}'},
                              'query-input': 'required name=q'}},
         {'@type': 'SoftwareApplication', 'name': 'Biblioteca de traducciones', 'url': base, 'description': desc, 'inLanguage': 'es',
          'operatingSystem': 'Windows 10, Windows 11', 'applicationCategory': 'UtilitiesApplication', 'softwareVersion': version,
          'downloadUrl': INSTALADOR, 'license': 'https://www.gnu.org/licenses/gpl-3.0.html', 'image': base + 'img/vista-previa.png',
          'offers': {'@type': 'Offer', 'price': '0', 'priceCurrency': 'EUR'}}]}
-    return pagina(raiz, 'Biblioteca de traducciones: juega en español a juegos que nunca salieron traducidos', desc, '', cuerpo, base, ld=ld)
+    return pagina(raiz, 'Biblioteca de traducciones: juegos traducidos al español por fans', desc, '', cuerpo, base, ld=ld)
 
 
 def pagina_novedades(dias, filas, sysn, base):
@@ -1146,7 +1213,7 @@ def pagina_novedades(dias, filas, sysn, base):
 </main>'''
     desc = 'Las últimas traducciones al español añadidas al catálogo de la Biblioteca de traducciones, día a día.'
     ld = {'@context': 'https://schema.org', '@graph': [migas_ld(base, [('Inicio', ''), ('Novedades', 'novedades/')])]}
-    return pagina(raiz, 'Novedades: últimas traducciones añadidas · Biblioteca de traducciones', desc, 'novedades/', cuerpo, base, ld=ld)
+    return pagina(raiz, 'Novedades: últimas traducciones de juegos al español', desc, 'novedades/', cuerpo, base, ld=ld)
 
 
 def pagina_doblajes(filas, sysn, base):
@@ -1187,7 +1254,7 @@ def pagina_doblajes(filas, sysn, base):
 </main>'''
     desc = f'{len(juegos)} juegos con doblaje al español hecho por aficionados: voces en castellano y en latino para juegos de PlayStation, Dreamcast, PC y más.'
     ld = {'@context': 'https://schema.org', '@graph': [migas_ld(base, [('Inicio', ''), ('Doblajes', 'doblajes/')])]}
-    return pagina(raiz, 'Doblajes al español hechos por fans · Biblioteca de traducciones', desc, 'doblajes/', cuerpo, base, ld=ld)
+    return pagina(raiz, 'Doblajes de juegos al español hechos por fans', desc, 'doblajes/', cuerpo, base, ld=ld)
 
 
 # ---------------------------------------------------------------- grupos de traducción
@@ -1240,9 +1307,12 @@ def pagina_grupo(nombre, items, sysn, base):
   {bloques}
 </main>'''
     ruta = ruta_grupo(nombre)
-    desc = f'{len(items)} traducciones al español hechas por {nombre}: {enumera(sistemas[:4])}. Fichas con los datos de cada traducción y el enlace a su página.'
+    desc = el_mas_largo_que_quepa([f'{len(items):,} traducciones al español de {nombre} para {enumera(sistemas[:k])}. '
+                                   'Con los datos de cada una y el enlace a su página.' for k in (4, 3, 2, 1)], MAX_DESC)
     ld = {'@context': 'https://schema.org', '@graph': [migas_ld(base, [('Inicio', ''), ('Grupos de traducción', 'grupos/'), (nombre, ruta)])]}
-    return pagina(raiz, f'{titulo} · Biblioteca de traducciones', desc, ruta, cuerpo, base, ld=ld)
+    juegos_t = f'{n_juegos:,} {"juego traducido" if n_juegos == 1 else "juegos traducidos"} al español'
+    titulo_pagina = next((t for t in (f'{titulo}: {juegos_t}', f'{nombre}: {juegos_t}') if len(t) <= MAX_TITULO), titulo)
+    return pagina(raiz, titulo_pagina, desc, ruta, cuerpo, base, ld=ld)
 
 
 def pagina_grupos(grupos, base):
@@ -1259,7 +1329,7 @@ def pagina_grupos(grupos, base):
 </main>'''
     desc = f'Los {len(grupos)} grupos de traducción al español con más traducciones de juegos hechas por aficionados, cada uno con sus traducciones.'
     ld = {'@context': 'https://schema.org', '@graph': [migas_ld(base, [('Inicio', ''), ('Grupos de traducción', 'grupos/')])]}
-    return pagina(raiz, 'Grupos de traducción al español · Biblioteca de traducciones', desc, 'grupos/', cuerpo, base, ld=ld)
+    return pagina(raiz, 'Grupos de traducción de juegos al español', desc, 'grupos/', cuerpo, base, ld=ld)
 
 
 # ---------------------------------------------------------------- selecciones
@@ -1339,12 +1409,21 @@ def pagina_seleccion(sel, sysn, base):
   <ul class="tarjetas">{''.join(tarjeta_juego(g, raiz, sysn, not imprescindible) for g in gs)}</ul>
   <p class="suave">Ordenados por fama (votos en LaunchBox y reseñas en Steam). {"" if sl == "con-logros" else "No salen los juegos cuyas únicas traducciones están hechas con IA. "}Los juegos para adultos solo aparecen si los activas en el catálogo.</p>
 </main>'''
-    desc = f'{intro} {len(gs)} juegos, cada uno con su ficha y el enlace a su traducción.'
+    desc = el_mas_largo_que_quepa([f'{intro} {len(gs)} juegos, cada uno con su ficha y el enlace a su traducción.', intro], MAX_DESC)
     ld = {'@context': 'https://schema.org', '@graph': [
         migas_ld(base, [('Inicio', ''), ('Selecciones', 'selecciones/'), (titulo, f'selecciones/{sl}/')]),
         {'@type': 'ItemList', 'name': titulo, 'numberOfItems': len(gs),
          'itemListElement': [{'@type': 'ListItem', 'position': i + 1, 'url': base + g['ruta'], 'name': g['titulo']} for i, g in enumerate(gs[:20])]}]}
-    return pagina(raiz, f'{titulo} · Biblioteca de traducciones', desc, f'selecciones/{sl}/', cuerpo, base, ld=ld)
+    # Para el buscador, «los mejores …»: se busca mucho «mejores juegos de SNES en español» o «mejores RPG traducidos».
+    sistema = re.fullmatch(r'Imprescindibles de (.+) en español', titulo)
+    if sl == 'con-logros':
+        opciones = [f'{len(gs)} juegos traducidos al español con logros de RetroAchievements', titulo]
+    elif sistema:
+        opciones = [f'Los {len(gs)} mejores juegos de {sistema.group(1)} en español', titulo]
+    else:
+        opciones = [f'{titulo}: {"las" if sl in ("aventuras-graficas", "novelas-visuales") else "los"} {len(gs)} mejores', titulo]
+    titulo_pagina = next((t for t in opciones if len(t) <= MAX_TITULO), titulo)
+    return pagina(raiz, titulo_pagina, desc, f'selecciones/{sl}/', cuerpo, base, ld=ld)
 
 
 def pagina_selecciones(sels, base, doblados=()):
@@ -1360,7 +1439,7 @@ def pagina_selecciones(sels, base, doblados=()):
 </main>'''
     desc = 'Selecciones de juegos con traducción al español: RPG japoneses, aventuras gráficas, terror, novelas visuales e imprescindibles de cada consola.'
     ld = {'@context': 'https://schema.org', '@graph': [migas_ld(base, [('Inicio', ''), ('Selecciones', 'selecciones/')])]}
-    return pagina(raiz, 'Selecciones de juegos en español · Biblioteca de traducciones', desc, 'selecciones/', cuerpo, base, ld=ld)
+    return pagina(raiz, 'Selecciones de juegos traducidos al español', desc, 'selecciones/', cuerpo, base, ld=ld)
 
 
 # ---------------------------------------------------------------- traducciones en camino
@@ -1405,7 +1484,7 @@ def pagina_en_camino(juegos, sysn, base):
 </main>'''
     desc = 'Traducciones al español de juegos que están en camino: proyectos en curso de los grupos de aficionados y traducciones en beta que ya se pueden jugar.'
     ld = {'@context': 'https://schema.org', '@graph': [migas_ld(base, [('Inicio', ''), ('Traducciones en camino', 'en-camino/')])]}
-    return pagina(raiz, 'Traducciones en camino · Biblioteca de traducciones', desc, 'en-camino/', cuerpo, base, ld=ld)
+    return pagina(raiz, 'Traducciones de juegos al español en camino', desc, 'en-camino/', cuerpo, base, ld=ld)
 
 
 def feed_novedades(dias, sysn, base):
@@ -1433,7 +1512,9 @@ def pagina_listas(base):
   <p class="lede">Tus favoritos y las listas que hagas, guardados en este navegador. Pulsa el corazón de cualquier juego para añadirlo a Favoritos; en su ficha, «Guardar en una lista» para ponerlo donde quieras.</p>
   <div id="listas"></div>
 </main>'''
-    return pagina(raiz, 'Mis listas · Biblioteca de traducciones', 'Tus juegos favoritos y tus listas de traducciones, guardados en tu navegador.', 'mis-listas/', cuerpo, base)
+    # Sin contenido propio (todo sale del localStorage de cada uno): fuera de los buscadores.
+    return pagina(raiz, f'Mis listas · {SITIO}', 'Tus juegos favoritos y tus listas de traducciones, guardados en tu navegador.', 'mis-listas/', cuerpo, base,
+                  indexar=False)
 
 
 def pagina_404(base):
@@ -1441,7 +1522,7 @@ def pagina_404(base):
   <h1>Esta página no existe</h1>
   <p class="lede">Puede que el juego haya cambiado de nombre en el catálogo. Búscalo en el <a href="{base}catalogo/">catálogo</a> o vuelve al <a href="{base}">inicio</a>.</p>
 </main>'''
-    return pagina(base, 'Página no encontrada · Biblioteca de traducciones', 'Esta página no existe.', '404.html', cuerpo, base)
+    return pagina(base, f'Página no encontrada · {SITIO}', 'Esta página no existe.', '404.html', cuerpo, base, indexar=False)
 
 
 def parches_json(filas):
@@ -1478,7 +1559,7 @@ def pagina_parchear(base, sysn):
     raiz = '../'
     cuerpo = f'''<main>
 <p class="migas"><a href="{raiz}">Inicio</a> › Parchear en el navegador</p>
-<h1>Parchear en el navegador</h1>
+<h1>Parchear ROMs en el navegador</h1>
 <p class="lede">Elige tu ROM o toda tu carpeta de juegos: la página reconoce cada juego por su CRC32, baja el parche de la web de sus autores y te da el juego traducido. Todo ocurre en tu navegador: tus juegos no se suben a ningún sitio.</p>
 <div class="zona" id="zona">
   <input type="file" id="rom" aria-label="Tu ROM">
@@ -1496,6 +1577,25 @@ def pagina_parchear(base, sysn):
 <div id="resultado"></div>
 <details class="registro"><summary>Registro</summary><pre id="registro"></pre></details>
 <p class="muted">Funciona mejor en Chrome y Edge. Los parches xdelta y los juegos en 7z, rar o CHD necesitan el <a href="{raiz}#descargar">programa</a>. Nunca descarga juegos: solo el parche de traducción, que se aplica sobre tu propia copia.</p>
+<section class="bloque como">
+  <h2>Cómo parchear una ROM al español</h2>
+  <ol class="pasos">
+    <li><b>Elige tu ROM</b> (o un zip con ella) o toda tu carpeta de juegos. La página calcula su CRC32, la huella que distingue cada versión de un juego, con y sin la cabecera de 16 bytes de las ROMs de NES y la de 512 bytes de copiador de las de Super Nintendo.</li>
+    <li><b>Elige la traducción.</b> Si el catálogo tiene alguna para esa versión exacta, la página baja el parche de la web de sus autores. Si no puede bajarlo, o ya tienes tú el parche, cárgalo con «Tengo el parche».</li>
+    <li><b>Guarda el juego traducido.</b> Es una copia nueva con el parche aplicado: tu ROM original no se toca.</li>
+  </ol>
+</section>
+<section class="bloque">
+  <h2>Formatos de parche</h2>
+  <p class="texto">Aplica parches IPS, BPS, UPS, PPF (versiones 1 a 3) y APS (de Nintendo 64 y de Game Boy Advance), sueltos o dentro de un zip, con las mismas comprobaciones que el programa para Windows. Los parches xdelta, muy usados en los juegos en CD, y los juegos en 7z, rar o CHD necesitan el <a href="{raiz}#descargar">programa</a>.</p>
+</section>
+<section class="bloque preguntas">
+  <h2>Preguntas</h2>
+  <details><summary>¿Y si no encuentra traducción para mi ROM?</summary><p>Cada traducción se hace sobre una versión concreta del juego (región y revisión), y la página busca la que casa con el CRC32 de la tuya. Si no hay ninguna, puede que la haya para otra revisión: busca el juego en el <a href="{raiz}catalogo/">catálogo</a>, cuya ficha dice qué versión pide cada traducción. Si ya tienes un parche, puedes aplicarlo igualmente con «Tengo el parche».</p></details>
+  <details><summary>¿Se sube mi juego a algún sitio?</summary><p>No. Todo ocurre en tu navegador: la página solo descarga el parche de traducción, y el juego traducido se guarda en tu equipo.</p></details>
+  <details><summary>¿Descarga juegos?</summary><p>No. Necesitas tu propia copia del juego: la página solo aplica sobre ella los parches de traducción de sus autores.</p></details>
+  <details><summary>¿Qué juegos tienen traducción?</summary><p>El <a href="{raiz}catalogo/">catálogo</a> tiene traducciones al español hechas por aficionados para NES, Super Nintendo, Game Boy, Mega Drive, PlayStation y muchos sistemas más; las <a href="{raiz}selecciones/">selecciones</a> reúnen las más conocidas de cada uno.</p></details>
+</section>
 </main>
 <style>
 .zona {{ margin-top: 28px; padding: 36px 24px; border: 2px dashed var(--linea); border-radius: 16px; background: var(--panel); text-align: center; }}
@@ -1523,8 +1623,14 @@ def pagina_parchear(base, sysn):
 <script>var SYS = {json.dumps(sysn, ensure_ascii=False).replace('<', '\\u003c')};</script>
 <script src="motor.js"></script>
 <script src="parchear.js" defer></script>'''
-    desc = 'Aplica una traducción al español a tu ROM desde el navegador: la página reconoce el juego por su CRC32, baja el parche de sus autores y te da el juego traducido. Nada se sube a ningún sitio.'
-    return pagina(raiz, 'Parchear en el navegador · Biblioteca de traducciones', desc, 'parchear/', cuerpo, base)
+    desc = ('Parchea tu ROM online y gratis: la página reconoce el juego, baja su traducción al español y aplica '
+            'parches IPS, BPS, UPS, PPF o APS. Nada se sube.')
+    ld = {'@context': 'https://schema.org', '@graph': [
+        migas_ld(base, [('Inicio', ''), ('Parchear en el navegador', 'parchear/')]),
+        {'@type': 'WebApplication', 'name': 'Parchear en el navegador', 'url': base + 'parchear/', 'description': desc, 'inLanguage': 'es',
+         'applicationCategory': 'UtilitiesApplication', 'operatingSystem': 'Cualquiera con un navegador moderno', 'browserRequirements': 'Chrome o Edge recomendados',
+         'offers': {'@type': 'Offer', 'price': '0', 'priceCurrency': 'EUR'}}]}
+    return pagina(raiz, 'Parchear ROM online: traducciones al español en el navegador', desc, 'parchear/', cuerpo, base, ld=ld)
 
 
 def miles(t):
@@ -1567,7 +1673,9 @@ def main():
     for g in sorted(juegos, key=lambda g: sin_acentos(g['titulo']).lower()):
         for grupo in dict.fromkeys(f['grupo'].strip() for f in g['filas'] if f['grupo'].strip()):
             por_grupo.setdefault(grupo, []).append(g)
-    ctx = {'sysn': sysn, 'por_sis': por_sis, 'por_grupo': por_grupo}
+    # Juegos distintos con el mismo título en el mismo sistema: su ficha lleva el año en el título de la página.
+    repetidos = {k for k, v in collections.Counter((g['titulo'], g['s']) for g in juegos).items() if v > 1}
+    ctx = {'sysn': sysn, 'por_sis': por_sis, 'por_grupo': por_grupo, 'repetidos': repetidos}
     # Grupos con página propia (cada parte de «A / B» cuenta para los dos) y su ruta, sin repetir.
     por_parte = {}
     for g in juegos:
