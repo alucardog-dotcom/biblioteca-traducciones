@@ -102,6 +102,9 @@ pub struct Ajustes {
     /// Buscar también los juegos de PC instalados con Steam, GOG y Epic.
     #[serde(default = "si")]
     pub tiendas: bool,
+    /// Avisar de forma anónima, como mucho una vez al día, de que se usa el programa (uso.rs).
+    #[serde(default = "si")]
+    pub estadisticas: bool,
 }
 
 fn carpetas_por_defecto() -> Vec<PathBuf> {
@@ -122,6 +125,7 @@ impl Default for Ajustes {
             salida: junto(),
             retrobat: retrobat.join("emulationstation").join("emulatorLauncher.exe").is_file().then_some(retrobat),
             tiendas: true,
+            estadisticas: true,
         }
     }
 }

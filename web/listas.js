@@ -10,6 +10,9 @@
   // Cómo llegar a la raíz del sitio desde esta página: lo dice el enlace del icono.
   const icono = document.querySelector('link[rel="icon"]');
   const RAIZ = icono ? icono.getAttribute('href').replace(/icono\.svg$/, '') : '';
+  // Las rutas de las fichas de esta web («juego/snes/chrono-trigger/»). Lo que no lo sea (una copia de las
+  // listas preparada con «javascript:…») no se enlaza: en la portada RAIZ está vacía y se ejecutaría al pulsar.
+  const RUTA_FICHA = /^juego\/[a-z0-9-]+\/[a-z0-9-]+\/$/;
   const nuevoId = () => 'l' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
   let datos = cargar();
@@ -81,7 +84,7 @@
   function tarjeta(j, quitarDe) {
     const img = j.p && j.p.length ? `<img loading="lazy" src="${esc(j.p[0])}" data-alt="${esc(j.p.slice(1).join(' '))}" alt="" referrerpolicy="no-referrer" onerror="sig(this)" onload="this.classList.add('ok')">` : '';
     return `<li class="tarjeta${quitarDe ? ' con-acc' : ''}" data-ruta="${esc(j.r)}" data-sis="${esc(j.s)}" data-sisn="${esc(j.sn)}" data-titulo="${esc(j.t)}" data-port="${esc((j.p || []).join(' '))}">
-      <a href="${esc(RAIZ + j.r)}"><span class="port${img ? '' : ' sin'}">${img}<span class="ph">${esc(j.t)}</span></span><span class="cuerpo"><span class="t">${esc(j.t)}</span><span class="m">${esc(j.sn || j.s)}</span></span></a>
+      <a href="${esc(RAIZ + (RUTA_FICHA.test(j.r) ? j.r : ''))}"><span class="port${img ? '' : ' sin'}">${img}<span class="ph">${esc(j.t)}</span></span><span class="cuerpo"><span class="t">${esc(j.t)}</span><span class="m">${esc(j.sn || j.s)}</span></span></a>
       ${quitarDe ? `<div class="acc"><button type="button" class="btn" data-quitar="${esc(quitarDe)}" data-r="${esc(j.r)}">Quitar</button></div>` : ''}
       <button type="button" class="fav" aria-pressed="false" aria-label="Añadir a Favoritos">${FAV}</button></li>`;
   }
@@ -185,7 +188,8 @@
           if (!l || !Array.isArray(l.juegos)) continue;
           let mia = l.id === 'fav' ? fav() : datos.listas.find(x => x.id !== 'fav' && x.nombre === l.nombre);
           if (!mia) { mia = {id: nuevoId(), nombre: String(l.nombre || 'Lista').slice(0, 40), juegos: []}; datos.listas.push(mia); }
-          for (const j of l.juegos) if (j && typeof j.r === 'string' && !enLista(mia, j.r)) mia.juegos.push({r: j.r, t: String(j.t || ''), s: String(j.s || ''), sn: String(j.sn || ''), p: Array.isArray(j.p) ? j.p.filter(u => /^https?:\/\//.test(u)).slice(0, 3) : []});
+          // Solo rutas de fichas de esta web (RUTA_FICHA).
+          for (const j of l.juegos) if (j && typeof j.r === 'string' && RUTA_FICHA.test(j.r) &&!enLista(mia, j.r)) mia.juegos.push({r: j.r, t: String(j.t || ''), s: String(j.s || ''), sn: String(j.sn || ''), p: Array.isArray(j.p) ? j.p.filter(u => /^https?:\/\//.test(u)).slice(0, 3) : []});
         }
         guardar(); pintarListas(); aviso('Copia restaurada.');
       } catch (err) { aviso('No se pudo leer la copia: ' + err.message); }

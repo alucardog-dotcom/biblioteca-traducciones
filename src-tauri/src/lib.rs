@@ -14,6 +14,7 @@ mod parcheo;
 mod portadas;
 mod rutas;
 mod trabajos;
+mod uso;
 
 use rutas::{Ajustes, Rutas};
 use serde_json::{json, Value};
@@ -175,15 +176,16 @@ fn abrir_web(url: String) -> Result<(), String> {
 fn ajustes(app: Estado) -> Value {
     let a = app.ajustes();
     json!({
-        "carpetas": a.carpetas, "salida": a.salida, "retrobat": a.retrobat, "tiendas": a.tiendas,
+        "carpetas": a.carpetas, "salida": a.salida, "retrobat": a.retrobat, "tiendas": a.tiendas, "estadisticas": a.estadisticas,
         "descargas": trabajos::carpeta_descargas(), "datos": app.rutas.datos,
         "version": env!("CARGO_PKG_VERSION"), "nuevo": app.nuevo.load(Ordering::Relaxed),
         "sugeridas": a.sugeridas().into_iter().map(|p| json!({"ruta": p, "existe": p.is_dir()})).collect::<Vec<_>>(),
     })
 }
 
+/// Sin `estadisticas` (la bienvenida no la pregunta) se queda como estaba.
 #[tauri::command]
-fn guardar_ajustes(app: Estado, carpetas: Vec<PathBuf>, salida: String, retrobat: Option<PathBuf>, tiendas: bool) -> Result<Value, String> {
+fn guardar_ajustes(app: Estado, carpetas: Vec<PathBuf>, salida: String, retrobat: Option<PathBuf>, tiendas: bool, estadisticas: Option<bool>) -> Result<Value, String> {
     let carpetas: Vec<PathBuf> = carpetas.into_iter().filter(|c| !c.as_os_str().is_empty()).collect();
     if carpetas.is_empty() {
         return Err("Hace falta al menos una carpeta de juegos.".into());
@@ -197,7 +199,8 @@ fn guardar_ajustes(app: Estado, carpetas: Vec<PathBuf>, salida: String, retrobat
     for c in &carpetas {
         fs::create_dir_all(c).map_err(|e| format!("No se pudo crear {}: {e}", c.display()))?;
     }
-    let a = Ajustes { carpetas, salida, retrobat: retrobat.filter(|r| !r.as_os_str().is_empty()), tiendas };
+    let estadisticas = estadisticas.unwrap_or(app.ajustes().estadisticas);
+    let a = Ajustes { carpetas, salida, retrobat: retrobat.filter(|r| !r.as_os_str().is_empty()), tiendas, estadisticas };
     a.guardar(&app.config).map_err(|e| e.to_string())?;
     *app.ajustes.lock().unwrap() = a;
     app.nuevo.store(false, Ordering::Relaxed);
@@ -317,6 +320,21 @@ fn catalogo_al_dia(h: AppHandle, app: Arc<App>) {
     });
 }
 
+/// Estadísticas de uso (uso.rs): al minuto de abrir y luego cada seis horas, por si se queda abierto días; el
+/// aviso sale como mucho una vez al día. No antes de pasar por la bienvenida, que cuenta que se hace.
+fn uso_al_dia(app: Arc<App>) {
+    std::thread::spawn(move || {
+        let mut espera = Duration::from_secs(60);
+        loop {
+            std::thread::sleep(espera);
+            espera = Duration::from_secs(6 * 60 * 60);
+            if app.ajustes().estadisticas && !app.nuevo.load(Ordering::Relaxed) {
+                uso::avisar(&app.rutas);
+            }
+        }
+    });
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -348,6 +366,7 @@ pub fn run() {
             trabajador(app.handle().clone(), estado.clone());
             vigilante(app.handle().clone(), estado.clone());
             catalogo_al_dia(app.handle().clone(), estado.clone());
+            uso_al_dia(estado.clone());
             app.manage(estado);
             Ok(())
         })

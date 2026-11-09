@@ -249,7 +249,9 @@ pub fn elegidos(siete_z: &Path, paquete: &Path, nombres: &[String], dest: &Path,
     let mut out = vec![];
     for n in nombres {
         let src = n.split(['/', '\\']).fold(t.0.clone(), |a, x| a.join(x));
-        if !src.is_file() {
+        // El nombre viene del catálogo: con «..» o «C:» se saldría de la carpeta temporal y copiaría un
+        // fichero cualquiera del disco como si fuera el parche.
+        if !src.is_file() || !crate::rutas::Rutas::dentro(&src, &t.0) {
             continue;
         }
         fs::create_dir_all(dest).map_err(|e| e.to_string())?;

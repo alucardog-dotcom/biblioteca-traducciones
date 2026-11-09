@@ -52,15 +52,26 @@ pub fn activo(r: &Rutas) -> (PathBuf, PathBuf) {
     (r.csv.clone(), r.centro.clone())
 }
 
-/// Que lo descargado sea un catálogo de verdad: un CSV con sus columnas y muchas filas, y el JSON.
-fn valido(csv_: &Path, centro: &Path) -> bool {
-    let filas = leer_texto(csv_).ok().map(|t| {
+/// Cuántas fichas tiene un catálogo (0 si no se puede leer o le faltan las columnas).
+fn filas(csv_: &Path) -> usize {
+    leer_texto(csv_).ok().map_or(0, |t| {
         let mut rd = csv::ReaderBuilder::new().flexible(true).from_reader(t.as_bytes());
         let cab_ok = rd.headers().is_ok_and(|h| h.iter().any(|c| c == "sistema") && h.iter().any(|c| c == "juego"));
         if cab_ok { rd.records().filter(Result::is_ok).count() } else { 0 }
-    });
+    })
+}
+
+/// Que lo descargado sea un catálogo de verdad: un CSV con sus columnas y muchas filas, y el JSON.
+fn valido(csv_: &Path, centro: &Path) -> bool {
     let json_ok = leer_texto(centro).ok().and_then(|t| serde_json::from_str::<serde_json::Value>(&t).ok()).is_some_and(|v| v.get("filas").is_some());
-    filas.unwrap_or(0) >= 1000 && json_ok
+    filas(csv_) >= 1000 && json_ok
+}
+
+/// ¿Pierde de golpe más de una de cada diez fichas? Casi seguro que es un catálogo cortado a medias (un script
+/// que se interrumpió al escribirlo y una tarea que lo subió así): mejor seguir con el que se usa. Si algún día
+/// se quitan a propósito tantas fichas, los programas instalados no lo aceptan hasta la versión siguiente.
+fn menguado(nuevas: usize, ahora: usize) -> bool {
+    nuevas * 10 < ahora * 9
 }
 
 /// Solo una comprobación a la vez: la de cada seis horas y la del botón «Buscar actualizaciones» pueden
@@ -104,6 +115,9 @@ pub fn actualizar(r: &Rutas) -> Result<bool, String> {
         if !valido(&nuevo.join(CSV), &nuevo.join(CENTRO)) {
             return Err("El catálogo descargado no es válido.".into());
         }
+        if menguado(filas(&nuevo.join(CSV)), filas(&antes.0)) {
+            return Err("El catálogo descargado tiene muchas menos traducciones que el que usas: se sigue con el tuyo.".into());
+        }
         let e = Estado { programa: PROGRAMA.into(), sha: HashMap::from([(CSV.into(), rc.0.clone()), (CENTRO.into(), rj.0.clone())]) };
         fs::write(nuevo.join("estado.json"), serde_json::to_vec_pretty(&e).unwrap_or_default()).map_err(|e| e.to_string())?;
         let _ = fs::remove_dir_all(&d);
@@ -126,6 +140,15 @@ mod pruebas {
         fs::write(&f, "hello\n").unwrap();
         // `git hash-object` de "hello\n".
         assert_eq!(sha_git(&f).unwrap(), "ce013625030ba8dba906f756967f9e9ca394464a");
+    }
+
+    #[test]
+    fn no_acepta_un_catalogo_cortado() {
+        assert!(!menguado(6182, 6182));
+        assert!(!menguado(6000, 6182));
+        assert!(menguado(5000, 6182));
+        // El que lleva dentro una versión de prueba puede estar vacío: cualquiera vale.
+        assert!(!menguado(1500, 0));
     }
 
     /// Descarga de verdad el catálogo de GitHub en una carpeta de datos de prueba (necesita conexión):

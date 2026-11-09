@@ -618,7 +618,7 @@ function pintarDescargas() {
 // Ajustes: se editan en una copia y se guardan todos juntos.
 let borrador = null;
 function pintarAjustes() {
-  if (!borrador) borrador = {carpetas: [...(ajustes.carpetas || [])], salida: ajustes.salida || 'junto', retrobat: ajustes.retrobat || '', tiendas: ajustes.tiendas !== false};
+  if (!borrador) borrador = {carpetas: [...(ajustes.carpetas || [])], salida: ajustes.salida || 'junto', retrobat: ajustes.retrobat || '', tiendas: ajustes.tiendas !== false, estadisticas: ajustes.estadisticas !== false};
   const b = borrador, aparte = b.salida !== 'junto';
   main.innerHTML = `<h1>Ajustes</h1>
     <div class="set">
@@ -639,6 +639,10 @@ function pintarAjustes() {
       <section><h2>RetroBat (opcional)</h2>
         <p>Si usas RetroBat, el botón <b>Jugar</b> abre el juego con su lanzador y el emulador que tengas elegido. Si no, se abre con el programa que Windows tenga asociado.</p>
         <div class="line"><input type="text" id="retrobat" aria-label="Carpeta de RetroBat" value="${esc(b.retrobat)}" placeholder="Sin RetroBat"><button class="btn" id="elegir-rb">Elegir…</button></div>
+      </section>
+      <section><h2>Estadísticas de uso</h2>
+        <label class="opt"><input type="checkbox" id="estadisticas" ${b.estadisticas ? 'checked' : ''}> Contar que uso el programa, de forma anónima</label>
+        <p>Como mucho una vez al día, el programa avisa a las estadísticas de la web (<a href="https://www.goatcounter.com/">GoatCounter</a>) de que se ha abierto y con qué versión. No manda tus juegos, tus carpetas ni nada que te identifique, y no usa cookies. Sirve para saber cuánta gente lo usa.</p>
       </section>
       <div class="line"><button class="btn primary" id="guardar">Guardar y buscar mis juegos</button></div>
       <section><h2>Parches que bajas tú</h2>
@@ -669,12 +673,13 @@ function pintarAjustes() {
   $('salida').oninput = e => { b.salida = e.target.value; };
   $('elegir-salida').onclick = async () => { const c = await elegir('Elige dónde dejar los juegos traducidos'); if (c) { b.salida = c; pintarAjustes(); } };
   $('tiendas').onchange = e => { b.tiendas = e.target.checked; };
+  $('estadisticas').onchange = e => { b.estadisticas = e.target.checked; };
   $('retrobat').oninput = e => { b.retrobat = e.target.value; };
   $('elegir-rb').onclick = async () => { const c = await elegir('Elige la carpeta de RetroBat'); if (c) { b.retrobat = c; pintarAjustes(); } };
   $('guardar').onclick = async () => {
     if (b.salida !== 'junto' && !b.salida.trim()) return aviso('Elige la carpeta para los traducidos.', 'bad');
     try {
-      ajustes = await api('guardar_ajustes', {carpetas: b.carpetas, salida: b.salida, retrobat: b.retrobat.trim() || null, tiendas: b.tiendas});
+      ajustes = await api('guardar_ajustes', {carpetas: b.carpetas, salida: b.salida, retrobat: b.retrobat.trim() || null, tiendas: b.tiendas, estadisticas: b.estadisticas});
       borrador = null;
       aviso('Guardado. Buscando tus juegos…', 'ok');
       escaneando = true; pintarEscaneo(''); sondear();
@@ -704,7 +709,7 @@ function bienvenida() {
       ${ajustes.retrobat ? `<p>Tienes RetroBat en <code>${esc(ajustes.retrobat)}</code>: el botón Jugar abrirá tus juegos con él.</p>` : ''}
       <div class="f-actions"><button type="button" class="btn primary" id="b-empezar" ${elegidas.length ? '' : 'disabled'}>Empezar</button>
         <button type="button" class="btn ghost" id="b-luego">Ahora no</button></div>
-      <p>Todo esto se puede cambiar después en Ajustes.</p>`;
+      <p>Para saber cuánta gente lo usa, el programa avisa una vez al día, de forma anónima y sin ningún dato tuyo, de que se ha abierto. Todo esto se puede cambiar después en Ajustes.</p>`;
   };
   $('b-body').onclick = async e => {
     const t = e.target.closest('button');

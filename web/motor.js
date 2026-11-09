@@ -330,7 +330,11 @@ function apsN64(p, origen) {
     out = conTamano(out, tamFinal);
   }
   const roto = () => new Error('Parche APS truncado.');
-  const asegurar = fin => { if (fin > out.length) out = conTamano(out, fin); };
+  // Como en motor.rs: nada más allá de lo que puede ocupar un cartucho de N64.
+  const asegurar = fin => {
+    if (fin > MAX_N64) throw new Error('El parche APS escribe fuera de cualquier juego de N64: está dañado.');
+    if (fin > out.length) out = conTamano(out, fin);
+  };
   while (pos + 5 <= p.length) {
     const desde = u32le(p, pos), n = p[pos + 4];
     pos += 5;

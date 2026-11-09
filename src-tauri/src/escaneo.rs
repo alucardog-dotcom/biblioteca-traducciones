@@ -158,7 +158,8 @@ fn crcs_zip(p: &Path) -> Vec<String> {
 /// CRC32 de los ficheros de un .7z o .rar, con el 7z.exe que lleva el programa.
 fn crcs_7z(p: &Path, siete_z: &Path) -> Vec<String> {
     let mut c = Command::new(siete_z);
-    c.args(["l", "-slt", "-ba"]).arg(p);
+    // `--`: la ruta es un nombre aunque empiece por `-` o `@` (como en parcheo::listar).
+    c.args(["l", "-slt", "-ba", "--"]).arg(p);
     #[cfg(windows)]
     c.creation_flags(0x0800_0000);
     let Ok(o) = c.output() else { return vec![] };

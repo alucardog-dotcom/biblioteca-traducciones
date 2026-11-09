@@ -61,6 +61,7 @@ El programa no envía datos tuyos a ningún sitio. Solo se conecta para:
 - **Portadas:** thumbnails.libretro.com, la CDN de Steam e images.launchbox-app.com.
 - **Parches:** traduccioneswave.top, archive.org y github.com.
 - **Versión y catálogo nuevos:** api.github.com y raw.githubusercontent.com, para ver si hay una versión nueva del programa y para traer el catálogo más reciente.
+- **Saber cuánta gente lo usa:** como mucho una vez al día, stats.bibliotecadetraducciones.com (las estadísticas de la web, con [GoatCounter](https://www.goatcounter.com/)) recibe un aviso de que se ha abierto el programa y con qué versión. No lleva tus juegos, tus carpetas ni ningún identificador, y GoatCounter no usa cookies ni guarda la IP. Se quita en Ajustes, «Estadísticas de uso».
 
 Tus ajustes, tus listas y tus datos se guardan en tu equipo: `%APPDATA%\es.traducciones.biblioteca` y `%LOCALAPPDATA%\es.traducciones.biblioteca`.
 

@@ -463,17 +463,18 @@ fn ppf(parche: &Path, origen: &Path, salida: &Path, forzar: bool) -> Result<Stri
             return Err("Parche PPF truncado.".into());
         }
         let nuevo = &p[pos..pos + n];
+        // Un PPF escribe dentro del disco (como mucho, justo al final): un desplazamiento mayor es un parche
+        // corrupto o de otra imagen, no una orden de agrandar el fichero gigabytes. Va antes de la suma de
+        // abajo: con un desplazamiento de PPF3 cerca de u64::MAX, `desde + n` se desbordaría.
+        if desde > largo {
+            return Err("El parche PPF apunta fuera del disco: no es para esta imagen o está dañado.".into());
+        }
         if desde + n as u64 <= largo {
             o.seek(SeekFrom::Start(desde)).map_err(es)?;
             o.read_exact(&mut actual[..n]).map_err(es)?;
             if &actual[..n] == nuevo {
                 iguales += 1;
             }
-        }
-        // Un PPF escribe dentro del disco (como mucho, justo al final): un desplazamiento mayor es un parche
-        // corrupto o de otra imagen, no una orden de agrandar el fichero gigabytes.
-        if desde > largo {
-            return Err("El parche PPF apunta fuera del disco: no es para esta imagen o está dañado.".into());
         }
         escribir_en(&mut o, desde, nuevo)?;
         pos += n;
@@ -516,15 +517,24 @@ fn aps_n64(parche: &Path, origen: &Path, salida: &Path) -> Result<String, String
         o.set_len(t).map_err(es)?;
     }
     let truncado = || "Parche APS truncado.".to_string();
+    // Tampoco se escribe más allá de lo que puede ocupar un cartucho: sin esto, un bloque en 0xFFFFFF00 de un
+    // APS sin tamaño final crearía un fichero de 4 GB.
+    let fuera = || "El parche APS escribe fuera de cualquier juego de N64: está dañado.".to_string();
     while pos + 5 <= p.len() {
         let desde = u32le(&p, pos)? as u64;
         let n = p[pos + 4] as usize;
         pos += 5;
         if n == 0 {
             let x = p.get(pos..pos + 2).ok_or_else(truncado)?;
+            if desde + x[1] as u64 > MAX_N64 {
+                return Err(fuera());
+            }
             escribir_en(&mut o, desde, &vec![x[0]; x[1] as usize])?;
             pos += 2;
         } else {
+            if desde + n as u64 > MAX_N64 {
+                return Err(fuera());
+            }
             escribir_en(&mut o, desde, p.get(pos..pos + n).ok_or_else(truncado)?)?;
             pos += n;
         }
@@ -827,5 +837,33 @@ pub(crate) mod pruebas {
                 let _ = aplicar(&pp, &origen, &d.join("s.bin"), 0, true);
             }
         }
+    }
+
+    /// Desplazamientos imposibles: ni desbordan (PPF3 cerca de u64::MAX) ni crean ficheros de gigas (APS).
+    #[test]
+    fn ppf_y_aps_fuera_de_rango() {
+        let d = carpeta("motor-fuera");
+        let origen = escribir(&d, "juego.bin", &ruido(4096, 8));
+        // PPF3 sin bloque de comprobación.
+        let mut ppf = b"PPF30".to_vec();
+        ppf.push(2);
+        ppf.extend_from_slice(&[b' '; 50]);
+        ppf.extend_from_slice(&[0, 0, 0, 0]);
+        ppf.extend_from_slice(&(u64::MAX - 1).to_le_bytes());
+        ppf.push(4);
+        ppf.extend_from_slice(b"HOLA");
+        let pp = escribir(&d, "p.ppf", &ppf);
+        assert!(aplicar(&pp, &origen, &d.join("s.bin"), 0, false).unwrap_err().contains("fuera del disco"));
+        // APS de N64 sin tamaño final que escribe en 0xFFFFFF00.
+        let mut aps = b"APS10".to_vec();
+        aps.extend_from_slice(&[0, 0]);
+        aps.extend_from_slice(&[b' '; 50]);
+        aps.extend_from_slice(&0xFFFF_FF00u32.to_le_bytes());
+        aps.push(4);
+        aps.extend_from_slice(b"HOLA");
+        let pa = escribir(&d, "p.aps", &aps);
+        let salida = d.join("a.bin");
+        assert!(aplicar(&pa, &origen, &salida, 0, false).unwrap_err().contains("fuera de cualquier juego"));
+        assert!(!salida.exists());
     }
 }
