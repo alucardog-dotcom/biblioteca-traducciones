@@ -694,6 +694,7 @@ def pagina(raiz, titulo, descripcion, ruta, cuerpo, base, imagen='img/vista-prev
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="strict-origin">
 <title>{e(titulo)}</title>
 <meta name="description" content="{e(descripcion)}">
 {extra}<link rel="canonical" href="{e(canon)}">
