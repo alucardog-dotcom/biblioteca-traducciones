@@ -735,6 +735,7 @@ def pagina(raiz, titulo, descripcion, ruta, cuerpo, base, imagen='img/vista-prev
     <a href="{raiz}selecciones/">Selecciones</a>
     <a href="{raiz}doblajes/">Doblajes</a>
     <a href="{raiz}mis-listas/" id="nav-listas">Mis listas</a>
+    <a href="{raiz}perdidas/"><span class="nav-largo">Traducciones perdidas</span><span class="nav-corto">Perdidas</span></a>
     <a class="btn primario" href="{INSTALADOR}" data-goatcounter-click="descarga-cabecera">Descargar</a>
   </nav>
 </header>

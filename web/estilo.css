@@ -57,6 +57,7 @@ code { font: 0.9em Consolas, ui-monospace, monospace; background: var(--panel-2)
 .barra nav { display: flex; align-items: center; gap: 6px 18px; flex-wrap: wrap; }
 .barra nav a:not(.btn) { color: var(--texto); text-decoration: none; font-weight: 600; }
 .barra nav a:not(.btn):hover { color: var(--amarillo-t); }
+.barra .nav-corto { display: none; }
 .pie { border-top: 1px solid var(--linea); margin-top: 72px; background: #0B0E13; }
 .pie-in { max-width: var(--ancho); margin: 0 auto; padding: 28px var(--lado-d) 40px var(--lado); color: var(--suave); font-size: 0.93rem; }
 .pie-in p { margin: 0 0 10px; max-width: 80ch; }
@@ -175,6 +176,8 @@ main { display: block; max-width: var(--ancho); margin: 0 auto; padding: 0 var(-
   .cifras b { font-size: 1.5rem; }
   .juego-h { grid-template-columns: minmax(0, 1fr); }
   .portada { width: 180px; }
+  .barra .nav-largo { display: none; }
+  .barra .nav-corto { display: inline; }
 }
 @media (max-width: 480px) {
   body { font-size: 16px; }
