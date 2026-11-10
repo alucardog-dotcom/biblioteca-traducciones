@@ -115,6 +115,7 @@ main { display: block; max-width: var(--ancho); margin: 0 auto; padding: 0 var(-
 .juego-t { display: grid; gap: 6px; justify-items: start; }
 .juego-t h1 span { color: var(--amarillo); }
 .juego-t .btn { margin-top: 18px; }
+.juego-t .aviso-j { margin: 4px 0 0; max-width: 60ch; }
 .compra { margin-top: 10px; display: grid; gap: 4px; justify-items: start; }
 .juego-t .compra .btn { margin-top: 0; }
 .compra p { margin: 0; font-size: 0.82rem; }
