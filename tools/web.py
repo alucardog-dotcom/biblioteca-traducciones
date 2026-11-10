@@ -552,11 +552,12 @@ FAMILIA = {**dict.fromkeys(['nes', 'fds', 'snes', 'satellaview', 'gb', 'gbc', 'g
            **dict.fromkeys(['pc', 'dos', 'windows', 'scummvm', 'easyrpg', 'msx', 'msx2', 'pc98', 'amiga', 'c64', 'zxspectrum', 'amstradcpc'], 'ordenador')}
 
 
-def destacados(filas, dias, pins, k=9):
-    """Las portadas del mosaico de la portada: primero los juegos fijados en web/destacados.txt, luego las novedades de
-    los últimos días con tirón (web/popularidad.tsv) y, para completar, los juegos de más tirón de todo el catálogo,
-    que rotan cada día. Sin IA ni juegos para adultos, con portada, y como mucho dos juegos por sistema y tres por
-    familia, para que no salgan nueve de Super Nintendo. Devuelve [(juego, direcciones de la portada)]."""
+def destacados(filas, dias, pins, k=9, vistos=()):
+    """Las portadas del mosaico de la portada: primero los juegos fijados en web/destacados.txt, luego tres de los más
+    consultados en la web (vistos, de «Lo más visto»; si GoatCounter no da datos, ninguno), las novedades de los últimos
+    días con tirón (web/popularidad.tsv) y, para completar, los juegos de más tirón de todo el catálogo, que rotan cada
+    día. Sin IA ni juegos para adultos, con portada, y como mucho dos juegos por sistema y tres por familia, para que no
+    salgan nueve de Super Nintendo. Devuelve [(juego, direcciones de la portada)]."""
     elegidos, titulos, por_sis, por_fam = [], set(), collections.Counter(), collections.Counter()
 
     def cabe(g):
@@ -580,6 +581,11 @@ def destacados(filas, dias, pins, k=9):
         g = next((g for g in juegos if g['s'] == s and sin_acentos(g['titulo']).lower() == sin_acentos(j).lower()), None)
         if g:
             cabe(g)
+    n_vistos = 0
+    for g in vistos:
+        if n_vistos >= 3 or len(elegidos) >= k:
+            break
+        n_vistos += cabe(g)
     tope = len(elegidos) + min(4, k - len(elegidos))
     for f in sorted((f for _, fs in dias for f in fs if f['pop'] >= 60 and not es_ia(f)), key=lambda f: (-f['pop'], f['alta'])):
         if len(elegidos) >= tope:
@@ -1112,7 +1118,7 @@ def pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version, dias, filas, p
     raiz = ''
     mosaico = ''.join(f'<a href="{e(g["ruta"])}" title="{e(g["titulo"])}"><img src="{e(u[0])}" data-alt="{e(" ".join(u[1:]))}" alt="" '
                       f'referrerpolicy="no-referrer" onerror="sig(this)" onload="this.classList.add(\'ok\')"><span class="ph">{e(g["titulo"])}</span></a>'
-                      for g, u in destacados(filas, dias, pins))
+                      for g, u in destacados(filas, dias, pins, vistos=next((s[3] for s in sels if s[0] == 'lo-mas-visto'), ())))
     if dias:
         bloque_nov = f'''<section class="bloque novedades">
     <div class="cab"><h2>Últimas novedades</h2><p class="suave"><a href="novedades/">Todas las novedades</a> · <a href="novedades.xml">Canal RSS</a></p></div>
@@ -1194,7 +1200,7 @@ def pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version, dias, filas, p
     <div class="sistemas">{chips_sistemas(por_sis, sysn, raiz)}</div>
   </section>
 
-  <section class="bloque doble programa">
+  <section class="bloque programa">
     <div>
       <p class="eti">El programa para Windows</p>
       <h2>Si prefieres que lo haga todo él</h2>
@@ -1210,7 +1216,6 @@ def pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version, dias, filas, p
       </div>
       <p class="suave">Gratis y de código libre · Windows 10 y 11 · versión {e(version)}</p>
     </div>
-    <img class="captura" src="img/captura-listas.png" width="1360" height="860" loading="lazy" alt="La Biblioteca de traducciones con juegos de diez plataformas: Game Boy Advance, PlayStation, Super Nintendo, Mega CD, Dreamcast, Saturn, Nintendo DS, PlayStation 2, Nintendo 64 y PC">
   </section>
 
   <section class="bloque">
@@ -1929,8 +1934,8 @@ def main():
         shutil.rmtree(salida)
     os.makedirs(salida)
     shutil.copytree(os.path.join(WEB, 'img'), os.path.join(salida, 'img'))
-    for c in ('captura-listas.png', 'captura-ficha.png', 'captura-descubrir.png'):
-        shutil.copy(os.path.join(RAIZ, 'docs', c), os.path.join(salida, 'img', c))
+    # Las capturas del programa de docs/ ya no se publican: enseñaban grupos retirados (10-11-2026). Cuando haya
+    # capturas nuevas, el bloque «programa» de la portada puede volver a ser «bloque doble programa» con su <img class="captura">.
     shutil.copytree(os.path.join(RAIZ, 'ui', 'portadas'), os.path.join(salida, 'portadas'))
     # Copias reducidas de las portadas de internet que pesan mucho (las hace miniaturas.py); el catálogo
     # apunta a ellas en "pu", también para el programa.
