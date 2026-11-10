@@ -323,7 +323,6 @@ const thumb = (sys, name, tipo) => 'https://thumbnails.libretro.com/' + encodeUR
 // Juegos de PC: la carátula vertical de Steam y, si no la tiene, su cabecera.
 const steamImg = (id, f) => `https://cdn.cloudflare.steamstatic.com/steam/apps/${encodeURIComponent(id)}/${f}`;
 const REPO_UI = 'https://raw.githubusercontent.com/alucardog-dotcom/biblioteca-traducciones/main/ui/';
-const DONAR = 'https://paypal.me/btraducciones';
 const WEB = 'https://bibliotecadetraducciones.com/';
 // Enlace de afiliado de Instant Gaming: su búsqueda con el código del autor.
 const INSTANT_GAMING = 'https://www.instant-gaming.com/es/busquedas/?query=', AFILIADO = 'gamer-d73144';
@@ -656,8 +655,8 @@ function pintarAjustes() {
         <p>Biblioteca de traducciones ${esc(ajustes.version || '')}. Nunca descarga juegos: solo parches de traducción para tu propia copia. Guarda sus datos (trabajos y parches descargados) en tu carpeta de usuario.</p>
         <p>El catálogo se pone al día solo al abrir el programa y cada seis horas; las versiones nuevas del programa se avisan abajo a la izquierda. Si no quieres esperar:</p>
         <div class="line"><button class="btn" id="buscar-act">Buscar actualizaciones</button><span class="muted" id="buscar-act-res" aria-live="polite"></span></div>
-        <p>Es gratuita y de código abierto. Si te resulta útil, puedes invitarme a un café: las donaciones son para el desarrollo del programa (las traducciones son de sus autores).</p>
-        <div class="line"><a class="btn primary" href="${DONAR}">Invitar a un café (PayPal)</a><a class="btn" href="${WEB}">La web</a><a class="btn" href="https://github.com/alucardog-dotcom/biblioteca-traducciones">El proyecto en GitHub</a><button class="btn" data-ruta="${esc(ajustes.datos || '')}">Abrir la carpeta de datos</button></div>
+        <p>Es gratuita y de código abierto. Las traducciones son de sus autores.</p>
+        <div class="line"><a class="btn" href="${WEB}">La web</a><a class="btn" href="https://github.com/alucardog-dotcom/biblioteca-traducciones">El proyecto en GitHub</a><button class="btn" data-ruta="${esc(ajustes.datos || '')}">Abrir la carpeta de datos</button></div>
       </section>
     </div>`;
   const elegir = async titulo => api('elegir_carpeta', {titulo}).catch(e => { aviso(e.message, 'bad'); return null; });
@@ -1071,29 +1070,6 @@ function pintarEscaneo(prog) {
   $('scan-text').textContent = t;
 }
 
-// Una sola vez, al traducir el tercer juego, un aviso discreto para invitar a un café. Si hay una ventana
-// abierta (la ficha), sale al cerrarla.
-const CAFE_TRAS = 3;
-function contarCafe() {
-  let c = {};
-  try { c = JSON.parse(localStorage.getItem('cafe') || '{}'); } catch (e) { }
-  if (c.visto) return;
-  c.n = (c.n || 0) + 1;
-  if (c.n >= CAFE_TRAS) {
-    c.visto = true;
-    $('cafe-n').textContent = c.n;
-    setTimeout(mostrarCafe, 1500);
-  }
-  try { localStorage.setItem('cafe', JSON.stringify(c)); } catch (e) { }
-}
-function mostrarCafe() {
-  const abierta = document.querySelector('dialog[open]');
-  if (abierta) abierta.addEventListener('close', mostrarCafe, {once: true});
-  else $('cafe').hidden = false;
-}
-$('cafe-si').href = DONAR;
-for (const id of ['cafe-si', 'cafe-no', 'cafe-x']) $(id).addEventListener('click', () => { $('cafe').hidden = true; });
-
 let sondeo = null, sondeando = false, sondearOtraVez = false;
 async function sondear() {
   // Una pasada cada vez: dos a la vez podrían aplicar las respuestas en orden inverso. Si llega otra
@@ -1114,7 +1090,6 @@ async function sondear() {
         hechoNuevo = true;
         const r = porClave.get(t.clave);
         aviso((r ? r.a[F.juego] : 'El juego') + ' ya está en español.', 'ok');
-        contarCafe();
       }
       if (t.estado === 'error' && antes.get(t.id) && antes.get(t.id) !== 'error') aviso(t.mensaje || 'No se pudo traducir.', 'bad');
       if (!['hecho', 'error'].includes(t.estado)) activo = true;

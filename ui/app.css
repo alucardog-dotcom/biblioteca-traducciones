@@ -268,12 +268,6 @@ kbd { font: inherit; font-size: 11px; background: var(--panel-2); border: 1px so
 /* ---------------------------------------------------------------- avisos */
 .toasts { position: fixed; right: 20px; bottom: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 10; }
 .toast { background: var(--panel-2); border: 1px solid var(--line); border-left: 4px solid var(--acc); border-radius: 10px; padding: 10px 14px; max-width: 380px; box-shadow: 0 8px 24px rgba(0,0,0,.4); }
-.cafe { position: fixed; left: 24px; bottom: 24px; z-index: 11; width: min(380px, calc(100vw - 48px)); background: var(--panel-2); border: 1px solid var(--line); border-top: 4px solid var(--acc); border-radius: var(--radius); padding: 16px 18px; box-shadow: 0 12px 32px rgba(0,0,0,.5); }
-.cafe h2 { font-size: 16px; margin: 0 24px 6px 0; }
-.cafe p { margin: 0 0 12px; color: var(--muted); font-size: 13px; line-height: 1.5; }
-.cafe .line { display: flex; gap: 8px; flex-wrap: wrap; }
-.cafe-x { position: absolute; top: 8px; right: 10px; background: none; border: 0; color: var(--muted); font-size: 20px; cursor: pointer; line-height: 1; }
-.cafe-x:hover { color: var(--text); }
 .toast.bad { border-left-color: var(--bad); }
 .toast.ok { border-left-color: var(--ok); }
 
