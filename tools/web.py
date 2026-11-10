@@ -1203,7 +1203,7 @@ def pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version, dias, filas, p
 
   <section class="bloque">
     <h2>De dónde salen las traducciones</h2>
-    <p class="texto">Las traducciones son de sus autores. El catálogo se ha hecho con los listados de romhacking.net, Traducciones Wave, Romhack Plaza, TraduSquare, Romhack Hispano, El Otro Lado, Steam Community, RetroAchievements, Parches en Castellano y blogs y repositorios de traductores. Cada ficha lleva a la página de su traducción, y la web y el programa solo descargan los parches de los sitios que lo permiten.</p>
+    <p class="texto">Las traducciones son de sus autores. El catálogo se ha hecho con los listados de romhacking.net, Traducciones Wave, Romhack Plaza, Romhack Hispano, El Otro Lado, Steam Community, RetroAchievements, Parches en Castellano y blogs y repositorios de traductores. Cada ficha lleva a la página de su traducción, y la web y el programa solo descargan los parches de los sitios que lo permiten.</p>
     <p class="texto">No se enlazan los sitios que reparten juegos ya parcheados o completos. Si eres autor de una traducción y quieres corregir su ficha o que no aparezca, <a href="{INCIDENCIAS}">abre una incidencia</a>.</p>
   </section>
 

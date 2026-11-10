@@ -49,7 +49,7 @@ Al abrirlo por primera vez te pregunta en qué carpetas tienes tus juegos. El ca
 
 Las traducciones son de sus autores. Este programa solo las encuentra y las aplica, y las descarga de su sitio original cuando ese sitio lo permite: [Traducciones Wave](https://traduccioneswave.top), la copia de romhacking.net de 2021 en [archive.org](https://archive.org/details/rhdn-20210914), GitHub y la [copia de parches de RetroAchievements](https://github.com/RetroAchievements/RAPatches). Para el resto, la ficha lleva a la página de la traducción.
 
-El catálogo se ha hecho con los listados de romhacking.net, Traducciones Wave, Romhack Plaza, TraduSquare, Romhack Hispano, El Otro Lado, Steam Community, RetroAchievements, Abandonsocios, Parches en Castellano y blogs y repositorios de traductores. Si eres autor de una traducción y quieres corregir su ficha o que no aparezca, [abre una incidencia](../../issues).
+El catálogo se ha hecho con los listados de romhacking.net, Traducciones Wave, Romhack Plaza, Romhack Hispano, El Otro Lado, Steam Community, RetroAchievements, Abandonsocios, Parches en Castellano y blogs y repositorios de traductores. Si eres autor de una traducción y quieres corregir su ficha o que no aparezca, [abre una incidencia](../../issues).
 
 No se enlazan las webs que reparten juegos ya parcheados o completos; de Abandonsocios se enlaza el hilo del foro donde está cada traducción. Las traducciones hechas con IA o con traducción automática van marcadas, y hay un filtro para ocultarlas; otro filtro, «En Steam», deja solo los juegos que se venden en Steam.
 
