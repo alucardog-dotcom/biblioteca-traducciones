@@ -1146,10 +1146,11 @@ def pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version, dias, filas, p
     <p class="texto suave">Los juegos cuyas fichas más se han consultado en la web en los últimos {MAS_VISTOS_DIAS} días.</p>
     <ul class="tarjetas">{''.join(tarjeta_juego(g, raiz, sysn, True) for g in vistos)}</ul>
   </section>''' if len(vistos) >= 6 else ''
-    portada_sels = [s for s in sels if s[0] in ('rpg-japoneses', 'imprescindibles-super-nintendo', 'aventuras-graficas', 'terror', 'novelas-visuales', 'con-logros')]
+    portada_sels = explora(sels)
+    usadas = set()  # que una misma portada no salga en dos tarjetas
     bloque_explora = (f'''<section class="bloque explora">
     <div class="cab"><h2>Explora</h2><p class="suave"><a href="selecciones/">Todas las selecciones</a></p></div>
-    <div class="sels">{''.join(tarjeta_seleccion(s, raiz) for s in portada_sels)}</div>
+    <div class="sels">{''.join(tarjeta_seleccion(s, raiz, evitar=usadas) for s in portada_sels)}</div>
     <p class="suave">Y también: <a href="grupos/">los {n_grupos} grupos de traducción</a> · <a href="en-camino/">traducciones en camino</a> · <a href="parchear/#mi-carpeta">escanear tu carpeta de juegos</a> en el navegador.</p>
   </section>''' if portada_sels else '')
     cuerpo = f'''<main>
@@ -1435,6 +1436,37 @@ SELECCIONES_GENERO = [
      lambda g: de_genero(g, 'Life Simulation', 'Construction and Management Simulation', 'Flight Simulator', 'Vehicle Simulation')
      and not de_genero(g, 'Visual Novel', 'Adventure')),
 ]
+# Selecciones temáticas hechas a mano: LaunchBox no dice quién protagoniza un juego, cuánto texto tiene ni si sale de un
+# anime, así que van por nombre (el del juego o el de alguna de sus traducciones). Para añadir un juego, su patrón.
+TEMAS = [
+    ('chicas-al-poder', 'Chicas al poder', 'Juegos protagonizados por mujeres: de Samus Aran y Lara Croft a Laura Bow, Shantae o las guerreras '
+     'de Sailor Moon, traducidos al español por aficionados.',
+     [r'^(Super )?Metroid\b', r'^Tomb Raider', r'^Clock Tower', r'^Parasite Eve', r'^(FATAL FRAME|Fatal Frame)', r'^Shantae', r'^(Syd of )?Valis\b',
+      r'^Wonder Momo', r'^Athena$', r'Sailor Moon', r'^Magic Knight Rayearth', r'^Valkyrie Profile$', r'^Princess Crown', r'^Lady Stalker',
+      r'^Atelier ', r'^Night in the Woods', r'^Wild Arms 3', r"^Magical Pop'n", r'^Little Witch in the Woods', r'^WitchSpring',
+      r'^Touhou Luna Nights', r"^Heroine's Quest", r'^Miracle Girls', r'^YAWARA', r'Madoka Magica', r'Neptunia|Superdimension Neptune', r'^Arcana Heart',
+      r"Gal'?s Fi", r'^Xenosaga Episode I:', r'Little Mermaid', r'^Blackwell', r'^Kathy Rain', r'Perils of Rosella', r'^Kuon$',
+      r'^Nancy Drew', r'^Phantasmagoria$', r"Colonel's Bequest", r'Dagger of Amon Ra', r'^Dreamfall']),
+    ('mucho-texto', 'Mucho texto', 'Rol, novelas visuales y aventuras en las que se lee muchísimo: los juegos donde más se agradece '
+     'una traducción.',
+     [r'^Planescape', r'^Disco Elysium', r"^Baldur's Gate", r'^Icewind Dale', r'^Arcanum', r'^Fallout( 2)?(:|$)', r'^Dragon Age',
+      r'Knights of the Old Republic', r'^Divinity: Original Sin', r'^Ultima VII', r'^Roadwarden', r'^Citizen Sleeper', r'^Sunless Sea',
+      r'^Snatcher', r'^Policenauts', r'^Famicom Detective Club', r'Ace Attorney', r'^Danganronpa', r'^AI: The Somnium', r'^Paranormasight',
+      r'^Steins;Gate', r'^(CHAOS|Chaos);', r'^Anonymous;Code', r'^Ever17', r'^CLANNAD', r'^Little Busters', r'^AIR$', r'^Fate/stay night',
+      r'^Tsukihime', r'^Higurashi', r'^Umineko', r'^Saya no Uta', r'^The House in Fata Morgana', r'^Kara no Sho', r'^Sharin no Kuni',
+      r'Grisaia', r'^Persona [2-5Q]', r'^Shin Megami Tensei: Persona', r'^Suikoden', r'^Chrono Trigger', r'^Mother 3', r'^EarthBound',
+      r'^Lunar: The Silver Star', r'^Xenogears', r'^Xenosaga', r'^Tales of (?!Monkey|Maj)', r'^Trails ', r'^Yakuza', r'^Valkyrie Profile',
+      r'^Vagrant Story', r'^Final Fantasy Tactics', r'^Tactics Ogre', r'^(UNDERTALE|Undertale|DELTARUNE)', r'^OMORI', r'^Grim Fandango',
+      r'^Monkey Island 2', r'^Gabriel Knight', r'^Quest for Glory', r'^Langrisser']),
+    ('basados-en-animes', 'Juegos basados en animes', 'Dragon Ball, Saint Seiya, Sailor Moon, Captain Tsubasa, Ranma, Hokuto no Ken y otras '
+     'series de anime convertidas en videojuego, traducidas al español por aficionados.',
+     [r'Sailor Moon', r'^Dragon Ball', r'Saint Seiya', r'Captain Tsubasa', r'^Ranma', r'Yu ?Yu Hakusho', r'Hokuto no Ken|Fist of the North Star',
+      r'Evangelion', r'Gundam', r'Macross', r'^Lupin', r'^Doraemon', r'Kinnikuman|M\.U\.S\.C\.L\.E', r'^Dr\. Slump', r'One Piece', r'^Naruto',
+      r'^Digimon Adventure', r'^Magic Knight Rayearth', r'Madoka Magica', r'^Slayers', r'Record of Lodoss War', r'Berserk', r'Shin-?Chan',
+      r'Chibi Maruko', r'^JoJo', r'^City Hunter', r'Urusei Yatsura', r'Patlabor', r'^Mazinger', r'Super Robot (Taisen|Wars)', r'^Shaman King',
+      r'Hajime no Ippo', r'^Attack on Titan', r'^Ashita no Joe', r'^Bastard!!', r'^Devilman', r'^Dirty Pair', r'Gegege no Kit',
+      r'Hattori-kun', r'^YAWARA', r'^Tenchi Muy', r'^Yaiba', r'^Maison Ikkoku']),
+]
 # Sagas: el nombre del juego (o el de alguna de sus traducciones) casa con la expresión.
 SAGAS = [
     ('final-fantasy', 'Final Fantasy', r'\bFinal Fantasy\b'),
@@ -1532,6 +1564,11 @@ def selecciones(juegos, sysn, visitas=None):
             gs = sorted((g for g in juegos if filtro(g)), key=tiron)
         if len(gs) >= 8:
             out.append((sl, titulo, intro, gs[:MAX_SELECCION] if sl != 'con-logros' else gs))
+    for sl, titulo, intro, patrones in TEMAS:
+        rx = re.compile('|'.join(f'(?:{p})' for p in patrones), re.I)
+        gs = sorted((g for g in validos if rx.search(g['titulo']) or any(rx.search(f['juego']) for f in g['filas'])), key=tiron)
+        if len(gs) >= 8:
+            out.append((sl, titulo, intro, gs[:MAX_SELECCION]))
     for sl, nombre, patron in SAGAS:
         rx = re.compile(patron, re.I)
         gs = sorted((g for g in validos if rx.search(g['titulo']) or any(rx.search(f['juego']) for f in g['filas'])), key=tiron)
@@ -1541,11 +1578,37 @@ def selecciones(juegos, sysn, visitas=None):
     return out
 
 
-def tarjeta_seleccion(sel, raiz, href=None, sub=None):
-    """Una selección como tarjeta: tres portadas (con las alternativas de sig() por si una falla), el título y cuántos juegos."""
+EXPLORA_FIJAS = ('rpg-japoneses', 'aventuras-graficas', 'novelas-visuales', 'terror')
+
+
+def explora(sels, dia=None):
+    """Las ocho selecciones de «Explora» en la portada (dos filas de cuatro): cuatro fijas y, rotando cada día, dos
+    imprescindibles de consola, una saga y otra de género. La elección sale de la fecha, así que el mismo día da
+    siempre las mismas aunque la web se regenere varias veces."""
+    rnd = random.Random((dia or date.today()).toordinal())
+    por_slug = {s[0]: s for s in sels}
+    fijas = [por_slug[k] for k in EXPLORA_FIJAS if k in por_slug]
+    imp = [s for s in sels if s[0].startswith('imprescindibles-')]
+    sagas = [s for s in sels if s[0].startswith('saga-')]
+    # «RPG» se parece demasiado a «RPG japoneses», que es fija.
+    generos = [s for s in sels if s not in fijas and not s[0].startswith(('imprescindibles-', 'saga-')) and s[0] not in ('lo-mas-visto', 'rpg')]
+    rotan = rnd.sample(imp, min(2, len(imp))) + rnd.sample(sagas, min(1, len(sagas))) + rnd.sample(generos, min(1, len(generos)))
+    # Intercaladas: una que rota, una fija…; si faltan, se completa con las que quedan.
+    out = [s for par in zip(rotan, fijas) for s in par] + rotan[len(fijas):] + fijas[len(rotan):]
+    resto = [s for s in imp + sagas + generos if s not in out]
+    return (out + rnd.sample(resto, max(0, min(8 - len(out), len(resto)))))[:8]
+
+
+def tarjeta_seleccion(sel, raiz, href=None, sub=None, evitar=None):
+    """Una selección como tarjeta: tres portadas (con las alternativas de sig() por si una falla), el título y cuántos juegos.
+    Con evitar (un conjunto que se va llenando), no repite la portada de un juego que ya salió en otra tarjeta."""
     sl, titulo, intro, gs = sel
     ports = ''
-    for g in [g for g in gs if portadas(g, LIBRETRO, raiz) and not juego_adulto(g)][:3]:
+    elegidos = [g for g in gs if portadas(g, LIBRETRO, raiz) and not juego_adulto(g)
+                and (evitar is None or sin_acentos(g['titulo']).lower() not in evitar)][:3]
+    if evitar is not None:
+        evitar.update(sin_acentos(g['titulo']).lower() for g in elegidos)
+    for g in elegidos:
         u = portadas(g, LIBRETRO, raiz)
         ports += (f'<img loading="lazy" src="{e(u[0])}" data-alt="{e(" ".join(u[1:]))}" alt="" referrerpolicy="no-referrer" '
                   f'onerror="sig(this)">')
