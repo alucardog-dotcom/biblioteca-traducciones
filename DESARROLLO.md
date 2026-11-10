@@ -89,9 +89,9 @@ Para poner al día el catálogo de todos basta con subir a `main` los ficheros n
 python tools/web.py          (la deja en _web; para verla: python -m http.server -d _web)
 ```
 
-Las páginas de los juegos de PC que están en Steam (los que tienen AppID) llevan un enlace de afiliado a la búsqueda de Instant Gaming (`INSTANT_GAMING` en `tools/web.py`), con su aviso. La ficha del programa lo enseña también cuando no tienes el juego (`INSTANT_GAMING` en `ui/app.js`).
+Las páginas de los juegos de PC que están en Steam (los que tienen AppID) llevan un enlace a su página de la tienda de Steam, sin afiliado (`en_steam` en `tools/web.py`). La ficha del programa lo enseña también cuando no tienes el juego (`enSteam` en `ui/app.js`). La web y el programa no llevan enlaces de afiliado ni piden donaciones.
 
-Los juegos de PC que no están en Steam pero tienen página oficial conocida (itch.io, Game Jolt o la web de su autor; campo `pj` del catálogo, con `pj18` si es para adultos) llevan en su lugar un enlace a esa página, sin afiliado, también en el programa cuando no tienes el juego.
+Los juegos de PC que no están en Steam pero tienen página oficial conocida (itch.io, Game Jolt o la web de su autor; campo `pj` del catálogo, con `pj18` si es para adultos) llevan en su lugar un enlace a esa página, también en el programa cuando no tienes el juego.
 
 Las traducciones de PC y de las consolas actuales (Switch, PS3, PS4, Xbox 360…; `MODERNAS` en `ui/app.js` y en `tools/web.py`) se instalan a mano: ni la web ni el programa las marcan como «Un clic» aunque su descarga sea directa.
 

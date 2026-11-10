@@ -24,8 +24,6 @@ GOATCOUNTER = 'bibliotecadetraducciones'
 # Vacío, se usan gc.zgo.at y <código>.goatcounter.com.
 GOATCOUNTER_DOMINIO = 'stats.bibliotecadetraducciones.com'
 INCIDENCIAS = REPO + '/issues'
-# Enlace de afiliado: la búsqueda de Instant Gaming con el código del autor (igr).
-INSTANT_GAMING = 'https://www.instant-gaming.com/es/busquedas/?query={}&igr=gamer-d73144'
 LIBRETRO = {}  # nombres de los sistemas en thumbnails.libretro.com (de centro_datos.json); lo rellena main()
 PC = {'dos', 'windows', 'scummvm', 'easyrpg', 'pc'}
 # Consolas de hoy: sus traducciones son mods que se instalan a mano (como MODERNAS en ui/app.js).
@@ -846,16 +844,12 @@ def pagina_juego(gr, sysn, libretro, base, ctx):
     imagen = absolutas[0] if absolutas else 'img/vista-previa.png'
     quien = ', '.join(grupos[:3]) + (' y otros' if len(grupos) > 3 else '')
     orig = titulo_original(gr)
-    # Los que están en Steam (tienen AppID) se venden en las tiendas de claves; los gratuitos y los de
-    # aficionados, no. Se busca por el nombre de la ficha (en los de Steam, el de la tienda; el título
-    # original de las novelas visuales suele ir en japonés), sin lo que va entre paréntesis.
+    # Los que están en Steam (tienen AppID): enlace a su página de la tienda, sin afiliado.
     en_steam = next((f for f in gr['filas'] if f['x'].get('steam')), None)
     compra = ''
     if en_steam:
-        nombre = re.sub(r'\s*[(\[][^)\]]*[)\]]', '', en_steam['juego']).strip()
         compra = f"""<div class="compra">
-        <a class="btn tienda" href="{e(INSTANT_GAMING.format(quote(nombre)))}" target="_blank" rel="sponsored noopener">¿No lo tienes? Búscalo en Instant Gaming</a>
-        <p class="suave">Enlace de afiliado: si lo compras, me llevo una pequeña comisión sin que te cueste más.</p>
+        <a class="btn tienda" href="https://store.steampowered.com/app/{e(str(en_steam['x']['steam']))}/" target="_blank" rel="noopener">¿No lo tienes? Página del juego en Steam</a>
       </div>"""
     # Los que no están en Steam: la página oficial del juego ("pj", itch.io o la web de su autor), si se conoce.
     con_pagina = next((f for f in gr['filas'] if web_segura(f['x'].get('pj', ''))), None)

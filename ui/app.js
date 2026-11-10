@@ -324,8 +324,6 @@ const thumb = (sys, name, tipo) => 'https://thumbnails.libretro.com/' + encodeUR
 const steamImg = (id, f) => `https://cdn.cloudflare.steamstatic.com/steam/apps/${encodeURIComponent(id)}/${f}`;
 const REPO_UI = 'https://raw.githubusercontent.com/alucardog-dotcom/biblioteca-traducciones/main/ui/';
 const WEB = 'https://bibliotecadetraducciones.com/';
-// Enlace de afiliado de Instant Gaming: su búsqueda con el código del autor.
-const INSTANT_GAMING = 'https://www.instant-gaming.com/es/busquedas/?query=', AFILIADO = 'gamer-d73144';
 // Los juegos de PC que no están en Steam suelen estar en itch.io o en la web de su autor ("pj" en el catálogo).
 const sitioPagina = u => /\.itch\.io\//.test(u) ? 'itch.io' : /gamejolt\.com\//.test(u) ? 'Game Jolt' : /store\.steampowered\.com\//.test(u) ? 'Steam'
   : /\.gog\.com\//.test(u) ? 'GOG' : 'la web oficial';
@@ -783,14 +781,12 @@ function abrirFicha(r, p) {
     } else if (MODERNAS.has(r.s)) {
       html += '<p class="muted">No lo encuentro en tus carpetas de juegos.</p>';
     }
-    // Los que están en Steam se venden en las tiendas de claves: si no lo tienes, el enlace de afiliado.
+    // Los que están en Steam: si no lo tienes, su página de la tienda (no es un enlace de afiliado).
     const enSteam = (r.gr ? r.gr.filas : [r]).find(f => f.x.steam);
     if (enSteam && !opciones.length) {
-      const nombre = enSteam.a[F.juego].replace(/\s*[(\[][^)\]]*[)\]]/g, '').trim();
-      html += `<div class="f-compra"><a class="btn" href="${esc(INSTANT_GAMING + encodeURIComponent(nombre) + '&igr=' + AFILIADO)}" target="_blank" rel="noopener">¿No lo tienes? Búscalo en Instant Gaming</a>
-        <p class="hint">Enlace de afiliado: si lo compras, me llevo una pequeña comisión sin que te cueste más.</p></div>`;
+      html += `<div class="f-compra"><a class="btn" href="https://store.steampowered.com/app/${encodeURIComponent(enSteam.x.steam)}/" target="_blank" rel="noopener">¿No lo tienes? Página del juego en Steam</a></div>`;
     }
-    // Los que no están en Steam: la página oficial del juego, si la conocemos (no es un enlace de afiliado).
+    // Los que no están en Steam: la página oficial del juego, si la conocemos.
     const conPagina = (r.gr ? r.gr.filas : [r]).find(f => webSegura(f.x.pj));
     if (conPagina && !enSteam && !opciones.length) {
       html += `<div class="f-compra"><a class="btn" href="${esc(conPagina.x.pj)}" target="_blank" rel="noopener">¿No lo tienes? Página del juego en ${esc(sitioPagina(conPagina.x.pj))}${conPagina.x.pj18 ? ' (18+)' : ''}</a></div>`;
