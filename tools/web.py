@@ -1137,8 +1137,16 @@ def pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version, dias, filas, p
     <p class="texto suave">Juegos con voces en español gracias a grupos de aficionados, de Resident Evil y Silent Hill a Lies of P.</p>
     <ul class="tarjetas">{''.join(dob[:6])}</ul>
   </section>''' if dob else ''
-    # «Lo más visto» (si hay datos de visitas) desplaza a la última para que sigan siendo seis.
-    portada_sels = [s for s in sels if s[0] in ('lo-mas-visto', 'rpg-japoneses', 'imprescindibles-super-nintendo', 'aventuras-graficas', 'terror', 'novelas-visuales', 'con-logros')][:6]
+    # «Lo más visto» (si hay datos de visitas de GoatCounter): sus 12 primeros juegos, sin los de adultos, justo después
+    # de las novedades. Por eso no va también entre las selecciones de «Explora».
+    todos_vistos = next((s[3] for s in sels if s[0] == 'lo-mas-visto'), [])
+    vistos = [g for g in todos_vistos if not juego_adulto(g)][:12]
+    bloque_vistos = f'''<section class="bloque novedades vistos">
+    <div class="cab"><h2>Lo más visto</h2><p class="suave"><a href="selecciones/lo-mas-visto/">Los {len(todos_vistos)} más vistos</a></p></div>
+    <p class="texto suave">Los juegos cuyas fichas más se han consultado en la web en los últimos {MAS_VISTOS_DIAS} días.</p>
+    <ul class="tarjetas">{''.join(tarjeta_juego(g, raiz, sysn, True) for g in vistos)}</ul>
+  </section>''' if len(vistos) >= 6 else ''
+    portada_sels = [s for s in sels if s[0] in ('rpg-japoneses', 'imprescindibles-super-nintendo', 'aventuras-graficas', 'terror', 'novelas-visuales', 'con-logros')]
     bloque_explora = (f'''<section class="bloque explora">
     <div class="cab"><h2>Explora</h2><p class="suave"><a href="selecciones/">Todas las selecciones</a></p></div>
     <div class="sels">{''.join(tarjeta_seleccion(s, raiz) for s in portada_sels)}</div>
@@ -1167,6 +1175,8 @@ def pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version, dias, filas, p
   <div id="favoritos-inicio"></div>
 
   {bloque_nov}
+
+  {bloque_vistos}
 
   {bloque_dob}
 
