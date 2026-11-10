@@ -1137,7 +1137,8 @@ def pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version, dias, filas, p
     <p class="texto suave">Juegos con voces en español gracias a grupos de aficionados, de Resident Evil y Silent Hill a Lies of P.</p>
     <ul class="tarjetas">{''.join(dob[:6])}</ul>
   </section>''' if dob else ''
-    portada_sels = [s for s in sels if s[0] in ('rpg-japoneses', 'imprescindibles-super-nintendo', 'aventuras-graficas', 'terror', 'novelas-visuales', 'con-logros')]
+    # «Lo más visto» (si hay datos de visitas) desplaza a la última para que sigan siendo seis.
+    portada_sels = [s for s in sels if s[0] in ('lo-mas-visto', 'rpg-japoneses', 'imprescindibles-super-nintendo', 'aventuras-graficas', 'terror', 'novelas-visuales', 'con-logros')][:6]
     bloque_explora = (f'''<section class="bloque explora">
     <div class="cab"><h2>Explora</h2><p class="suave"><a href="selecciones/">Todas las selecciones</a></p></div>
     <div class="sels">{''.join(tarjeta_seleccion(s, raiz) for s in portada_sels)}</div>
@@ -1413,16 +1414,92 @@ SELECCIONES_GENERO = [
     ('estrategia', 'Estrategia y táctica en español', 'Juegos de estrategia y de rol táctico traducidos por aficionados.', lambda g: de_genero(g, 'Strategy')),
     ('con-logros', 'Traducciones con logros', 'Juegos traducidos con los que RetroAchievements tiene logros: la ficha dice qué versión del parche guardan en su GitHub.',
      lambda g: any(tiene_logros(f) for f in g['filas'])),
+    # Los RPG cuentan como de dos jugadores por el cable link (Pokémon): fuera, igual que las novelas visuales.
+    ('para-jugar-acompanado', 'Para jugar acompañado', 'Juegos traducidos al español en los que pueden jugar dos o más personas a la vez.',
+     lambda g: (g['dj'].get('j') or '1').isdigit() and int(g['dj'].get('j') or '1') >= 2 and not de_genero(g, 'Role-Playing', 'Visual Novel')),
+    ('deportes', 'Deportes en español', 'Fútbol, golf, béisbol, tenis y otros juegos deportivos traducidos al español por aficionados.', lambda g: de_genero(g, 'Sports')),
+    ('carreras', 'Carreras en español', 'Juegos de coches y de carreras con traducción al español hecha por aficionados.', lambda g: de_genero(g, 'Racing')),
+    ('disparos', "Disparos y shoot 'em up en español", "Matamarcianos, run and gun y juegos de disparos traducidos al español por aficionados.", lambda g: de_genero(g, 'Shooter')),
+    ('puzles', 'Puzles en español', 'Juegos de puzles y de ingenio traducidos al español por aficionados.', lambda g: de_genero(g, 'Puzzle')),
+    ('simulacion', 'Simulación y gestión en español', 'Granjas, ciudades, parques, aviones y otros juegos de simulación y gestión traducidos por aficionados.',
+     lambda g: de_genero(g, 'Life Simulation', 'Construction and Management Simulation', 'Flight Simulator', 'Vehicle Simulation')
+     and not de_genero(g, 'Visual Novel', 'Adventure')),
 ]
+# Sagas: el nombre del juego (o el de alguna de sus traducciones) casa con la expresión.
+SAGAS = [
+    ('final-fantasy', 'Final Fantasy', r'\bFinal Fantasy\b'),
+    ('dragon-quest', 'Dragon Quest', r'\bDragon (?:Quest|Warrior)\b'),
+    ('shin-megami-tensei', 'Shin Megami Tensei y Persona', r'\b(?:Megami Tensei|Persona [1-5Q]|Persona:|Devil Summoner|Devil Survivor|Majin Tensei)'),
+    ('tales-of', 'Tales of', r'^Tales of (?!Monkey)'),
+    ('mega-man', 'Mega Man', r'\b(?:Mega ?Man|Rockman)\b'),
+    ('castlevania', 'Castlevania', r'\b(?:Castlevania|Akumajou Dracula)\b'),
+    ('zelda', 'The Legend of Zelda', r'\bZelda\b'),
+    ('mario', 'Mario', r'\bMario\b'),
+    ('sonic', 'Sonic', r'\bSonic\b(?! Blast Man)'),
+    ('dragon-ball', 'Dragon Ball', r'\bDragon Ball\b'),
+    ('captain-tsubasa', 'Captain Tsubasa', r'\bCaptain Tsubasa\b'),
+    ('pokemon', 'Pokémon', r'\bPok[eé]mon\b'),
+    ('fire-emblem', 'Fire Emblem', r'\bFire Emblem\b'),
+    ('resident-evil', 'Resident Evil', r'\b(?:Resident Evil|Biohazard)\b'),
+    ('star-wars', 'Star Wars', r'\bStar Wars\b'),
+    ('phantasy-star', 'Phantasy Star', r'\bPhantasy Star\b'),
+]
+MAS_VISTOS_DIAS = 30
+
+
+def visitas_fichas():
+    """Visitas a cada ficha de juego en los últimos MAS_VISTOS_DIAS días, de la API de GoatCounter: {ruta: visitas}.
+    Hace falta una clave de solo lectura de estadísticas en la variable GOATCOUNTER_TOKEN (en GitHub, el secreto del
+    mismo nombre que le pasa web.yml). Sin clave, o si la API falla, devuelve {} y «Lo más visto» no sale: la web se
+    genera igual."""
+    clave = os.environ.get('GOATCOUNTER_TOKEN', '').strip()
+    if not (clave and GOATCOUNTER):
+        return {}
+    import urllib.request
+    from datetime import timedelta
+    from urllib.parse import urlencode
+    hoy = date.today()
+    visitas, vistos = {}, []
+    for _ in range(5):  # páginas de 100 rutas, de más visitas a menos
+        q = {'start': (hoy - timedelta(days=MAS_VISTOS_DIAS)).isoformat(), 'end': hoy.isoformat(), 'limit': 100}
+        if vistos:
+            q['exclude_paths'] = ','.join(map(str, vistos))
+        pet = urllib.request.Request(f'https://{GOATCOUNTER}.goatcounter.com/api/v0/stats/hits?{urlencode(q)}',
+                                     headers={'Authorization': f'Bearer {clave}', 'Content-Type': 'application/json',
+                                              'User-Agent': 'BibliotecaTraducciones-web'})
+        try:
+            with urllib.request.urlopen(pet, timeout=30) as r:
+                datos = json.load(r)
+        except Exception as ex:  # nunca se enseña la clave: solo el tipo de error
+            print(f'AVISO: no se pudieron leer las visitas de GoatCounter ({type(ex).__name__}); se sigue con lo leído', file=sys.stderr)
+            break
+        for h in datos.get('hits') or []:
+            if h.get('path_id'):
+                vistos.append(h['path_id'])
+            ruta = (h.get('path') or '').split('?')[0].strip('/')
+            if not h.get('event') and ruta.startswith('juego/'):
+                visitas[ruta + '/'] = visitas.get(ruta + '/', 0) + int(h.get('count') or 0)
+        if not datos.get('more'):
+            break
+    print(f'visitas de GoatCounter: {len(visitas)} fichas de juego con visitas en {MAS_VISTOS_DIAS} días', file=sys.stderr)
+    return visitas
+
+
 SISTEMAS_IMPRESCINDIBLES = ['snes', 'nes', 'psx', 'megadrive', 'gba', 'gb', 'n64', 'ps2', 'nds', 'psp', 'saturn', 'dreamcast', 'mastersystem', 'pcengine', 'pc']
 MAX_SELECCION = 48
 
 
-def selecciones(juegos, sysn):
-    """Las selecciones: [(slug, título, entradilla, [juegos])], de más tirón a menos, sin los juegos que solo tienen traducciones con IA."""
+def selecciones(juegos, sysn, visitas=None):
+    """Las selecciones: [(slug, título, entradilla, [juegos])], de más tirón a menos, sin los juegos que solo tienen traducciones con IA.
+    «Lo más visto» va la primera y ordena por las visitas a la ficha (visitas_fichas), con todos los juegos."""
     validos = [g for g in juegos if not all(es_ia(f) for f in g['filas']) and any(f['pop'] for f in g['filas'])]
     tiron = lambda g: -max(f['pop'] for f in g['filas'])
     out = []
+    if visitas:
+        gs = sorted((g for g in juegos if visitas.get(g['ruta'], 0) >= 2), key=lambda g: (-visitas[g['ruta']], tiron(g) if any(f['pop'] for f in g['filas']) else 0))
+        if len(gs) >= 8:
+            out.append(('lo-mas-visto', 'Lo más visto', f'Los juegos cuyas fichas más se han consultado en la web en los últimos {MAS_VISTOS_DIAS} días.',
+                        gs[:MAX_SELECCION]))
     for s in SISTEMAS_IMPRESCINDIBLES:
         nombre = sysn.get(s, s)
         gs = sorted((g for g in validos if g['s'] == s), key=tiron)[:MAX_SELECCION]
@@ -1435,6 +1512,12 @@ def selecciones(juegos, sysn):
             gs = sorted((g for g in juegos if filtro(g)), key=tiron)
         if len(gs) >= 8:
             out.append((sl, titulo, intro, gs[:MAX_SELECCION] if sl != 'con-logros' else gs))
+    for sl, nombre, patron in SAGAS:
+        rx = re.compile(patron, re.I)
+        gs = sorted((g for g in validos if rx.search(g['titulo']) or any(rx.search(f['juego']) for f in g['filas'])), key=tiron)
+        if len(gs) >= 8:
+            out.append((f'saga-{sl}', f'{nombre} en español', f'Los juegos de {nombre} con traducción al español hecha por aficionados, '
+                        'de los más conocidos a los menos.', gs[:MAX_SELECCION]))
     return out
 
 
@@ -1459,7 +1542,7 @@ def pagina_seleccion(sel, sysn, base):
   <h1>{e(titulo)}</h1>
   <p class="lede">{e(intro)}</p>
   <ul class="tarjetas">{''.join(tarjeta_juego(g, raiz, sysn, not imprescindible) for g in gs)}</ul>
-  <p class="suave">Ordenados por fama (votos en LaunchBox y reseñas en Steam). {"" if sl == "con-logros" else "No salen los juegos cuyas únicas traducciones están hechas con IA. "}Los juegos para adultos solo aparecen si los activas en el catálogo.</p>
+  <p class="suave">{f"Ordenados por las visitas a su ficha en los últimos {MAS_VISTOS_DIAS} días (estadísticas anónimas y sin cookies de GoatCounter). Se pone al día cada día. " if sl == "lo-mas-visto" else "Ordenados por fama (votos en LaunchBox y reseñas en Steam). "}{"" if sl in ("con-logros", "lo-mas-visto") else "No salen los juegos cuyas únicas traducciones están hechas con IA. "}Los juegos para adultos solo aparecen si los activas en el catálogo.</p>
 </main>'''
     desc = el_mas_largo_que_quepa([f'{intro} {len(gs)} juegos, cada uno con su ficha y el enlace a su traducción.', intro], MAX_DESC)
     ld = {'@context': 'https://schema.org', '@graph': [
@@ -1472,6 +1555,12 @@ def pagina_seleccion(sel, sysn, base):
         opciones = [f'{len(gs)} juegos traducidos al español con logros de RetroAchievements', titulo]
     elif sistema:
         opciones = [f'Los {len(gs)} mejores juegos de {sistema.group(1)} en español', titulo]
+    elif sl.startswith('saga-'):
+        opciones = [f'{titulo}: {len(gs)} juegos traducidos', titulo]
+    elif sl == 'lo-mas-visto':
+        opciones = [f'Lo más visto: los {len(gs)} juegos traducidos más consultados', titulo]
+    elif sl == 'para-jugar-acompanado':
+        opciones = [f'{len(gs)} juegos en español para jugar acompañado', titulo]
     else:
         opciones = [f'{titulo}: {"las" if sl in ("aventuras-graficas", "novelas-visuales") else "los"} {len(gs)} mejores', titulo]
     titulo_pagina = next((t for t in opciones if len(t) <= MAX_TITULO), titulo)
@@ -1481,15 +1570,19 @@ def pagina_seleccion(sel, sysn, base):
 def pagina_selecciones(sels, base, doblados=()):
     raiz = '../'
     sistemas = [s for s in sels if s[0].startswith('imprescindibles-')]
-    otras = [s for s in sels if not s[0].startswith('imprescindibles-')]
+    sagas = [s for s in sels if s[0].startswith('saga-')]
+    vistos = [s for s in sels if s[0] == 'lo-mas-visto']
+    otras = [s for s in sels if not s[0].startswith(('imprescindibles-', 'saga-')) and s[0] != 'lo-mas-visto']
     cuerpo = f'''<main class="sistema selecciones-p">
   <p class="migas"><a href="{raiz}">Inicio</a> › Selecciones</p>
   <h1>Selecciones</h1>
-  <p class="lede">Juegos con traducción al español agrupados por género y por sistema, de los más conocidos a los menos. Para descubrir qué jugar.</p>
+  <p class="lede">Juegos con traducción al español agrupados por género, por saga y por sistema, de los más conocidos a los menos. Para descubrir qué jugar.</p>
+  {f'<section class="bloque"><h2>Lo que más se consulta</h2><div class="sels">{"".join(tarjeta_seleccion(s, raiz) for s in vistos)}</div></section>' if vistos else ''}
   <section class="bloque"><h2>Por género</h2><div class="sels">{''.join(tarjeta_seleccion(s, raiz) for s in otras)}{tarjeta_seleccion(('doblajes', 'Doblajes al español', '', doblados), raiz, href=f'{raiz}doblajes/', sub=f'{len(doblados)} juegos con voces en español') if doblados else ''}</div></section>
+  {f'<section class="bloque"><h2>Por saga</h2><div class="sels">{"".join(tarjeta_seleccion(s, raiz) for s in sagas)}</div></section>' if sagas else ''}
   <section class="bloque"><h2>Imprescindibles por sistema</h2><div class="sels">{''.join(tarjeta_seleccion(s, raiz) for s in sistemas)}</div></section>
 </main>'''
-    desc = 'Selecciones de juegos con traducción al español: RPG japoneses, aventuras gráficas, terror, novelas visuales e imprescindibles de cada consola.'
+    desc = 'Selecciones de juegos con traducción al español: RPG japoneses, aventuras gráficas, terror, sagas como Final Fantasy o Mega Man e imprescindibles de cada consola.'
     ld = {'@context': 'https://schema.org', '@graph': [migas_ld(base, [('Inicio', ''), ('Selecciones', 'selecciones/')])]}
     return pagina(raiz, 'Selecciones de juegos traducidos al español', desc, 'selecciones/', cuerpo, base, ld=ld)
 
@@ -1743,7 +1836,7 @@ def main():
             ruta = f'grupo/{base_slug}-{k}/'
             k += 1
         RUTAS_GRUPO[n] = ruta
-    sels = selecciones(juegos, sysn)
+    sels = selecciones(juegos, sysn, visitas_fichas())
     altas = fechas_alta()
     for f in filas:
         f['alta'] = altas.get(clave_fila(f), '')

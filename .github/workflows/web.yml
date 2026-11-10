@@ -1,5 +1,6 @@
 # La web (GitHub Pages): se genera con tools/web.py a partir del catálogo y se publica cada vez que cambia
-# en main el catálogo, las portadas a mano, las capturas, la versión o la propia web.
+# en main el catálogo, las portadas a mano, las capturas, la versión o la propia web, y además una vez al día
+# para poner al día «Lo más visto» (las visitas de GoatCounter de los últimos 30 días).
 name: Web
 
 on:
@@ -15,6 +16,8 @@ on:
       - 'web/**'
       - 'tools/web.py'
       - '.github/workflows/web.yml'
+  schedule:
+    - cron: '17 5 * * *'
   workflow_dispatch:
 
 permissions:
@@ -37,7 +40,11 @@ jobs:
         with:
           # Todo el historial: las novedades de la portada salen de los commits del catálogo (fechas_alta en tools/web.py).
           fetch-depth: 0
+      # GOATCOUNTER_TOKEN: clave de GoatCounter de solo lectura de estadísticas (secreto del repositorio). Sin ella la
+      # web sale igual, sin la selección «Lo más visto».
       - name: Generar la web
+        env:
+          GOATCOUNTER_TOKEN: ${{ secrets.GOATCOUNTER_TOKEN }}
         run: python3 tools/web.py _site
       # IndexNow (Bing, DuckDuckGo, Ecosia, Yandex…): antes de subir la web se pone la clave en su raíz y se guarda el
       # sitemap publicado; después de desplegar, tools/indexnow.py avisa solo de las páginas nuevas o cambiadas. Si
