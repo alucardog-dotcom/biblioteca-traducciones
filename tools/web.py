@@ -227,7 +227,7 @@ MIN_GRUPO = 3  # traducciones que necesita un grupo para tener página propia
 
 
 def partes_grupo(grupo):
-    """Los grupos o personas de una ficha: «Traducciones del Tío Víctor / Reviviendo En Castellano» son dos."""
+    """Los grupos o personas de una ficha: «pitito / Wesker» son dos."""
     return [GRUPO_ALIAS.get(p.strip(), p.strip()) for p in re.split(r'\s*/\s*|\s*;\s*', grupo) if p.strip()]
 
 
