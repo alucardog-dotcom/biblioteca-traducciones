@@ -1465,13 +1465,15 @@ def visitas_fichas():
     clave = os.environ.get('GOATCOUNTER_TOKEN', '').strip()
     if not (clave and GOATCOUNTER):
         return {}
-    import urllib.request
-    from datetime import timedelta
+    import urllib.error, urllib.request
+    from datetime import datetime, timedelta, timezone
     from urllib.parse import urlencode
-    hoy = date.today()
+    # La API pide fecha y hora (RFC 3339), redondeadas a la hora.
+    fin = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
+    inicio = fin - timedelta(days=MAS_VISTOS_DIAS)
     visitas, vistos = {}, []
     for _ in range(5):  # páginas de 100 rutas, de más visitas a menos
-        q = {'start': (hoy - timedelta(days=MAS_VISTOS_DIAS)).isoformat(), 'end': hoy.isoformat(), 'limit': 100}
+        q = {'start': inicio.strftime('%Y-%m-%dT%H:%M:%SZ'), 'end': fin.strftime('%Y-%m-%dT%H:%M:%SZ'), 'limit': 100}
         if vistos:
             q['exclude_paths'] = ','.join(map(str, vistos))
         pet = urllib.request.Request(f'https://{GOATCOUNTER}.goatcounter.com/api/v0/stats/hits?{urlencode(q)}',
@@ -1480,8 +1482,16 @@ def visitas_fichas():
         try:
             with urllib.request.urlopen(pet, timeout=30) as r:
                 datos = json.load(r)
-        except Exception as ex:  # nunca se enseña la clave: solo el tipo de error
-            print(f'AVISO: no se pudieron leer las visitas de GoatCounter ({type(ex).__name__}); se sigue con lo leído', file=sys.stderr)
+        except Exception as ex:  # nunca se enseña la clave: solo el código y el mensaje de error de la API
+            motivo = type(ex).__name__
+            if isinstance(ex, urllib.error.HTTPError):
+                try:
+                    cuerpo = json.loads(ex.read().decode('utf-8', 'replace') or '{}')
+                    detalle = cuerpo.get('error') or cuerpo.get('errors') or ''
+                except Exception:
+                    detalle = ''
+                motivo = f'HTTP {ex.code} {str(detalle)[:200]}'.strip()
+            print(f'AVISO: no se pudieron leer las visitas de GoatCounter ({motivo}); se sigue con lo leído', file=sys.stderr)
             break
         for h in datos.get('hits') or []:
             if h.get('path_id'):
