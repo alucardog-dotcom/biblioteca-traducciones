@@ -766,6 +766,28 @@ def formato(f):
     return fmt.upper() if fmt.lower() in ('ips', 'bps', 'ups', 'ppf', 'aps', 'xdelta') else fmt.capitalize()
 
 
+# Dónde se aplica cada traducción de consola, para elegir el botón principal de su ficha.
+NAVEGADOR = {'ips', 'bps', 'ups', 'ppf', 'aps'}  # los que aplica web/motor.js
+# Sistemas de disco o de ROMs grandes: sin formato apuntado, lo normal es un parche xdelta, que el navegador no aplica
+# (en el catálogo de 2026-11, xdelta es el formato conocido más común en todos ellos).
+DISCO = {'psx', 'ps2', 'psp', 'psvita', 'dreamcast', 'saturn', 'megacd', 'pcenginecd', 'neogeocd', '3do', 'pc98',
+         'gamecube', 'wii', 'xbox', 'nds', '3ds'}
+
+
+def donde_aplicar(f):
+    """'navegador' (IPS, BPS, UPS, PPF o APS: Parchear en el navegador), 'programa' (xdelta: el programa para Windows)
+    o 'manual' (archivos, mods, instaladores: se instalan como diga su autor). Sin formato apuntado, depende del
+    sistema: en los de cartucho casi todo es IPS; en los de disco, xdelta."""
+    fmts = set(re.split(r'[/,+\s]+', f['formato_parche'].strip().lower())) - {''}
+    if fmts & NAVEGADOR:
+        return 'navegador'
+    if 'xdelta' in fmts:
+        return 'programa'
+    if fmts - {'parche'}:
+        return 'manual'
+    return 'programa' if f['sistema'] in DISCO else 'navegador'
+
+
 GRUPOS_CON_PAGINA = set()  # los rellena main: los grupos con MIN_GRUPO traducciones o más
 
 
@@ -864,9 +886,17 @@ def pagina_juego(gr, sysn, libretro, base, ctx):
     else:
         cuantas = f'{n} traducciones' + (' (con doblaje)' if k_dob else '')
         hay = f'Hay {n} traducciones al español hechas por aficionados' + (f', {"una" if k_dob == 1 else k_dob} con doblaje' if k_dob else '')
+    # Dónde se aplica (donde_aplicar): elige el botón principal, el final de la descripción y los pasos de «Cómo jugarlo».
+    # Basta una traducción que valga en el navegador para ofrecerlo; si no, el programa (xdelta) o la página del autor.
+    modos = {donde_aplicar(f) for f in gr['filas']}
+    modo = ('pc' if s in PC | MODERNAS else 'navegador' if 'navegador' in modos
+            else 'programa' if 'programa' in modos else 'manual')
+    xdelta = any('xdelta' in f['formato_parche'].lower() for f in gr['filas'])
     # La descripción para los buscadores: de la más completa a la más corta, la primera que quepa en MAX_DESC.
-    if s in PC | MODERNAS:
+    if modo in ('pc', 'manual'):
         cierre = f'. Descárga{"lo" if solo_dob else "la"} gratis desde la página de su autor.' if n == 1 else '. Con el enlace a la página de cada autor.'
+    elif modo == 'programa':
+        cierre = '. Se aplica gratis con el programa para Windows.'
     else:
         cierre = '. Parchea tu ROM gratis en el navegador o con el programa.'
 
@@ -888,12 +918,43 @@ def pagina_juego(gr, sysn, libretro, base, ctx):
       <li>Si tienes el juego en Steam, GOG o Epic, la biblioteca lo encuentra sola.</li>
       <li>Las traducciones de PC se instalan a mano: abre la ficha del juego y te lleva a la página de la traducción y a la carpeta del juego.</li>
     </ol>"""
+    elif modo == 'programa':
+        como = f"""<ol class="pasos">
+      <li><b>Con el programa para Windows:</b> dile en qué carpeta tienes tus juegos, busca «{e(titulo)}» y pulsa <b>Traducir</b>. Comprueba que tu copia es la versión que pide la traducción y aplica el parche xdelta; si el juego está en .zip, .7z, .rar o .chd, lo saca y monta el disco traducido en .chd. Tu original no se toca.</li>
+      <li><b>Sin Windows:</b> baja el parche de la página de su autor y aplícalo con un parcheador de xdelta, como Delta Patcher, sobre la versión del juego que pide.</li>
+    </ol>
+    <p class="suave">El navegador todavía no aplica parches xdelta. Necesitas tu propia copia del juego: ni la web ni el programa descargan juegos, solo los parches de traducción.</p>"""
+    elif modo == 'manual':
+        como = """<ol class="pasos">
+      <li>Abre la página de la traducción y comprueba qué versión del juego pide.</li>
+      <li>Instálala como explique su autor: normalmente, copiando sus archivos sobre los del juego o con su instalador.</li>
+    </ol>
+    <p class="suave">No es un parche, así que ni el navegador ni el programa la aplican solos. Necesitas tu propia copia del juego: ni la web ni el programa descargan juegos.</p>"""
     else:
         como = f"""<ol class="pasos">
       <li><b>Sin instalar nada:</b> abre <a href="{raiz}parchear/">Parchear en el navegador</a> y elige tu ROM, o toda tu carpeta de juegos. La página reconoce el juego por su CRC32, baja el parche de su autor (o usa el que hayas descargado tú) y te da el juego traducido. Nada sale de tu equipo.</li>
       <li><b>Con el programa para Windows:</b> dile en qué carpeta tienes tus juegos, busca «{e(titulo)}» y pulsa <b>Traducir</b>. Comprueba que tu copia es la versión que pide la traducción y la aplica; tu original no se toca.</li>
     </ol>
     <p class="suave">Necesitas tu propia copia del juego: ni la web ni el programa descargan juegos, solo los parches de traducción.</p>"""
+    # El botón principal de la ficha, con una línea que explica por qué cuando no es el navegador.
+    descarga = f'href="{INSTALADOR}" data-goatcounter-click="descarga-juego"'
+    if modo == 'navegador':
+        botones = (f'<div class="acciones-j"><a class="btn primario grande" href="{raiz}parchear/">Traducir en el navegador</a>'
+                   f'<a class="btn grande" {descarga}>Programa para Windows</a></div>')
+    elif modo == 'programa':
+        por_que = ('El parche es xdelta y el navegador todavía no puede aplicarlo; el programa para Windows sí.' if xdelta else
+                   f'Las traducciones de {e(nombre_sis)} suelen ser parches xdelta, que el navegador todavía no aplica; el programa '
+                   f'para Windows sí. Si el parche resulta ser IPS, BPS, UPS, PPF o APS, también vale '
+                   f'<a href="{raiz}parchear/">Parchear en el navegador</a>.')
+        botones = f'<a class="btn primario grande" {descarga}>Traducir con el programa para Windows</a><p class="suave aviso-j">{por_que}</p>'
+    elif modo == 'manual':
+        autor = next((f for f in gr['filas'] if web_segura(f['url'])), None)
+        evento = f' data-goatcounter-click="trad-{e(gr["ruta"].removeprefix("juego/").strip("/"))}"' if GOATCOUNTER else ''
+        botones = ((f'<a class="btn primario grande" href="{e(autor["url"])}" target="_blank" rel="noopener"{evento}>Ir a la traducción</a>'
+                    if autor else '<a class="btn primario grande" href="#traducciones">Ver la traducción</a>')
+                   + '<p class="suave aviso-j">No es un parche: se instala como explica su autor, copiando sus archivos o con su instalador.</p>')
+    else:
+        botones = f'<a class="btn primario grande" {descarga}>Descargar el programa para Windows</a>'
     cuerpo = f"""<main class="juego">
   <nav class="migas" aria-label="Estás en"><a href="{raiz}">Inicio</a> › <a href="{raiz}catalogo/">Catálogo</a> › <a href="{raiz}sistema/{e(s)}/">{e(nombre_sis)}</a></nav>
   <div class="juego-h">
@@ -903,15 +964,12 @@ def pagina_juego(gr, sysn, libretro, base, ctx):
       <h1>{e(titulo)} <span>en español</span></h1>
       {f'<p class="orig">Título original: {e(orig)}</p>' if orig else ''}
       <p class="lede">{hay}{f": {e(quien)}" if quien else ''}.</p>
-      {(f'<div class="acciones-j"><a class="btn primario grande" href="{raiz}parchear/">Traducir en el navegador</a>'
-        f'<a class="btn grande" href="{INSTALADOR}" data-goatcounter-click="descarga-juego">Programa para Windows</a></div>')
-       if s not in PC | MODERNAS else
-       f'<a class="btn primario grande" href="{INSTALADOR}" data-goatcounter-click="descarga-juego">Descargar el programa para Windows</a>'}
+      {botones}
       {compra}
       <div class="juego-acciones" data-ruta="{e(gr["ruta"])}" data-sis="{e(s)}" data-sisn="{e(nombre_sis)}" data-titulo="{e(titulo)}" data-port="{e(" ".join(absolutas[:3]))}"><button type="button" class="fav" aria-pressed="false" aria-label="Añadir a Favoritos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7.5-4.6-9.3-9.2C1.4 7.4 3.6 4 7 4c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.4 0 5.6 3.4 4.3 6.8C19.5 15.4 12 20 12 20z"/></svg></button><button type="button" class="btn" id="guardar-lista">Guardar en una lista</button></div>
     </div>
   </div>
-  <section class="bloque">
+  <section class="bloque" id="traducciones">
     <h2>{({'doblaje': 'El doblaje', 'ambos': 'La traducción y el doblaje'}.get(tipos[0], 'La traducción') if n == 1
           else 'Los doblajes' if solo_dob else 'Las traducciones')}</h2>
     <div class="trads">{''.join(tarjeta_trad(f, ruta=gr['ruta']) for f in gr['filas'])}</div>
