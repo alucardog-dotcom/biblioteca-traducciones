@@ -319,8 +319,11 @@ iframe.video { display: block; width: 100%; max-width: 640px; aspect-ratio: 16 /
 .sel-port { display: flex; gap: 6px; height: 92px; margin-bottom: 6px; }
 .sel-port img { height: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 6px; background: var(--panel-2); }
 .explora-l { margin: 18px 0 0; }
-.grupo-p .letra h2 .n, .seleccion-p h2 .n, .en-camino-p h2 .n { font-size: 0.8rem; vertical-align: middle; margin-left: 8px; color: var(--suave); }
-.en-camino-p .bloque .texto { margin: -8px 0 0; }
+.grupo-p .letra h2 .n, .seleccion-p h2 .n, .en-camino-p h2 .n, .perdidas-p h2 .n { font-size: 0.8rem; vertical-align: middle; margin-left: 8px; color: var(--suave); }
+.en-camino-p .bloque .texto, .perdidas-p .bloque .texto { margin: -8px 0 0; }
+.proy code { overflow-wrap: anywhere; }
+.proy .tengo { white-space: nowrap; font-weight: 700; }
+.trad .perdida-aviso { margin: 0; padding: 10px 12px; border-radius: 10px; font-size: 0.9rem; color: var(--amarillo-t); background: rgba(255, 196, 0, 0.08); border: 1px solid rgba(255, 196, 0, 0.3); }
 .proys { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 8px; }
 .proy { display: grid; gap: 2px; padding: 12px 14px; border-radius: 10px; background: var(--panel); border: 1px solid var(--linea); }
 .proy > a { color: var(--texto); text-decoration: none; }

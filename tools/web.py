@@ -28,6 +28,16 @@ LIBRETRO = {}  # nombres de los sistemas en thumbnails.libretro.com (de centro_d
 PC = {'dos', 'windows', 'scummvm', 'easyrpg', 'pc'}
 # Consolas de hoy: sus traducciones son mods que se instalan a mano (como MODERNAS en ui/app.js).
 MODERNAS = {'switch', 'ps3', 'ps4', 'ps5', 'wiiu', 'xbox360', 'xboxone'}
+# Traducciones cuyo parche ya no se conserva: su web cerró y archive.org guarda la página, pero no el fichero. Lo dice
+# la nota de la ficha («El fichero (x.zip, 9 KB) no está en archive.org», «archive.org no guarda el parche (x.7z)»…).
+# Salen en «Traducciones perdidas», que pide copias a quien las conserve. Las fichas sin enlace se quedan fuera: su
+# fichero pesaba como la ROM entera y pudo ser la ROM ya parcheada, que no se pide.
+PERDIDA = re.compile(r'no está en archive\.org|archive\.org no (?:lo )?guarda', re.I)
+FICHERO_PERDIDO = re.compile(r'\(([\w.\-]+\.(?:zip|rar|7z|exe|lzh|arj|ips|ups|bps|ppf|xdelta))(?:, ([\d.,]+ ?[KM]B))?', re.I)
+
+
+def perdida(f):
+    return bool(f['url'].strip() and PERDIDA.search(f['notas']))
 e = html.escape
 
 # ---------------------------------------------------------------- SEO
@@ -732,7 +742,7 @@ def pagina(raiz, titulo, descripcion, ruta, cuerpo, base, imagen='img/vista-prev
 <footer class="pie">
   <div class="pie-in">
     <p><b>Biblioteca de traducciones</b> es gratuita y de código libre (<a href="{REPO}/blob/main/LICENSE">GPL-3.0</a>). Las traducciones son de sus autores: este programa solo las encuentra y las aplica, y nunca descarga juegos.</p>
-    <p><a href="{raiz}grupos/">Grupos de traducción</a> · <a href="{raiz}en-camino/">Traducciones en camino</a> · <a href="{raiz}selecciones/">Selecciones</a> · <a href="{raiz}parchear/">Parchear en el navegador</a></p>
+    <p><a href="{raiz}grupos/">Grupos de traducción</a> · <a href="{raiz}en-camino/">Traducciones en camino</a> · <a href="{raiz}perdidas/">Traducciones perdidas</a> · <a href="{raiz}selecciones/">Selecciones</a> · <a href="{raiz}parchear/">Parchear en el navegador</a></p>
     <p><a href="{REPO}" data-goatcounter-click="estrella-github">Código en GitHub: si te es útil, dale una estrella ★</a> · <a href="{INCIDENCIAS}">Avisar de un error o de una traducción que falta</a></p>
     <p class="suave">No está relacionado con ninguna de las empresas de los juegos. Las portadas son de sus propietarios. Firma del instalador: <a href="{REPO}#code-signing-policy">Code signing policy</a>.{nota_cuenta}</p>
   </div>
@@ -826,6 +836,10 @@ def tarjeta_trad(f, raiz='../../../', ruta=''):
               f'data-goatcounter-title="{e(f["juego"])} ({e(f["grupo"][:60])})"') if ruta and GOATCOUNTER else ''
     enlace = (f'<a class="btn" href="{e(f["url"])}" target="_blank" rel="noopener"{evento}>Página {cosa}</a>'
               if web_segura(f['url']) else f'<p class="suave">No se conoce la página {"de este doblaje" if doblaje(f) == "doblaje" else "de esta traducción"}.</p>')
+    if perdida(f):
+        enlace = enlace.replace(f'>Página {cosa}</a>', f'>Página archivada {cosa}</a>')
+        enlace += (f'<p class="perdida-aviso">El parche se ha perdido: su web cerró y archive.org no guardó el fichero. '
+                   f'¿Lo conservas? Mira <a href="{raiz}perdidas/">traducciones perdidas</a>.</p>')
     return f'''<article class="trad">
   <div class="trad-h"><h3>{nombre_grupo_html(f['grupo'], raiz)}</h3><div class="chips">{chips_trad(f)}</div></div>
   {f'<dl>{dl}</dl>' if dl else ''}
@@ -1093,7 +1107,7 @@ def pagina_catalogo(por_sis, sysn, base, n_trad, n_juegos, filas):
   <p class="suave" id="cuenta" aria-live="polite"></p>
   <ul class="tarjetas" id="res"></ul>
   <button class="btn" id="mas" hidden>Ver más</button>
-  <p class="suave explora-l">También: <a href="../selecciones/">Selecciones</a> · <a href="../doblajes/">Doblajes</a> · <a href="../grupos/">Grupos de traducción</a> · <a href="../en-camino/">Traducciones en camino</a> · <a href="../novedades/">Novedades</a></p>
+  <p class="suave explora-l">También: <a href="../selecciones/">Selecciones</a> · <a href="../doblajes/">Doblajes</a> · <a href="../grupos/">Grupos de traducción</a> · <a href="../en-camino/">Traducciones en camino</a> · <a href="../perdidas/">Traducciones perdidas</a> · <a href="../novedades/">Novedades</a></p>
   <section class="bloque">
     <h2>Por sistema</h2>
     <div class="sistemas">{chips_sistemas(por_sis, sysn, raiz)}</div>
@@ -1157,7 +1171,7 @@ def pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version, dias, filas, p
     bloque_explora = (f'''<section class="bloque explora">
     <div class="cab"><h2>Explora</h2><p class="suave"><a href="selecciones/">Todas las selecciones</a></p></div>
     <div class="sels">{''.join(tarjeta_seleccion(s, raiz, evitar=usadas) for s in portada_sels)}</div>
-    <p class="suave">Y también: <a href="grupos/">los {n_grupos} grupos de traducción</a> · <a href="en-camino/">traducciones en camino</a> · <a href="parchear/#mi-carpeta">escanear tu carpeta de juegos</a> en el navegador.</p>
+    <p class="suave">Y también: <a href="grupos/">los {n_grupos} grupos de traducción</a> · <a href="en-camino/">traducciones en camino</a> · <a href="perdidas/">traducciones perdidas que buscamos</a> · <a href="parchear/#mi-carpeta">escanear tu carpeta de juegos</a> en el navegador.</p>
   </section>''' if portada_sels else '')
     cuerpo = f'''<main>
   <section class="heroe {'mosaico-h' if mosaico else 'uno'}">
@@ -1720,6 +1734,58 @@ def pagina_en_camino(juegos, sysn, base):
     return pagina(raiz, 'Traducciones de juegos al español en camino', desc, 'en-camino/', cuerpo, base, ld=ld)
 
 
+def pagina_perdidas(filas, sysn, base):
+    """Traducciones de las que solo queda la página donde se anunciaban (ver PERDIDA): se piden copias a quien las conserve.
+    Un parche que aparezca solo se aloja con permiso de su autor."""
+    raiz = '../'
+    perdidas = [f for f in filas if perdida(f)]
+    por_sis = {}
+    for f in sorted(perdidas, key=lambda f: sin_acentos(f['juego']).lower()):
+        por_sis.setdefault(f['sistema'], []).append(f)
+    webs = collections.Counter(f['fuente'].split(' (')[0].strip() for f in perdidas)
+    bloques = ''
+    for s, fs in sorted(por_sis.items(), key=lambda sf: (-len(sf[1]), sysn.get(sf[0], sf[0]))):
+        items = ''
+        for f in fs:
+            m = FICHERO_PERDIDO.search(f['notas'])
+            fichero = (f'<code>{e(m.group(1))}</code>' + (f' ({e(m.group(2))})' if m.group(2) else '')) if m else 'fichero sin nombre conocido'
+            web = f['fuente'].split(' (')[0].strip()
+            titulo_inc = f'Traducción perdida: {f["juego"]} ({sysn.get(s, s)}, {f["grupo"].strip() or "grupo sin indicar"})'
+            cuerpo_inc = (f'Conservo una copia de esta traducción perdida:\n{base}{f["ruta"]}\n\n'
+                          f'Fichero que se busca: {m.group(1) if m else "(sin nombre conocido)"}\n\n'
+                          '¿Qué tienes? (nombre del fichero, tamaño y de dónde salió):\n\n\n'
+                          '¿Eres el autor o sabes cómo contactar con él?:\n\n\n'
+                          'No adjuntes el archivo todavía: te contestaremos para ver cómo hacerlo.')
+            tengo = f'{REPO}/issues/new?title={quote(titulo_inc)}&body={quote(cuerpo_inc)}'
+            items += (f'<li class="proy"><a href="{raiz}{f["ruta"]}"><b>{e(f["juego"])}</b></a>'
+                      f'<span class="suave">{e(f["grupo"].strip() or "grupo sin indicar")} · {fichero}</span>'
+                      f'<span class="suave">Publicada en {e(web)} · <a href="{e(f["url"])}" target="_blank" rel="noopener">página archivada</a>'
+                      f' · <a class="tengo" href="{e(tengo)}" target="_blank" rel="noopener" data-goatcounter-click="perdida-{e(f["ruta"].removeprefix("juego/").strip("/"))}">La tengo</a></span></li>')
+        bloques += (f'<section class="bloque"><h2>{e(sysn.get(s, s))} <span class="n">{len(fs)}</span></h2>'
+                    f'<ul class="proys">{items}</ul></section>')
+    origen = ', '.join(f'{e(w)} ({n})' for w, n in webs.most_common())
+    cuerpo = f'''<main class="sistema perdidas-p">
+  <p class="migas"><a href="{raiz}">Inicio</a> › Traducciones perdidas</p>
+  <h1>Traducciones perdidas</h1>
+  <p class="lede">{len(perdidas)} traducciones al español que existieron y de las que ya solo queda la página donde se anunciaban. Sus webs cerraron y archive.org guardó esa página, pero no el parche. Si alguna vez te bajaste alguna y aún la tienes en un disco duro, un CD o una copia vieja, puede que seas de los pocos que la conservan.</p>
+  <section class="bloque"><h2>Cómo ayudar</h2>
+    <ol class="pasos">
+      <li><b>Busca el fichero.</b> Cada traducción lleva el nombre exacto que tenía (por ejemplo, <code>dreams_frogger2_100.zip</code>) y su tamaño, cuando se conoce.</li>
+      <li><b>Avisa con «La tengo».</b> Abre un aviso en GitHub con los datos ya puestos. No adjuntes el archivo todavía: cuéntanos qué tienes y te contestaremos.</li>
+      <li><b>Solo parches.</b> No mandes juegos ni ROMs ya parcheadas.</li>
+      <li><b>Si eres el autor, o sabes cómo dar con él, dilo también.</b> Un parche recuperado solo se aloja aquí con permiso de su autor, y su ficha dirá a quién se le debe.</li>
+    </ol>
+  </section>
+  {bloques}
+  <section class="bloque"><h2>De dónde salen</h2>
+    <p class="texto suave">De copias de archive.org de webs que ya no existen: {origen}. TodoTradus (2002-2004) reunía los parches de casi todos los grupos de la época, entre ellos los de BnD Translations, los equipos Babel y Dreams de El Otro Lado. Las traducciones cuyo parche sí guarda archive.org no salen aquí: su ficha lleva a él.</p>
+  </section>
+</main>'''
+    desc = f'{len(perdidas)} traducciones al español de juegos cuyo parche se ha perdido: si conservas alguna, ayúdanos a recuperarla.'
+    ld = {'@context': 'https://schema.org', '@graph': [migas_ld(base, [('Inicio', ''), ('Traducciones perdidas', 'perdidas/')])]}
+    return pagina(raiz, 'Traducciones al español perdidas: ¿las conservas?', desc, 'perdidas/', cuerpo, base, ld=ld)
+
+
 def feed_novedades(dias, sysn, base):
     """Canal Atom de las novedades: una entrada por día con sus juegos (sin los de adultos)."""
     entradas = []
@@ -1973,6 +2039,7 @@ def main():
     for sel in sels:
         escribir(salida, f'selecciones/{sel[0]}/index.html', miles(pagina_seleccion(sel, sysn, base)))
     escribir(salida, 'en-camino/index.html', miles(pagina_en_camino(juegos, sysn, base)))
+    escribir(salida, 'perdidas/index.html', miles(pagina_perdidas(filas, sysn, base)))
     indice = []
     for g in juegos:
         escribir(salida, g['ruta'] + 'index.html', pagina_juego(g, sysn, libretro, base, ctx))
@@ -1992,7 +2059,7 @@ def main():
     # la portada y el catálogo cambian cada vez que se genera la web.
     hoy = date.today().isoformat()
     rutas = ([('', hoy), ('catalogo/', hoy), ('novedades/', hoy), ('doblajes/', hoy), ('parchear/', hoy), ('grupos/', hoy),
-              ('selecciones/', hoy), ('en-camino/', hoy)]
+              ('selecciones/', hoy), ('en-camino/', hoy), ('perdidas/', hoy)]
              + [(f'selecciones/{s[0]}/', hoy) for s in sels]
              + [(ruta_grupo(n), max((fecha_iso(f) for _, f in items), default='')) for n, items in grupos.items()]
              + [(f'sistema/{s}/', max((g['fecha'] for g in gs), default='')) for s, gs in por_sis.items()]
