@@ -64,7 +64,9 @@ El instalador no está firmado todavía. En noviembre de 2026 se pidió la firma
 
 ## ¿Te gusta?
 
-La Biblioteca de traducciones es gratuita y de código libre. Si te resulta útil, ayuda mucho avisar de traducciones que falten o que no funcionen ([incidencias](https://github.com/alucardog-dotcom/biblioteca-traducciones/issues)) y compartir el programa.
+La Biblioteca de traducciones es gratuita y de código libre. Si te resulta útil, ayuda mucho avisar de traducciones que falten o que no funcionen y compartir el programa.
+
+**Contacto:** para avisar de un error, pedir una traducción que falta o retirar la tuya, escribe a [contacto@bibliotecadetraducciones.com](mailto:contacto@bibliotecadetraducciones.com). Los fallos del programa también se pueden apuntar en las [incidencias](https://github.com/alucardog-dotcom/biblioteca-traducciones/issues).
 
 ## Compilar
 

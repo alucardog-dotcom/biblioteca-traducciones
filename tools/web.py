@@ -23,7 +23,9 @@ GOATCOUNTER = 'bibliotecadetraducciones'
 # mandan a un subdominio propio, un CNAME a <código>.goatcounter.com puesto también en los ajustes de GoatCounter.
 # Vacío, se usan gc.zgo.at y <código>.goatcounter.com.
 GOATCOUNTER_DOMINIO = 'stats.bibliotecadetraducciones.com'
-INCIDENCIAS = REPO + '/issues'
+# El correo de contacto: desde el 11-11-2026, los errores, las peticiones y las retiradas van por correo (antes la
+# web mandaba a las incidencias de GitHub, que piden cuenta). contacto() hace el enlace, con el asunto ya puesto.
+CORREO = 'contacto@bibliotecadetraducciones.com'
 # La cuenta de X (Twitter) de la Biblioteca: enlace en el pie de todas las páginas y «twitter:site» en las tarjetas.
 X_CUENTA = 'bibliotecatradu'
 X = 'https://x.com/' + X_CUENTA
@@ -702,6 +704,18 @@ def tarjetas_novedades(dias, raiz, sysn, k=None, con_fecha=True):
     return items
 
 
+def mailto(asunto='', cuerpo=''):
+    """Dirección mailto: del correo de contacto, con el asunto y el texto ya escritos (lo que abre el programa de correo)."""
+    partes = [f'{k}={quote(v.replace(chr(10), chr(13) + chr(10)), safe="")}' for k, v in (('subject', asunto), ('body', cuerpo)) if v]
+    return f'mailto:{CORREO}' + ('?' + '&'.join(partes) if partes else '')
+
+
+def contacto(asunto='', clic=''):
+    """Enlace al correo de contacto con la dirección a la vista (quien no tenga programa de correo la copia)."""
+    cuenta = f' data-goatcounter-click="{e(clic)}"' if clic else ''
+    return f'<a href="{e(mailto(asunto))}"{cuenta}>{CORREO}</a>'
+
+
 def jsonld(datos):
     return '<script type="application/ld+json">' + json.dumps(datos, ensure_ascii=False).replace('<', '\\u003c') + '</script>'
 
@@ -769,7 +783,8 @@ def pagina(raiz, titulo, descripcion, ruta, cuerpo, base, imagen='img/vista-prev
   <div class="pie-in">
     <p><b>Biblioteca de traducciones</b> es gratuita y de código libre (<a href="{REPO}/blob/main/LICENSE">GPL-3.0</a>). Las traducciones son de sus autores: este programa solo las encuentra y las aplica, y nunca descarga juegos.</p>
     <p><a href="{raiz}grupos/">Grupos de traducción</a> · <a href="{raiz}en-camino/">Traducciones en camino</a> · <a href="{raiz}perdidas/">Traducciones perdidas</a> · <a href="{raiz}selecciones/">Selecciones</a> · <a href="{raiz}parchear/">Parchear en el navegador</a></p>
-    <p><a href="{REPO}" data-goatcounter-click="estrella-github">Código en GitHub: si te es útil, dale una estrella ★</a> · <a href="{X}" rel="me noopener" data-goatcounter-click="x-pie">Síguenos en X (Twitter): @{X_CUENTA}</a> · <a href="{INCIDENCIAS}">Avisar de un error o de una traducción que falta</a></p>
+    <p><a href="{REPO}" data-goatcounter-click="estrella-github">Código en GitHub: si te es útil, dale una estrella ★</a> · <a href="{X}" rel="me noopener" data-goatcounter-click="x-pie">Síguenos en X (Twitter): @{X_CUENTA}</a></p>
+    <p>Contacto, para avisar de un error, pedir una traducción que falta o retirar la tuya: {contacto(clic='correo-pie')}</p>
     <p class="suave">No está relacionado con ninguna de las empresas de los juegos. Las portadas son de sus propietarios. Firma del instalador: <a href="{REPO}#code-signing-policy">Code signing policy</a>.{nota_cuenta}</p>
   </div>
 </footer>
@@ -1036,7 +1051,7 @@ def pagina_juego(gr, sysn, libretro, base, ctx):
     {como}
   </section>
   {relacionados(gr, ctx, raiz, nombre_sis)}
-  <p class="suave">¿Algún dato está mal o eres el autor y quieres cambiar algo? <a href="{INCIDENCIAS}">Avísame en GitHub</a>.</p>
+  <p class="suave">¿Algún dato está mal o eres el autor y quieres cambiar o retirar algo? Escríbeme a {contacto(f'Ficha: {titulo} ({nombre_sis})')}.</p>
 </main>"""
     # El título, con lo que se busca: «<juego> en español», el sistema por su nombre corto y «parche de traducción».
     # Dos juegos distintos con el mismo nombre en el mismo sistema (Monolith de 2017 y de 2023) llevan el año.
@@ -1274,16 +1289,16 @@ def pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version, dias, filas, p
   <section class="bloque">
     <h2>De dónde salen las traducciones</h2>
     <p class="texto">Las traducciones son de sus autores. El catálogo se ha hecho con los listados de romhacking.net, Traducciones Wave, Romhack Plaza, Romhack Hispano, El Otro Lado, Steam Community, RetroAchievements, Parches en Castellano y blogs y repositorios de traductores. Cada ficha lleva a la página de su traducción, y la web y el programa solo descargan los parches de los sitios que lo permiten.</p>
-    <p class="texto">No se enlazan los sitios que reparten juegos ya parcheados o completos. Si eres autor de una traducción y quieres corregir su ficha o que no aparezca, <a href="{INCIDENCIAS}">abre una incidencia</a>.</p>
+    <p class="texto">No se enlazan los sitios que reparten juegos ya parcheados o completos. Si eres autor de una traducción y quieres corregir su ficha o que no aparezca, escribe a {contacto('Soy autor de una traducción')}.</p>
   </section>
 
   <section class="bloque preguntas">
     <h2>Preguntas</h2>
-    <details><summary>¿Solo hay traducciones en español de España?</summary><p>No. El catálogo recoge todas las traducciones al español que encuentra, hechas en España y en Latinoamérica, y cuando sus autores indican la variante (español de España, latino o neutro) la ficha lo dice; en el catálogo puedes filtrar por «Español latino». Si conoces una traducción latina que falta, <a href="{INCIDENCIAS}">avísame</a>.</p></details>
+    <details><summary>¿Solo hay traducciones en español de España?</summary><p>No. El catálogo recoge todas las traducciones al español que encuentra, hechas en España y en Latinoamérica, y cuando sus autores indican la variante (español de España, latino o neutro) la ficha lo dice; en el catálogo puedes filtrar por «Español latino». Si conoces una traducción latina que falta, escríbeme a {contacto('Falta una traducción latina')}.</p></details>
     <details><summary>¿Hace falta instalar algo?</summary><p>No. La web busca en el mismo catálogo que el programa, cada ficha enlaza a la traducción y la página <a href="parchear/">Parchear</a> aplica los parches en el navegador sin subir nada a ningún sitio. El programa para Windows añade buscar tus juegos él solo, comprobar tu copia por su CRC32, portadas y listas, y el botón Jugar con RetroBat.</p></details>
     <details><summary>¿Descarga juegos?</summary><p>No. Ni la web ni el programa descargan juegos: solo los parches de traducción, que se aplican sobre la copia que ya tienes.</p></details>
     <details><summary>¿Cuánto cuesta?</summary><p>Nada. Es gratuito y de código libre, con licencia GPL-3.0.</p></details>
-    <details><summary>Falta una traducción o una ficha está mal</summary><p><a href="{INCIDENCIAS}">Avísame en GitHub</a>. El catálogo se pone al día en la web y en el programa sin reinstalar nada.</p></details>
+    <details><summary>Falta una traducción o una ficha está mal</summary><p>Escríbeme a {contacto('Falta una traducción o una ficha está mal')}. El catálogo se pone al día en la web y en el programa sin reinstalar nada.</p></details>
     <details><summary>Windows dice «Windows protegió su PC». ¿Es seguro?</summary><p>El instalador no está firmado y por eso Windows avisa. Pulsa «Más información» y «Ejecutar de todas formas». El código está en <a href="{REPO}">GitHub</a> para quien quiera revisarlo.</p></details>
     <details><summary>¿Necesito RetroBat?</summary><p>No. El programa funciona solo y traduce los juegos que tengas en cualquier carpeta. Si usas RetroBat, el botón Jugar abre el juego traducido con su emulador.</p></details>
     <details><summary>¿Envía datos míos a algún sitio?</summary><p>No. La web solo pide las portadas y los parches; el programa, además, mira si hay una versión o un catálogo nuevos. Tus ajustes y tus listas se quedan en tu equipo.</p></details>
@@ -1372,7 +1387,7 @@ def pagina_doblajes(filas, sysn, base):
     <p class="texto suave">El juego ya venía traducido, pero con voces en inglés o en japonés: estos mods le ponen voces en español.</p>
     {lista(solo)}
   </section>
-  <p class="suave">¿Conoces un doblaje de aficionados que falta? <a href="{INCIDENCIAS}">Avísame en GitHub</a>.</p>
+  <p class="suave">¿Conoces un doblaje de aficionados que falta? Escríbeme a {contacto('Falta un doblaje')}.</p>
 </main>'''
     desc = f'{len(juegos)} juegos con doblaje al español hecho por aficionados: voces en castellano y en latino para juegos de PlayStation, Dreamcast, PC y más.'
     ld = {'@context': 'https://schema.org', '@graph': [migas_ld(base, [('Inicio', ''), ('Doblajes', 'doblajes/')])]}
@@ -1425,7 +1440,7 @@ def pagina_grupo(nombre, items, sysn, base):
   <h1>{e(titulo)}</h1>
   <p class="lede">{len(items)} {"traducción" if len(items) == 1 else "traducciones"} al español de {n_juegos} {"juego" if n_juegos == 1 else "juegos"} en el catálogo, para {e(enumera(sistemas) if len(sistemas) <= 6 else ", ".join(sistemas[:6]) + " y otros")}{(" (" + ", ".join(extra) + ")") if extra else ""}.</p>
   {f'<p class="texto">Publica en {enumera([f"""<a href="https://{e(h)}/" target="_blank" rel="noopener">{e(h)}</a>""" for h in webs])}.</p>' if webs else ''}
-  <p class="suave">Cada ficha lleva a la página de su traducción. ¿Eres de {e(nombre)} y algo está mal o falta? <a href="{INCIDENCIAS}">Avísame en GitHub</a>.</p>
+  <p class="suave">Cada ficha lleva a la página de su traducción. ¿Eres de {e(nombre)} y algo está mal o falta? Escríbeme a {contacto(f'Grupo: {nombre}')}.</p>
   {bloques}
 </main>'''
     ruta = ruta_grupo(nombre)
@@ -1447,7 +1462,7 @@ def pagina_grupos(grupos, base):
   <h1>Grupos de traducción</h1>
   <p class="lede">Los {len(grupos)} grupos y traductores con {MIN_GRUPO} o más traducciones en el catálogo. Son quienes hacen posible jugar en español: cada página reúne sus traducciones y las webs donde publican.</p>
   <div class="sistemas">{lista}</div>
-  <p class="suave">Los que tienen menos traducciones salen en la ficha de cada juego. ¿Falta tu grupo o está mal escrito? <a href="{INCIDENCIAS}">Avísame en GitHub</a>.</p>
+  <p class="suave">Los que tienen menos traducciones salen en la ficha de cada juego. ¿Falta tu grupo o está mal escrito? Escríbeme a {contacto('Grupos de traducción')}.</p>
 </main>'''
     desc = f'Los {len(grupos)} grupos de traducción al español con más traducciones de juegos hechas por aficionados, cada uno con sus traducciones.'
     ld = {'@context': 'https://schema.org', '@graph': [migas_ld(base, [('Inicio', ''), ('Grupos de traducción', 'grupos/')])]}
@@ -1835,11 +1850,11 @@ def pagina_perdidas(filas, sysn, base):
                           '¿Qué tienes? (nombre del fichero, tamaño y de dónde salió):\n\n\n'
                           '¿Eres el autor o sabes cómo contactar con él?:\n\n\n'
                           'No adjuntes el archivo todavía: te contestaremos para ver cómo hacerlo.')
-            tengo = f'{REPO}/issues/new?title={quote(titulo_inc)}&body={quote(cuerpo_inc)}'
+            tengo = mailto(titulo_inc, cuerpo_inc)
             items += (f'<li class="proy"><a href="{raiz}{f["ruta"]}"><b>{e(f["juego"])}</b></a>'
                       f'<span class="suave">{e(f["grupo"].strip() or "grupo sin indicar")} · {fichero}</span>'
                       f'<span class="suave">Publicada en {e(web)} · <a href="{e(f["url"])}" target="_blank" rel="noopener">página archivada</a>'
-                      f' · <a class="tengo" href="{e(tengo)}" target="_blank" rel="noopener" data-goatcounter-click="perdida-{e(f["ruta"].removeprefix("juego/").strip("/"))}">La tengo</a></span></li>')
+                      f' · <a class="tengo" href="{e(tengo)}" data-goatcounter-click="perdida-{e(f["ruta"].removeprefix("juego/").strip("/"))}">La tengo</a></span></li>')
         bloques += (f'<section class="bloque"><h2>{e(sysn.get(s, s))} <span class="n">{len(fs)}</span></h2>'
                     f'<ul class="proys">{items}</ul></section>')
     origen = ', '.join(f'{e(w)} ({n})' for w, n in webs.most_common())
@@ -1850,7 +1865,7 @@ def pagina_perdidas(filas, sysn, base):
   <section class="bloque"><h2>Cómo ayudar</h2>
     <ol class="pasos">
       <li><b>Busca el fichero.</b> Cada traducción lleva el nombre exacto que tenía (por ejemplo, <code>dreams_frogger2_100.zip</code>) y su tamaño, cuando se conoce.</li>
-      <li><b>Avisa con «La tengo».</b> Abre un aviso en GitHub con los datos ya puestos. No adjuntes el archivo todavía: cuéntanos qué tienes y te contestaremos.</li>
+      <li><b>Avisa con «La tengo».</b> Abre un correo a {CORREO} con los datos ya puestos. No adjuntes el archivo todavía: cuéntanos qué tienes y te contestaremos.</li>
       <li><b>Solo parches.</b> No mandes juegos ni ROMs ya parcheadas.</li>
       <li><b>Si eres el autor, o sabes cómo dar con él, dilo también.</b> Un parche recuperado solo se aloja aquí con permiso de su autor, y su ficha dirá a quién se le debe.</li>
     </ol>
