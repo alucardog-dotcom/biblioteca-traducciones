@@ -389,6 +389,8 @@ FORMATOS = {'ips': 'parche IPS', 'bps': 'parche BPS', 'ups': 'parche UPS', 'ppf'
 ESTADOS = {'completa': 'está completa', 'publicada': 'está publicada', 'beta': 'está en beta', 'parcial': 'es parcial',
            'en curso': 'está en curso', 'en desarrollo': 'está en desarrollo', 'en actualización': 'está en actualización',
            'abandonada': 'quedó abandonada'}
+# Estados de las traducciones que no están terminadas: si todas las de un juego son así, su ficha habla de proyectos.
+SIN_TERMINAR = {'abandonada', 'en curso', 'en desarrollo'}
 
 
 def titulo_original(gr):
@@ -900,6 +902,17 @@ def pagina_juego(gr, sysn, libretro, base, ctx):
     else:
         cuantas = f'{n} traducciones' + (' (con doblaje)' if k_dob else '')
         hay = f'Hay {n} traducciones al español hechas por aficionados' + (f', {"una" if k_dob == 1 else k_dob} con doblaje' if k_dob else '')
+    # Si ninguna está terminada (abandonadas o en marcha), la entradilla no promete una traducción: habla de proyectos.
+    # Va seguida de «: <autores>.», así que cada frase acaba en lo que se dice de ellos.
+    estados = [f['estado'].strip().lower() for f in gr['filas']]
+    abandonadas = all(st == 'abandonada' for st in estados)
+    if all(st in SIN_TERMINAR for st in estados):
+        if n == 1:
+            hay = (f'Hubo un proyecto de {que} al español, pero quedó abandonado. Lo llevaban aficionados' if abandonadas
+                   else f'Hay un proyecto de {que} al español en marcha, hecho por aficionados')
+        else:
+            hay = (f'Hubo {n} proyectos de {que} al español, pero quedaron abandonados. Los llevaban aficionados' if abandonadas
+                   else f'Hay {n} proyectos de {que} al español sin terminar, hechos por aficionados')
     # Dónde se aplica (donde_aplicar): elige el botón principal, el final de la descripción y los pasos de «Cómo jugarlo».
     # Basta una traducción que valga en el navegador para ofrecerlo; si no, el programa (xdelta) o la página del autor.
     modos = {donde_aplicar(f) for f in gr['filas']}
@@ -913,6 +926,8 @@ def pagina_juego(gr, sysn, libretro, base, ctx):
         cierre = '. Se aplica gratis con el programa para Windows.'
     else:
         cierre = '. Parchea tu ROM gratis en el navegador o con el programa.'
+    if abandonadas:  # no hay nada que descargar ni que parchear: se dice que quedó sin terminar
+        cierre = '. Quedó sin terminar: con el enlace a la página del proyecto.' if n == 1 else '. Quedaron sin terminar: con el enlace a la página de cada proyecto.'
 
     def desc_con(k, det):
         q = (enumera(grupos) if len(grupos) <= k else ', '.join(grupos[:k]) + ' y otros') if k else ''
@@ -1009,8 +1024,8 @@ def pagina_juego(gr, sysn, libretro, base, ctx):
     if que == 'doblaje':
         opciones = [f'{titulo} ({corto}): doblaje al español']
     else:
-        opciones = [f'{titulo} en español ({corto}): ' + ('parche de traducción' if que == 'traducción' else 'traducción y doblaje'),
-                    f'{titulo} en español ({corto})']
+        coletilla = ('traducción abandonada' if abandonadas else 'parche de traducción') if que == 'traducción' else 'traducción y doblaje'
+        opciones = [f'{titulo} en español ({corto}): {coletilla}', f'{titulo} en español ({corto})']
     titulo_pagina = next((t for t in opciones if len(t) <= MAX_TITULO), opciones[-1])
     canon = base + gr['ruta']
     juego = {'@type': 'VideoGame', 'name': titulo, 'gamePlatform': nombre_sis, 'url': canon}
