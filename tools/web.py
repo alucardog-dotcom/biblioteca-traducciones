@@ -131,12 +131,17 @@ def cargar():
     return filas, centro['sistemas']
 
 
-def fijados():
-    """Los juegos que van siempre en el mosaico de la portada (web/destacados.txt: sistema|título, uno por línea)."""
-    ruta = os.path.join(WEB, 'destacados.txt')
+def lista_juegos(nombre):
+    """Una lista de juegos hecha a mano (web/<nombre>: sistema|título tal como está en el catálogo, uno por línea)."""
+    ruta = os.path.join(WEB, nombre)
     if not os.path.isfile(ruta):
         return []
     return [tuple(l.strip().split('|', 1)) for l in open(ruta, encoding='utf-8') if l.strip() and not l.startswith('#') and '|' in l]
+
+
+def fijados():
+    """Los juegos que van siempre en el mosaico de la portada (web/destacados.txt)."""
+    return lista_juegos('destacados.txt')
 
 
 def web_segura(u):
@@ -1522,6 +1527,11 @@ SAGAS = [
     ('phantasy-star', 'Phantasy Star', r'\bPhantasy Star\b'),
 ]
 MAS_VISTOS_DIAS = 30
+# La selección de quien lleva la web: juegos especiales, de los que no suelen salir en las listas, apuntados a mano en
+# web/seleccion.txt. Entran todos, también los que solo tienen traducción con IA (los ha elegido una persona), y no
+# tienen orden: se barajan cada día.
+SELECCION_MANO = ('seleccion-del-bibliotecario', 'La selección del bibliotecario',
+                  'Juegos especiales, de los que es raro ver en las listas, elegidos a mano por quien lleva la Biblioteca de traducciones.')
 
 
 def visitas_fichas():
@@ -1576,9 +1586,25 @@ SISTEMAS_IMPRESCINDIBLES = ['snes', 'nes', 'psx', 'megadrive', 'gba', 'gb', 'n64
 MAX_SELECCION = 48
 
 
+def seleccion_a_mano(juegos, dia=None):
+    """Los juegos de web/seleccion.txt, barajados según la fecha: el mismo día salen en el mismo orden aunque la web se
+    regenere varias veces. Avisa de los que ya no están en el catálogo (un título cambiado, una ficha retirada)."""
+    gs = []
+    for s, j in lista_juegos('seleccion.txt'):
+        t = sin_acentos(j).lower()
+        g = next((g for g in juegos if g['s'] == s and t in {sin_acentos(x).lower() for x in [g['titulo']] + [f['juego'] for f in g['filas']]}), None)
+        if not g:
+            print(f'AVISO: «{s}|{j}», de web/seleccion.txt, no está en el catálogo', file=sys.stderr)
+        elif g not in gs:
+            gs.append(g)
+    random.Random((dia or date.today()).toordinal()).shuffle(gs)
+    return gs
+
+
 def selecciones(juegos, sysn, visitas=None):
     """Las selecciones: [(slug, título, entradilla, [juegos])], de más tirón a menos, sin los juegos que solo tienen traducciones con IA.
-    «Lo más visto» va la primera y ordena por las visitas a la ficha (visitas_fichas), con todos los juegos."""
+    «Lo más visto» va la primera y ordena por las visitas a la ficha (visitas_fichas), con todos los juegos; la segunda,
+    la selección hecha a mano (SELECCION_MANO)."""
     validos = [g for g in juegos if not all(es_ia(f) for f in g['filas']) and any(f['pop'] for f in g['filas'])]
     tiron = lambda g: -max(f['pop'] for f in g['filas'])
     out = []
@@ -1587,6 +1613,9 @@ def selecciones(juegos, sysn, visitas=None):
         if len(gs) >= 8:
             out.append(('lo-mas-visto', 'Lo más visto', f'Los juegos cuyas fichas más se han consultado en la web en los últimos {MAS_VISTOS_DIAS} días.',
                         gs[:MAX_SELECCION]))
+    mano = seleccion_a_mano(juegos)
+    if len(mano) >= 4:
+        out.append((*SELECCION_MANO, mano))
     for s in SISTEMAS_IMPRESCINDIBLES:
         nombre = sysn.get(s, s)
         gs = sorted((g for g in validos if g['s'] == s), key=tiron)[:MAX_SELECCION]
@@ -1655,12 +1684,22 @@ def pagina_seleccion(sel, sysn, base):
     raiz = '../../'
     sl, titulo, intro, gs = sel
     imprescindible = sl.startswith('imprescindibles-')
+    a_mano = sl == SELECCION_MANO[0]
+    if sl == 'lo-mas-visto':
+        pie_orden = (f'Ordenados por las visitas a su ficha en los últimos {MAS_VISTOS_DIAS} días (estadísticas anónimas y sin cookies '
+                     'de GoatCounter). Se pone al día cada día. ')
+    elif a_mano:
+        pie_orden = ('Elegidos a mano y sin ningún orden: se barajan cada día. Alguno solo tiene, por ahora, una traducción hecha '
+                     'con IA; lo avisa su ficha. ')
+    else:
+        pie_orden = 'Ordenados por fama (votos en LaunchBox y reseñas en Steam). ' + (
+            '' if sl == 'con-logros' else 'No salen los juegos cuyas únicas traducciones están hechas con IA. ')
     cuerpo = f'''<main class="sistema seleccion-p">
   <p class="migas"><a href="{raiz}">Inicio</a> › <a href="{raiz}selecciones/">Selecciones</a> › {e(titulo)}</p>
   <h1>{e(titulo)}</h1>
   <p class="lede">{e(intro)}</p>
   <ul class="tarjetas">{''.join(tarjeta_juego(g, raiz, sysn, not imprescindible) for g in gs)}</ul>
-  <p class="suave">{f"Ordenados por las visitas a su ficha en los últimos {MAS_VISTOS_DIAS} días (estadísticas anónimas y sin cookies de GoatCounter). Se pone al día cada día. " if sl == "lo-mas-visto" else "Ordenados por fama (votos en LaunchBox y reseñas en Steam). "}{"" if sl in ("con-logros", "lo-mas-visto") else "No salen los juegos cuyas únicas traducciones están hechas con IA. "}Los juegos para adultos solo aparecen si los activas en el catálogo.</p>
+  <p class="suave">{pie_orden}Los juegos para adultos solo aparecen si los activas en el catálogo.</p>
 </main>'''
     desc = el_mas_largo_que_quepa([f'{intro} {len(gs)} juegos, cada uno con su ficha y el enlace a su traducción.', intro], MAX_DESC)
     ld = {'@context': 'https://schema.org', '@graph': [
@@ -1679,6 +1718,8 @@ def pagina_seleccion(sel, sysn, base):
         opciones = [f'Lo más visto: los {len(gs)} juegos traducidos más consultados', titulo]
     elif sl == 'para-jugar-acompanado':
         opciones = [f'{len(gs)} juegos en español para jugar acompañado', titulo]
+    elif a_mano:
+        opciones = [f'{titulo}: {len(gs)} juegos especiales en español', titulo]
     else:
         opciones = [f'{titulo}: {"las" if sl in ("aventuras-graficas", "novelas-visuales") else "los"} {len(gs)} mejores', titulo]
     titulo_pagina = next((t for t in opciones if len(t) <= MAX_TITULO), titulo)
@@ -1690,12 +1731,14 @@ def pagina_selecciones(sels, base, doblados=()):
     sistemas = [s for s in sels if s[0].startswith('imprescindibles-')]
     sagas = [s for s in sels if s[0].startswith('saga-')]
     vistos = [s for s in sels if s[0] == 'lo-mas-visto']
-    otras = [s for s in sels if not s[0].startswith(('imprescindibles-', 'saga-')) and s[0] != 'lo-mas-visto']
+    mano = [s for s in sels if s[0] == SELECCION_MANO[0]]
+    otras = [s for s in sels if not s[0].startswith(('imprescindibles-', 'saga-')) and s[0] not in ('lo-mas-visto', SELECCION_MANO[0])]
     cuerpo = f'''<main class="sistema selecciones-p">
   <p class="migas"><a href="{raiz}">Inicio</a> › Selecciones</p>
   <h1>Selecciones</h1>
   <p class="lede">Juegos con traducción al español agrupados por género, por saga y por sistema, de los más conocidos a los menos. Para descubrir qué jugar.</p>
   {f'<section class="bloque"><h2>Lo que más se consulta</h2><div class="sels">{"".join(tarjeta_seleccion(s, raiz) for s in vistos)}</div></section>' if vistos else ''}
+  {f'<section class="bloque"><h2>Elegidos a mano</h2><div class="sels">{"".join(tarjeta_seleccion(s, raiz) for s in mano)}</div></section>' if mano else ''}
   <section class="bloque"><h2>Por género</h2><div class="sels">{''.join(tarjeta_seleccion(s, raiz) for s in otras)}{tarjeta_seleccion(('doblajes', 'Doblajes al español', '', doblados), raiz, href=f'{raiz}doblajes/', sub=f'{len(doblados)} juegos con voces en español') if doblados else ''}</div></section>
   {f'<section class="bloque"><h2>Por saga</h2><div class="sels">{"".join(tarjeta_seleccion(s, raiz) for s in sagas)}</div></section>' if sagas else ''}
   <section class="bloque"><h2>Imprescindibles por sistema</h2><div class="sels">{''.join(tarjeta_seleccion(s, raiz) for s in sistemas)}</div></section>

@@ -1,0 +1,18 @@
+# La selección del bibliotecario (/selecciones/seleccion-del-bibliotecario/): juegos especiales elegidos a mano por quien
+# lleva la web. Uno por línea: sistema|título tal como está en el catálogo. Entran todos, también los que solo tienen
+# traducción con IA. El orden de aquí da igual: la página los baraja cada día.
+pc|Quake
+pc|NEEDY GIRL OVERDOSE
+pc|Kathy Rain 2
+megadrive|Alisia Dragoon
+pc|Look Outside
+pc|Dread Delusion
+pc|Disgaea 5
+pc|OMORI
+gba|Yggdra Union: We'll Never Fight Alone
+pc|Priest Simulator
+pc|Road to Vostok
+snes|ActRaiser
+pc|Citizen Sleeper
+pc|Battle Brothers
+pc|Helltaker
