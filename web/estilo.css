@@ -305,6 +305,7 @@ html:not(.adultos) .tarjeta[data-a18] { display: none; }
 .el-juego .datos dd { margin: 0; }
 .capturas { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); gap: 10px; }
 .capturas a { display: block; border-radius: 10px; overflow: hidden; border: 1px solid var(--linea); background: var(--panel-2); aspect-ratio: 4 / 3; }
+.capturas.anchas a { aspect-ratio: 16 / 9; }
 .capturas img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .el-juego p.suave { margin: 0; }
 button.video { position: relative; display: block; width: 100%; max-width: 640px; aspect-ratio: 16 / 9; padding: 0; border: 1px solid var(--linea); border-radius: 12px; overflow: hidden; background: #000; cursor: pointer; }

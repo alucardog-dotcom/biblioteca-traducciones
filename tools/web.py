@@ -24,6 +24,9 @@ GOATCOUNTER = 'bibliotecadetraducciones'
 # Vacío, se usan gc.zgo.at y <código>.goatcounter.com.
 GOATCOUNTER_DOMINIO = 'stats.bibliotecadetraducciones.com'
 INCIDENCIAS = REPO + '/issues'
+# La cuenta de X (Twitter) de la Biblioteca: enlace en el pie de todas las páginas y «twitter:site» en las tarjetas.
+X_CUENTA = 'bibliotecatradu'
+X = 'https://x.com/' + X_CUENTA
 LIBRETRO = {}  # nombres de los sistemas en thumbnails.libretro.com (de centro_datos.json); lo rellena main()
 PC = {'dos', 'windows', 'scummvm', 'easyrpg', 'pc'}
 # Consolas de hoy: sus traducciones son mods que se instalan a mano (como MODERNAS en ui/app.js).
@@ -120,7 +123,8 @@ def cargar():
             if not l.startswith('#') and '\t' in l:
                 k, p = l.rstrip('\n').split('\t')[:2]
                 pop[k] = int(p)
-    # Los datos de cada juego (año, desarrolladora, géneros, capturas, vídeo…), de herramientas\mantenimiento\datos_launchbox.py.
+    # Los datos de cada juego (año, desarrolladora, géneros, capturas, vídeo…), de herramientas\mantenimiento\datos_launchbox.py
+    # y, para los juegos de Steam que LaunchBox no tiene o tiene sin capturas, de datos_steam.py.
     ruta_dj = os.path.join(WEB, 'datos_juegos.json')
     dj = json.load(open(ruta_dj, encoding='utf-8')) if os.path.isfile(ruta_dj) else {}
     for f in filas:
@@ -171,7 +175,8 @@ def agrupar(filas):
         cover = next((f for f in fs if f['x'].get('pm')), None) or next((f for f in fs if con_portada(f)), rep)
         g = {'titulo': rep['juego'], 's': rep['sistema'], 'filas': sorted(fs, key=orden), 'cover': cover,
              'fecha': max((fecha_iso(f) for f in fs), default=''),
-             'dj': max((f['dj'] for f in [cover] + fs), key=len, default={})}
+             # Los datos más completos de entre sus fichas; antes los de LaunchBox que los de Steam («o»: «steam»).
+             'dj': max((f['dj'] for f in [cover] + fs), key=lambda d: (d.get('o') != 'steam', len(d)), default={})}
         for f in fs:
             f['gr'] = g
         out.append(g)
@@ -250,15 +255,25 @@ def ruta_grupo(nombre):
     return RUTAS_GRUPO.get(nombre) or f'grupo/{slug(nombre)}/'
 
 
-# ---------------------------------------------------------------- el juego: datos de LaunchBox
+# ---------------------------------------------------------------- el juego: datos de LaunchBox y de Steam
+# «Simulation» solo lo da Steam (datos_steam.py); LaunchBox distingue la social, la de gestión, la de vuelo y la de vehículos.
 GENEROS = {'Platform': 'plataformas', 'Action': 'acción', 'Shooter': 'disparos', 'Role-Playing': 'rol', 'Adventure': 'aventura',
            'Puzzle': 'puzles', "Beat 'em Up": "beat 'em up", 'Fighting': 'lucha', 'Sports': 'deportes', 'Strategy': 'estrategia',
            'Horror': 'terror', 'Racing': 'carreras', 'Visual Novel': 'novela visual', 'Life Simulation': 'simulación social',
            'Construction and Management Simulation': 'gestión', 'Board Game': 'juego de mesa', 'Stealth': 'sigilo',
            'Flight Simulator': 'simulación de vuelo', 'Sandbox': 'mundo abierto', 'Compilation': 'recopilatorio', 'Pinball': 'pinball',
            'Education': 'educativo', 'Vehicle Simulation': 'simulación de vehículos', 'Party': 'party', 'MMO': 'MMO', 'Quiz': 'preguntas',
-           'Music': 'musical', 'Casino': 'casino'}
+           'Music': 'musical', 'Casino': 'casino', 'Simulation': 'simulación'}
 IMG_LB = 'https://images.launchbox-app.com/'
+IMG_STEAM = 'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/'
+
+
+def captura(i):
+    """Dirección de la miniatura y de la imagen grande de una captura de datos_juegos.json: las de LaunchBox son un nombre
+    de fichero; las de Steam (de datos_steam.py), «steam:<AppID>/<nombre>», y la tienda las sirve en dos tamaños."""
+    if i.startswith('steam:'):
+        return IMG_STEAM + i[6:] + '.600x338.jpg', IMG_STEAM + i[6:] + '.1920x1080.jpg'
+    return IMG_LB + i, IMG_LB + i
 
 
 def enumera(lista):
@@ -308,9 +323,11 @@ def seccion_juego(gr, nombre_sis):
                                  ('Género', enumera([GENEROS.get(g, g) for g in d.get('g', [])][:3]).capitalize()),
                                  ('Jugadores', d.get('j') + (' (cooperativo)' if d.get('c') else '') if d.get('j') else '')) if v]
     dl = ''.join(f'<dt>{k}</dt><dd>{e(v)}</dd>' for k, v in datos)
-    imgs = ([d['t']] if d.get('t') else []) + d.get('s', [])
-    capturas = ''.join(f'<a href="{e(IMG_LB + i)}" target="_blank" rel="noopener"><img loading="lazy" src="{e(IMG_LB + i)}" alt="Captura de {e(titulo)}" '
-                       f'referrerpolicy="no-referrer" onerror="this.parentNode.remove()"></a>' for i in imgs[:4])
+    imgs = (([d['t']] if d.get('t') else []) + d.get('s', []))[:4]
+    capturas = ''.join(f'<a href="{e(grande)}" target="_blank" rel="noopener"><img loading="lazy" src="{e(mini)}" alt="Captura de {e(titulo)}" '
+                       f'referrerpolicy="no-referrer" onerror="this.parentNode.remove()"></a>' for mini, grande in map(captura, imgs))
+    # Las de Steam son panorámicas (16:9) y las de LaunchBox, casi todas de 4:3.
+    de_steam = bool(imgs) and all(i.startswith('steam:') for i in imgs)
     v = d.get('v', '')
     video = (f'<button type="button" class="video" data-v="{e(v)}" title="Vídeo de {e(titulo)}" onclick="yt(this)">'
              f'<img loading="lazy" src="https://i.ytimg.com/vi/{e(v)}/hqdefault.jpg" alt="" referrerpolicy="no-referrer"><span>Ver un vídeo del juego</span></button>'
@@ -321,7 +338,7 @@ def seccion_juego(gr, nombre_sis):
     <h2>El juego</h2>
     <p class="texto">{e(descripcion_juego(gr, nombre_sis))}</p>
     {f'<dl class="datos">{dl}</dl>' if dl else ''}
-    {f'<div class="capturas">{capturas}</div><p class="suave">Capturas del juego original, sin traducir (de LaunchBox).</p>' if capturas else ''}
+    {f'<div class="capturas{" anchas" if de_steam else ""}">{capturas}</div><p class="suave">Capturas del juego original, sin traducir (de {"su página de Steam" if de_steam else "LaunchBox"}).</p>' if capturas else ''}
     {video}
     {f'<p class="suave">{wiki}{" · " if wiki and video else ""}{"El vídeo es de YouTube y no se carga hasta que lo pulsas." if video else ""}</p>' if wiki or video else ''}
   </section>'''
@@ -729,6 +746,7 @@ def pagina(raiz, titulo, descripcion, ruta, cuerpo, base, imagen='img/vista-prev
 <meta property="og:image" content="{e(og_imagen)}">
 <meta property="og:locale" content="es_ES">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@{X_CUENTA}">
 {jsonld(ld) if ld else ''}
 <script>try{{if(localStorage.getItem('adultos')==='1')document.documentElement.classList.add('adultos')}}catch(e){{}}function sig(i){{var r=(i.dataset.alt||'').split(' ').filter(Boolean);if(!r.length){{i.parentNode.classList.add('sin');i.remove();return}}i.src=r.shift();i.dataset.alt=r.join(' ')}}function yt(b){{if(!/^[A-Za-z0-9_-]{{11}}$/.test(b.dataset.v))return;var f=document.createElement('iframe');f.src='https://www.youtube-nocookie.com/embed/'+b.dataset.v+'?autoplay=1';f.allow='autoplay; encrypted-media; picture-in-picture; fullscreen';f.allowFullscreen=true;f.title=b.title;f.className='video';b.replaceWith(f)}}</script>
 </head>
@@ -751,7 +769,7 @@ def pagina(raiz, titulo, descripcion, ruta, cuerpo, base, imagen='img/vista-prev
   <div class="pie-in">
     <p><b>Biblioteca de traducciones</b> es gratuita y de código libre (<a href="{REPO}/blob/main/LICENSE">GPL-3.0</a>). Las traducciones son de sus autores: este programa solo las encuentra y las aplica, y nunca descarga juegos.</p>
     <p><a href="{raiz}grupos/">Grupos de traducción</a> · <a href="{raiz}en-camino/">Traducciones en camino</a> · <a href="{raiz}perdidas/">Traducciones perdidas</a> · <a href="{raiz}selecciones/">Selecciones</a> · <a href="{raiz}parchear/">Parchear en el navegador</a></p>
-    <p><a href="{REPO}" data-goatcounter-click="estrella-github">Código en GitHub: si te es útil, dale una estrella ★</a> · <a href="{INCIDENCIAS}">Avisar de un error o de una traducción que falta</a></p>
+    <p><a href="{REPO}" data-goatcounter-click="estrella-github">Código en GitHub: si te es útil, dale una estrella ★</a> · <a href="{X}" rel="me noopener" data-goatcounter-click="x-pie">Síguenos en X (Twitter): @{X_CUENTA}</a> · <a href="{INCIDENCIAS}">Avisar de un error o de una traducción que falta</a></p>
     <p class="suave">No está relacionado con ninguna de las empresas de los juegos. Las portadas son de sus propietarios. Firma del instalador: <a href="{REPO}#code-signing-policy">Code signing policy</a>.{nota_cuenta}</p>
   </div>
 </footer>
@@ -1285,7 +1303,7 @@ def pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version, dias, filas, p
     # Cervantes; el nombre alternativo ayuda a Google a no confundirlos al poner el nombre de la web en los resultados.
     ld = {'@context': 'https://schema.org', '@graph': [
         {'@type': 'WebSite', 'url': base, 'name': SITIO, 'alternateName': ['Biblioteca de traducciones de juegos', 'bibliotecadetraducciones.com'],
-         'inLanguage': 'es',
+         'inLanguage': 'es', 'sameAs': [X],
          'potentialAction': {'@type': 'SearchAction', 'target': {'@type': 'EntryPoint', 'urlTemplate': base + 'catalogo/?q={q}'},
                              'query-input': 'required name=q'}},
         {'@type': 'SoftwareApplication', 'name': 'Biblioteca de traducciones', 'url': base, 'description': desc, 'inLanguage': 'es',
@@ -1443,7 +1461,9 @@ def es_japonesa(f):
 
 
 def de_genero(g, *gs):
-    return any(x in g['dj'].get('g', []) for x in gs)
+    """Para las selecciones por género solo valen los géneros de LaunchBox: los de Steam («o»: «steam» en datos_juegos.json)
+    son muy amplios (casi todo es «Aventura») y solo se usan en el texto de la ficha."""
+    return g['dj'].get('o') != 'steam' and any(x in g['dj'].get('g', []) for x in gs)
 
 
 AVENTURAS = {'scummvm', 'dos', 'pc', 'windows', 'pc98', 'amiga', 'megacd', 'pcenginecd'}
