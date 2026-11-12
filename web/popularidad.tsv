@@ -1469,6 +1469,8 @@ pc|UnderRail|MetakWAR	63	lb:10 st:6436
 pc|Void Stranger|GiAnMMV (Void Stranger International)	63	lb:3 st:3379 +2trad
 pc|Void Stranger|fogosb	63	lb:3 st:3379 +2trad
 ps2|Resident Evil Outbreak|	63	lb:122
+ps2|Xenosaga Episode II: Jenseits von Gut und Böse|Batnoska	63	lb:91 +2trad
+ps2|Xenosaga Episode II: Jenseits von Gut und Böse|JinK	63	lb:91 +2trad
 ps3|Persona 5|SeppNel (backport) y Artur16211	63	lb:122
 psp|Shin Megami Tensei: Persona 3 Portable|HxCannon	63	lb:117
 psx|Street Fighter EX2 Plus|BnD Translations / Er_Sevi	63	lb:116
@@ -2082,7 +2084,6 @@ pc|Umineko When They Cry - Answer Arcs|blasetvrt (basado en la traducción de 07
 pc|Warcraft II|Foro de Clan DLAN (autor no indicado)	59	lb:88
 pc|Wing Commander|Clan DLAN	59	lb:62 +2trad
 pc|Wing Commander|DarkNeo (Ruben Birri)	59	lb:62 +2trad
-ps2|Xenosaga Episode II: Jenseits von Gut und Böse|Batnoska	59	lb:91
 psx|Mickey's Wild Adventure|PeterDelta	59	lb:87
 psx|Skullmonkeys|PeterDelta	59	lb:86
 sega32x|Metal Head|Traducciones Wave	59	lb:90
@@ -5255,6 +5256,7 @@ colecovision|War Room|Traducciones Wave	34	lb:12
 dos|Snoopy: The Cool Computer Game|cireja	34	lb:12
 fds|Knight Lore - Majou no Ookami Otoko|Traducciones Wave	34	lb:12
 gamegear|Honoo no Toukyuuji: Dodge Danpei|Rockymitsu	34	lb:12
+gbc|Cardcaptor Sakura: Itsumo Sakura-chan to Issho!|Yuzuy	34	lb:12
 gbc|Ganbare Goemon: Hoshizorashi Dynamites Arawaru!!|jackic	34	lb:12
 gbc|Little Magic|Lukas	34	lb:12
 gbc|Warriors of Might and Magic|Traducciones Wave	34	lb:12
@@ -5727,14 +5729,13 @@ pc|Head over Heels|cireja	18	lb:3
 pc|Hexplore|aescuderos	18	lb:3
 pc|Higurashi When They Cry Hou (capítulos 5-8)|Universo When They Cry	18	lb:2 +2trad
 pc|I'll Be Back to the Future with a Terminator: The Fan Game|cireja	18	lb:3
-pc|Kamidori Alchemy Meister|Sharin-Sub	18	lb:3
 pc|Lone Echo 2|H4rl0ck	18	lb:2 +2trad
 pc|Lone Echo 2|Hanibalmax	18	lb:2 +2trad
 pc|Men of Valor: The Vietnam War|vreyes1981	18	lb:3
 pc|Metaphobia|walas74	18	lb:3
 pc|Reynatis|shadowman1	18	lb:3
+pc|Rhapsody: A Musical Adventure|El-ladronfantasma	18	lb:3
 pc|Snoopy vs. the Red Baron|Cait Sith	18	lb:3
-pc|Subarashiki Hibi ~Furenzoku Sonzai~|07th Inquisition	18	lb:3
 pc|Tex Murphy: Martian Memorandum|Pakolmo	18	lb:3
 pc|The Hardy Boys: The Hidden Theft|asperet, Mike Melanson y Pakolmo	18	lb:3
 pc|The Phantom Fellows|locoroco96	18	lb:3
@@ -5803,7 +5804,6 @@ pc|Morningstar|Ricardo Rodríguez Palma	14	lb:2
 pc|Party Project|Mr2Secs	14	lb:2
 pc|Scott Whiskers in: the Search for Mr. Fumbleclaw|locoroco96	14	lb:2
 pc|Sharin no Kuni, Himawari no Shoujo|Sharin-Sub	14	lb:2
-pc|Shuffle!|Sharin-Sub	14	lb:2
 pc|Stella Sora|jhon1466	14	lb:2
 pc|TETR.IO|EricRamirezS	14	lb:2
 pc|The Elder Scrolls IV: Shivering Isles|Clan DLAN	14	lb:2
@@ -5876,7 +5876,6 @@ pc98|Farland Story Denki: Arc Ou no Ensei|AbandoJuegos	9	lb:1
 pcenginecd|YAWARA! 2: A Fashionable Judo Girl!|johanderohan (Parches en Castellano)	9	lb:1
 pc|A Date in the Park|cireja	9	lb:1
 pc|A Walk in the Park|cireja	9	lb:1
-pc|Aiyoku no Eustia|Sharin-Sub	9	lb:1
 pc|Amatsutsumi|Taikutsu Translations (TaikutsuTL)	9	lb:1
 pc|Aokana - Four Rhythms Across the Blue|Taikutsu Translations (TaikutsuTL)	9	lb:1
 pc|Back to the Future III: Timeline of Monkey Island|Pakolmo	9	lb:1
@@ -5890,7 +5889,6 @@ pc|Detective Hayseed: The Clones Madness|Pakolmo	9	lb:1
 pc|Dragon Quest X Offline|KodywithaK	9	lb:1
 pc|Elite Warriors: Vietnam|dape.sw	9	lb:1
 pc|Fragment|cireja	9	lb:1
-pc|Hoshizora no Memoria -Wish upon a Shooting Star-|Sharin-Sub	9	lb:1
 pc|Kivi's Underworld|garciafigueres e Immortality (Clan DLAN)	9	lb:1
 pc|Knights: Learn to Fly|xblastoise99	9	lb:1
 pc|Nancy Drew: The Hidden Staircase|manzanin300	9	lb:1
