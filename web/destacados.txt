@@ -6,6 +6,11 @@ pc|Night Call|hasta 2026-11-19
 ps2|Xenosaga Episode II: Jenseits von Gut und Böse|hasta 2026-11-19
 -pc|PEAK|hasta 2026-11-19
 -n64|The Legend of Zelda: Ocarina of Time|hasta 2026-11-19
+# Del 12 al 19-11-2026: Chaos Rings III y Final Fantasy Explorers de Joseas, que dio permiso el 12-11; Chrono Trigger y A Link to the Past les dejan sitio.
+psvita|Chaos Rings III|hasta 2026-11-19
+3ds|Final Fantasy Explorers|hasta 2026-11-19
+-snes|Chrono Trigger|hasta 2026-11-19
+-snes|The Legend of Zelda - A Link to the Past|hasta 2026-11-19
 # Desde el 12-11-2026: Suikoden III de Yuzuy (sale aunque sus traducciones sean con IA, por estar fijado) y Super Mario 64 fuera.
 ps2|Suikoden III
 -n64|Super Mario 64

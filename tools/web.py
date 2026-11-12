@@ -174,6 +174,25 @@ def fijados():
     return mosaico_a_mano()[0]
 
 
+def actualizadas():
+    """Traducciones puestas al día que se decide sacar en las novedades (web/actualizadas.txt): cada línea es
+    sistema|juego|grupo|AAAA-MM-DD, con juego y grupo tal como están en el catálogo. Salen en las novedades de ese día
+    como «Actualizado», en vez de en el día en que entraron. Las de hace más de DIAS_NOVEDADES días, o con fecha
+    futura, no cuentan. Devuelve {clave de la fila: AAAA-MM-DD}."""
+    ruta = os.path.join(WEB, 'actualizadas.txt')
+    if not os.path.isfile(ruta):
+        return {}
+    hoy = date.today()
+    desde, hasta = date.fromordinal(hoy.toordinal() - DIAS_NOVEDADES).isoformat(), hoy.isoformat()
+    out = {}
+    for l in open(ruta, encoding='utf-8'):
+        partes = [p.strip() for p in l.strip().split('|')]
+        if (len(partes) == 4 and not partes[0].startswith('#') and re.fullmatch(r'\d{4}-\d{2}-\d{2}', partes[3])
+                and desde <= partes[3] <= hasta):
+            out[clave_fila({'sistema': partes[0], 'juego': partes[1], 'grupo': partes[2]})] = partes[3]
+    return out
+
+
 def web_segura(u):
     """Solo direcciones web en los href que vienen del catálogo (nunca javascript: ni file:)."""
     return u if u.startswith(('https://', 'http://')) and ' ' not in u else ''
@@ -730,8 +749,8 @@ def novedades(filas, sin_adultos=False):
 
 
 def tarjetas_novedades(dias, raiz, sysn, k=None, con_fecha=True):
-    """Las tarjetas de las novedades, un juego por tarjeta con su traducción nueva, hasta k. Con k (la portada), el
-    mismo título en dos sistemas sale una sola vez."""
+    """Las tarjetas de las novedades, un juego por tarjeta con su traducción nueva (o puesta al día, si está en
+    web/actualizadas.txt), hasta k. Con k (la portada), el mismo título en dos sistemas sale una sola vez."""
     vistos, titulos, items = set(), set(), []
     for fecha, fs in dias:
         for f in fs:
@@ -740,7 +759,10 @@ def tarjetas_novedades(dias, raiz, sysn, k=None, con_fecha=True):
                 continue
             vistos.add(id(g))
             titulos.add(sin_acentos(g['titulo']).lower())
-            pie = f'<span class="m alta">Añadido el {fecha_corta(fecha)}</span>' if con_fecha else ''
+            if f.get('act'):
+                pie = f'<span class="m alta">Actualizado{" el " + fecha_corta(fecha) if con_fecha else ""}</span>'
+            else:
+                pie = f'<span class="m alta">Añadido el {fecha_corta(fecha)}</span>' if con_fecha else ''
             items.append(tarjeta_juego(g, raiz, sysn, True, fila=f, pie=pie))
             if k and len(items) == k:
                 return items
@@ -1947,9 +1969,12 @@ def feed_novedades(dias, sysn, base):
     entradas = []
     for fecha, fs in dias[:30]:
         lista = ''.join(f'<li><a href="{e(base + f["ruta"])}">{e(f["juego"])}</a> ({e(sysn.get(f["sistema"], f["sistema"]))})'
-                        + (f' · {e(f["grupo"].strip())}' if f['grupo'].strip() else '') + '</li>' for f in fs)
-        n = len(fs)
-        entradas.append(f'<entry><title>{e(fecha_larga(fecha))}: {n} {"traducción nueva" if n == 1 else "traducciones nuevas"}</title>'
+                        + (f' · {e(f["grupo"].strip())}' if f['grupo'].strip() else '')
+                        + (' · actualizada' if f.get('act') else '') + '</li>' for f in fs)
+        n, na = sum(1 for f in fs if not f.get('act')), sum(1 for f in fs if f.get('act'))
+        partes = ([f'{n} {"traducción nueva" if n == 1 else "traducciones nuevas"}'] if n else []) + (
+            [f'{na} {"actualizada" if na == 1 else "actualizadas"}'] if na else [])
+        entradas.append(f'<entry><title>{e(fecha_larga(fecha))}: {" y ".join(partes)}</title>'
                         f'<link href="{e(base)}novedades/#d{fecha}"/><id>{e(base)}novedades/#d{fecha}</id><updated>{fecha}T00:00:00Z</updated>'
                         f'<content type="html">{e("<ul>" + lista + "</ul>")}</content></entry>\n')
     actualizado = (dias[0][0] if dias else date.today().isoformat()) + 'T00:00:00Z'
@@ -2147,9 +2172,13 @@ def main():
             k += 1
         RUTAS_GRUPO[n] = ruta
     sels = selecciones(juegos, sysn, visitas_fichas())
-    altas = fechas_alta()
+    altas, act = fechas_alta(), actualizadas()
     for f in filas:
         f['alta'] = altas.get(clave_fila(f), '')
+        if act.get(clave_fila(f), '') > f['alta']:  # puesta al día después de entrar: sale ese día, como «Actualizado»
+            f['alta'], f['act'] = act[clave_fila(f)], True
+    for c in sorted(set(act) - {clave_fila(f) for f in filas}):
+        print(f'AVISO: {c} (web/actualizadas.txt) no es de ninguna traducción del catálogo')
     dias, dias_publicas = novedades(filas), novedades(filas, sin_adultos=True)
 
     if os.path.isdir(salida):
