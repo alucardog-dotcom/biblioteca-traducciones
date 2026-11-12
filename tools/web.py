@@ -1648,8 +1648,9 @@ SAGAS = [
 ]
 MAS_VISTOS_DIAS = 30
 # Favoritos: al guardar un juego en Favoritos, web/listas.js manda un evento anónimo de GoatCounter, una sola vez por
-# navegador y juego. La ficha dice cuántas veces se ha guardado (favoritos_fichas()) a partir de FAVORITOS_MIN, que
-# menos luce poco, y la cuenta empieza en FAVORITOS_DESDE.
+# navegador y juego; quitarlo no manda nada. La ficha dice cuántas veces se ha guardado (favoritos_fichas()) a partir
+# de FAVORITOS_MIN, que menos luce poco, y la cuenta empieza en FAVORITOS_DESDE. La cifra solo sube, nunca baja
+# (favoritos_sin_bajar()).
 FAVORITOS_DESDE = '2026-11-12'
 FAVORITOS_MIN = 3
 # La selección de quien lleva la web: juegos especiales, de los que no suelen salir en las listas, apuntados a mano en
@@ -1757,6 +1758,35 @@ def favoritos_fichas():
                 veces[ruta] = veces.get(ruta, 0) + int(h.get('count') or 0)
     print(f'favoritos de GoatCounter: {len(veces)} juegos guardados en Favoritos desde {FAVORITOS_DESDE}, '
           f'{sum(1 for v in veces.values() if v >= FAVORITOS_MIN)} con {FAVORITOS_MIN} o más', file=sys.stderr)
+    return veces
+
+
+def favoritos_sin_bajar(nuevos, base, rutas):
+    """La cifra de Favoritos de una ficha nunca baja: cada generación publica favoritos.json ({ruta: veces}) y la
+    siguiente se queda, juego a juego, con lo mayor entre lo publicado y lo que dé GoatCounter. Así la ficha no pierde
+    su cifra si un día falla la API o si GoatCounter borra datos viejos (y quitar un favorito ya no resta: no se manda
+    nada). Solo quedan los juegos que siguen en la web (rutas)."""
+    import time, urllib.error, urllib.request
+    publicados = {}
+    for intento in range(3):  # si falla la red, se reintenta: perder lo publicado sería perder las cifras guardadas
+        try:
+            pet = urllib.request.Request(base + 'favoritos.json', headers={'User-Agent': 'BibliotecaTraducciones-web'})
+            with urllib.request.urlopen(pet, timeout=30) as r:
+                d = json.load(r)
+            if isinstance(d, dict):
+                publicados = {k: v for k, v in d.items() if isinstance(k, str) and type(v) is int and v > 0}
+            break
+        except Exception as ex:
+            if isinstance(ex, urllib.error.HTTPError) and ex.code == 404:
+                print('favoritos.json aún no está publicado: se empieza solo con GoatCounter', file=sys.stderr)
+                break
+            if intento == 2:
+                print(f'AVISO: no se pudo leer el favoritos.json publicado ({type(ex).__name__}); se sigue sin él', file=sys.stderr)
+            else:
+                time.sleep(5)
+    veces = {r: max(nuevos.get(r, 0), publicados.get(r, 0)) for r in (set(nuevos) | set(publicados)) & set(rutas)}
+    veces = {r: v for r, v in veces.items() if v > 0}
+    print(f'favoritos: {len(veces)} juegos ({len(publicados)} leídos de la web publicada)', file=sys.stderr)
     return veces
 
 
@@ -2235,7 +2265,7 @@ def main():
             k += 1
         RUTAS_GRUPO[n] = ruta
     sels = selecciones(juegos, sysn, visitas_fichas())
-    ctx['favs'] = favoritos_fichas()
+    ctx['favs'] = favoritos_sin_bajar(favoritos_fichas(), base, {g['ruta'] for g in juegos})
     altas, act = fechas_alta(), actualizadas()
     for f in filas:
         f['alta'] = altas.get(clave_fila(f), '')
@@ -2284,6 +2314,7 @@ def main():
     escribir(salida, 'catalogo/index.html', miles(pagina_catalogo(por_sis, sysn, base, n_trad, n_juegos, filas)))
     escribir(salida, 'novedades/index.html', miles(pagina_novedades(dias, filas, sysn, base)))
     escribir(salida, 'novedades.xml', feed_novedades(dias_publicas, sysn, base))
+    escribir(salida, 'favoritos.json', json.dumps(dict(sorted(ctx['favs'].items())), ensure_ascii=False, separators=(',', ':')))
     escribir(salida, 'doblajes/index.html', miles(pagina_doblajes(filas, sysn, base)))
     escribir(salida, 'grupos/index.html', miles(pagina_grupos(grupos, base)))
     for n, items in grupos.items():
