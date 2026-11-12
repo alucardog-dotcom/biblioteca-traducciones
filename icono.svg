@@ -1,14 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
-  <defs>
-    <clipPath id="c"><rect x="112" y="112" width="800" height="800" rx="160"/></clipPath>
-  </defs>
-  <rect x="48" y="48" width="928" height="928" rx="208" fill="#141922"/>
-  <g clip-path="url(#c)">
-    <rect x="112" y="112" width="800" height="800" fill="#C60B1E"/>
-    <rect x="112" y="312" width="800" height="400" fill="#FFC400"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="160 121 880 880">
+  <!-- El logotipo de la Biblioteca de traducciones (12-11-2026): un cartucho con las iniciales BT. El cartucho va
+       relleno de blanco para que se vea igual sobre fondo claro u oscuro. -->
+  <g fill="none" stroke="#B11F2A" stroke-linejoin="round">
+    <path d="M210 859V229a70 70 0 0 1 70-70h592l117 117v583h-69v104H280V859z" fill="#fff" stroke-width="48"/>
+    <path d="M370 236h420M370 284h420" stroke-width="20" stroke-linecap="round"/>
+    <rect x="300" y="343" width="600" height="453" rx="42" stroke-width="20"/>
   </g>
-  <g fill="#AA151B" transform="translate(512 512) scale(0.72) translate(-489 -520)">
-    <path d="M318 330c18-34 44-50 76-50 26 0 46 9 66 20 18 10 32 16 48 16 16 0 26-8 34-26l44 22c-18 36-44 52-78 52-26 0-46-9-66-20-18-10-32-16-48-16-14 0-26 8-34 26z"/>
-    <path d="M300 760V420h82l200 228V420h96v340h-82L396 532v228z"/>
-  </g>
+  <path fill="#B11F2A" fill-rule="evenodd" d="M405 437h117c53 0 78 25 78 63 0 30-18 50-45 56 35 6 57 34 57 69 0 40-32 65-87 65H405zM473 491v49h32c18 0 28-10 28-25s-10-24-28-24zM473 580v55h37c20 0 31-12 31-28s-11-27-31-27z"/>
+  <path fill="#E2A800" d="M595 437h217v55h-74v198h-68V492h-75z"/>
 </svg>

@@ -750,6 +750,7 @@ def pagina(raiz, titulo, descripcion, ruta, cuerpo, base, imagen='img/vista-prev
 <meta name="description" content="{e(descripcion)}">
 {extra}<link rel="canonical" href="{e(canon)}">
 <link rel="icon" href="{raiz}icono.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="{raiz}apple-touch-icon.png">
 <link rel="stylesheet" href="{raiz}estilo.css">
 <link rel="alternate" type="application/atom+xml" title="Novedades del catálogo" href="{raiz}novedades.xml">
 <meta property="og:site_name" content="{SITIO}">
@@ -2008,7 +2009,7 @@ def pagina_parchear(base, sysn):
 .trad-a {{ display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }}
 .manual {{ display: inline-block; margin-top: 8px; color: var(--suave); }}
 .hecho {{ margin: 22px 0; padding: 20px; border: 1px solid rgba(95, 211, 154, 0.4); border-radius: 12px; background: var(--panel); }}
-.aviso {{ padding: 14px 16px; border: 1px solid rgba(255, 196, 0, 0.4); border-radius: 12px; background: var(--panel); }}
+.aviso {{ padding: 14px 16px; border: 1px solid rgba(226, 168, 0, 0.4); border-radius: 12px; background: var(--panel); }}
 .registro {{ margin-top: 28px; color: var(--suave); }}
 .registro pre {{ white-space: pre-wrap; font-size: 0.85rem; max-height: 240px; overflow: auto; background: #0B0E13; padding: 12px; border-radius: 8px; }}
 #juego h2 {{ margin-top: 28px; }}
@@ -2101,9 +2102,13 @@ def main():
     # apunta a ellas en "pu", también para el programa.
     if os.path.isdir(os.path.join(WEB, 'miniaturas')):
         shutil.copytree(os.path.join(WEB, 'miniaturas'), os.path.join(salida, 'miniaturas'))
-    # El icono de la web (web/icono.svg, sin bandera) o, si no está, el del programa.
+    # El logotipo (web/icono.svg: el cartucho con las iniciales BT, desde el 12-11-2026) o, si no está, el del programa;
+    # y sus copias en PNG para el iPhone (fondo blanco) y en ICO para quien pida /favicon.ico.
     icono = os.path.join(WEB, 'icono.svg')
     shutil.copy(icono if os.path.isfile(icono) else os.path.join(RAIZ, 'ui', 'icono.svg'), os.path.join(salida, 'icono.svg'))
+    for nombre in ('apple-touch-icon.png', 'favicon.ico'):
+        if os.path.isfile(os.path.join(WEB, nombre)):
+            shutil.copy(os.path.join(WEB, nombre), os.path.join(salida, nombre))
     shutil.copy(os.path.join(WEB, 'estilo.css'), os.path.join(salida, 'estilo.css'))
     if os.path.isfile(os.path.join(WEB, 'estadisticas.js')):
         shutil.copy(os.path.join(WEB, 'estadisticas.js'), os.path.join(salida, 'estadisticas.js'))

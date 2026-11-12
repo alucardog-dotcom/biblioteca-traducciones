@@ -7,10 +7,10 @@
   --linea: #2A3140;
   --texto: #E8EAEE;
   --suave: #A3AAB7;
-  --rojo: #C60B1E;
-  --rojo-2: #DA1B2E;
-  --amarillo: #FFC400;
-  --amarillo-t: #FFD95A;
+  --rojo: #B11F2A;
+  --rojo-2: #C93340;
+  --amarillo: #E2A800;
+  --amarillo-t: #F2C94C;
   --verde: #5FD39A;
   --sans: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Roboto, Arial, sans-serif;
   --display: "Segoe UI Variable Display", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Roboto, Arial, sans-serif;
@@ -70,8 +70,8 @@ main { display: block; max-width: var(--ancho); margin: 0 auto; padding: 0 var(-
 .heroe { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 40px; align-items: center; padding-top: 40px;
   position: relative; }
 .heroe::before { content: ""; position: absolute; inset: -60px -40vw auto; height: 520px; z-index: -1; pointer-events: none;
-  background: radial-gradient(600px 320px at 15% 30%, rgba(198, 11, 30, 0.28), transparent 70%),
-              radial-gradient(520px 300px at 75% 10%, rgba(255, 196, 0, 0.12), transparent 70%); }
+  background: radial-gradient(600px 320px at 15% 30%, rgba(177, 31, 42, 0.28), transparent 70%),
+              radial-gradient(520px 300px at 75% 10%, rgba(226, 168, 0, 0.12), transparent 70%); }
 .heroe-t { display: grid; gap: 4px; }
 .acciones { display: flex; flex-wrap: wrap; gap: 12px; margin: 26px 0 12px; }
 .captura { width: 100%; height: auto; border-radius: 14px; border: 1px solid var(--linea); box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55); }
@@ -100,7 +100,7 @@ main { display: block; max-width: var(--ancho); margin: 0 auto; padding: 0 var(-
 .preguntas summary { cursor: pointer; padding: 14px 0; font-weight: 650; }
 .preguntas details p { margin: 0 0 16px; color: var(--suave); max-width: 75ch; }
 .final { margin-top: 80px; padding: 44px 24px; border-radius: 18px; text-align: center; display: grid; gap: 22px; justify-items: center;
-  background: linear-gradient(135deg, rgba(198, 11, 30, 0.35), rgba(255, 196, 0, 0.12)), var(--panel); border: 1px solid var(--linea); }
+  background: linear-gradient(135deg, rgba(177, 31, 42, 0.35), rgba(226, 168, 0, 0.12)), var(--panel); border: 1px solid var(--linea); }
 
 /* ---- migas */
 .migas { padding-top: 24px; color: var(--suave); font-size: 0.92rem; }
@@ -120,7 +120,7 @@ main { display: block; max-width: var(--ancho); margin: 0 auto; padding: 0 var(-
 .compra { margin-top: 10px; display: grid; gap: 4px; justify-items: start; }
 .juego-t .compra .btn { margin-top: 0; }
 .compra p { margin: 0; font-size: 0.82rem; }
-.btn.tienda { border-color: rgba(255, 196, 0, 0.55); color: var(--amarillo-t); }
+.btn.tienda { border-color: rgba(226, 168, 0, 0.55); color: var(--amarillo-t); }
 .btn.tienda:hover { border-color: var(--amarillo); }
 .eti { margin: 0; color: var(--amarillo-t); font-size: 0.8rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
 .trads { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr)); gap: 16px; }
@@ -135,7 +135,7 @@ main { display: block; max-width: var(--ancho); margin: 0 auto; padding: 0 var(-
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip { font-size: 0.75rem; font-weight: 700; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--linea); color: var(--suave); }
 .chip.ok { color: var(--verde); border-color: rgba(95, 211, 154, 0.4); }
-.chip.aviso { color: var(--amarillo-t); border-color: rgba(255, 196, 0, 0.4); }
+.chip.aviso { color: var(--amarillo-t); border-color: rgba(226, 168, 0, 0.4); }
 .chip.clic { background: var(--amarillo); color: #141922; border-color: transparent; }
 .chip.ia { color: #FF8C96; border-color: rgba(255, 107, 120, 0.45); }
 .chip.var { color: #9FD3FF; border-color: rgba(159, 211, 255, 0.4); }
@@ -327,7 +327,7 @@ iframe.video { display: block; width: 100%; max-width: 640px; aspect-ratio: 16 /
 .en-camino-p .bloque .texto, .perdidas-p .bloque .texto { margin: -8px 0 0; }
 .proy code { overflow-wrap: anywhere; }
 .proy .tengo { white-space: nowrap; font-weight: 700; }
-.trad .perdida-aviso { margin: 0; padding: 10px 12px; border-radius: 10px; font-size: 0.9rem; color: var(--amarillo-t); background: rgba(255, 196, 0, 0.08); border: 1px solid rgba(255, 196, 0, 0.3); }
+.trad .perdida-aviso { margin: 0; padding: 10px 12px; border-radius: 10px; font-size: 0.9rem; color: var(--amarillo-t); background: rgba(226, 168, 0, 0.08); border: 1px solid rgba(226, 168, 0, 0.3); }
 .proys { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 8px; }
 .proy { display: grid; gap: 2px; padding: 12px 14px; border-radius: 10px; background: var(--panel); border: 1px solid var(--linea); }
 .proy > a { color: var(--texto); text-decoration: none; }
