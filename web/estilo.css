@@ -131,6 +131,7 @@ main { display: block; max-width: var(--ancho); margin: 0 auto; padding: 0 var(-
 .trad dt { color: var(--suave); }
 .trad dd { margin: 0; overflow-wrap: anywhere; }
 .trad .nota { margin: 0; color: var(--suave); font-size: 0.9rem; }
+.trad .nota a { overflow-wrap: anywhere; }
 .trad p.suave { margin: 0; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip { font-size: 0.75rem; font-weight: 700; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--linea); color: var(--suave); }

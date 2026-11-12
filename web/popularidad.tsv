@@ -3306,12 +3306,10 @@ scummvm|Leisure Suit Larry in the Land of the Lounge Lizards|mondarina	52	lb:50
 scummvm|Phantasmagoria|pakolmo, asperet, walas74, Maruchan y Mike Melanson	52	lb:52
 snes|Air Cavalry|Traducciones Wave	52	lb:53
 snes|Ashita no Joe|Max1323	52	lb:52
-snes|BS The Legend of Zelda|Dervour	52	lb:52
 snes|BS Zelda no Densetsu - Inishie no Sekiban - Dai-1-wa|	52	lb:52
 snes|BS Zelda no Densetsu - Inishie no Sekiban - Dai-2-wa|	52	lb:52
 snes|BS Zelda no Densetsu - Inishie no Sekiban - Dai-3-wa|	52	lb:52
 snes|BS Zelda no Densetsu - Inishie no Sekiban - Dai-4-wa|	52	lb:52
-snes|BS Zelda no Densetsu - Map 2|	52	lb:52
 snes|Go Go Ackman 2|johanderohan (Parches en Castellano)	52	lb:53
 snes|Kyuuyaku Megami Tensei|jackic	52	lb:50
 snes|Sengoku Denshou|Max1323	52	lb:38 +2trad
@@ -3645,7 +3643,7 @@ pc|Kingdoms of the Dump|shadowman1	50	lb:1 st:1042
 pc|Miasmata|David Talavera e Ian Munsie	50	lb:6 st:1066
 pc|Old Skies|shadowman1	50	lb:4 st:989
 pc|Paradigm|pakolmo	50	lb:15 st:984
-pc|Quiplash|AkiraArtuhaxis	50	lb:14 st:1000
+pc|Quiplash|Jackbox en español	50	lb:14 st:1000
 pc|Sea Bed|Sharin-Sub	50	st:1011
 pc|The Fruit of Grisaia|Sharin-Sub	50	lb:6 st:1035
 pc|The Inner World|darkpadawan	50	lb:8 st:934
@@ -3841,7 +3839,7 @@ pc|Computer Tycoon|triangulotongo-web	49	lb:3 st:926
 pc|Deck of Ashes|ron_con_cola	49	lb:3 st:873
 pc|Demon Tides|shadowman1	49	lb:2 st:860
 pc|Disgaea 7|CepitaUva	49	st:923
-pc|Drawful 2|rmatelec	49	lb:24 st:825
+pc|Drawful 2|Jackbox en español	49	lb:24 st:825
 pc|Dungeon Master (DOS)|Aficionados (sin nombre)	49	lb:42
 pc|J.U.L.I.A.: Among the Stars|koke_ween	49	lb:7 st:825
 pc|La-Mulana 2|Mtu	49	lb:15 st:832
@@ -4040,7 +4038,7 @@ pc|StarCrawlers|shadowman1	48	lb:5 st:797
 pc|Still There|shadowman1	48	lb:3 st:774
 pc|The Wolf Among Us Remastered|garioncete	48	st:747
 pc|Trails beyond the Horizon|Yuzuy	48	st:732
-pc|Use Your Words|AkiraArtuhaxis	48	lb:5 st:750
+pc|Use Your Words|Jackbox en español	48	lb:5 st:750
 ps2|Eternal Poison|locoroco96	48	lb:36
 psx|Aconcagua|Mr.Nobody	48	lb:36
 psx|Final Fantasy V|Rod Traducciones / Ragnarok / Monicapo / Dusttin	48	lb:38
@@ -4440,6 +4438,7 @@ pc|Resonance|walas74	45	lb:17 st:471
 pc|Rise of the Third Power|shadowman1	45	lb:3 st:495
 pc|Sister Ray|shadowman1	45	st:485
 pc|The Beekeeper's Picnic|locoroco96	45	st:493
+pc|The Jackbox Party Pack|Jackbox en español	45	lb:29
 pc|The Quintessential Quintuplets: Five Memories Spent With You|Atos333	45	st:522
 pc|Under the Island|MaLDo	45	st:469
 ps2|King of Fighters: Maximum Impact|[John]	45	lb:29
@@ -4543,6 +4542,7 @@ pc|Kara no Shojo|Ononoki	44	st:414
 pc|Loopmancer|shadowman1	44	lb:12 st:451
 pc|Manhunt 2|Clan DLAN	44	lb:27
 pc|Metal Max Xeno Reborn|shadowman1	44	lb:2 st:448
+pc|Night Call|Sisa (maxeryt15)	44	lb:3 st:410
 pc|Rayman: 30th Anniversary Edition|AlexLimitedGames y El Gronux (PlumWing Studio, Chao Dubs)	44	lb:4 st:454
 pc|Silence of the Sleep|Tradupixel	44	lb:2 st:446
 pc|SimCity 3000 Unlimited|EstMP	44	lb:27
@@ -4650,7 +4650,7 @@ pc|The Elder Scrolls Adventures: Redguard|Inforyack (J. Giacobbi)	43	lb:25 st:20
 pc|The Jolly Gang's Misadventures in Africa|EquipoKat	43	st:383
 pc|Volkolak: The Will of Gods|shadowman1	43	lb:1 st:356
 pc|Voodoo Detective|muermo	43	lb:2 st:360
-pc|What The Dub?!|AkiraArtuhaxis	43	lb:2 st:396
+pc|What The Dub?!|Jackbox en español	43	lb:2 st:396
 psp|Hatsune Miku: Project DIVA 2nd# (Okaidoku Ban)|Diva Fan Project	43	lb:26
 scummvm|Code-Name: ICEMAN|SkaZZ	43	lb:25
 scummvm|Daryl F. Gates Police Quest: Open Season|SkaZZ	43	lb:26
@@ -4661,6 +4661,8 @@ sg1000|Congo Bongo|Traducciones Wave	43	lb:26
 sg1000|Flicky|Traducciones Wave	43	lb:25
 sg1000|Sega Galaga|Traducciones Wave	43	lb:26
 sg1000|Wonder Boy|Traducciones Wave	43	lb:25
+snes|BS The Legend of Zelda|Dervour	43	lb:25
+snes|BS Zelda no Densetsu - Map 2|	43	lb:25
 snes|Final Fantasy VI: Brave New World|Gens81	43	lb:25
 snes|Gulliver Boy|Lukas	43	lb:26
 snes|Ihatovo Monogatari|semco	43	lb:26
@@ -4823,6 +4825,7 @@ pc|Nights of Azure 2|CepitaUva	41	st:296
 pc|S.T.A.L.K.E.R. Anomaly|Albertitoeo	41	lb:22
 pc|Scratches (Director's Cut)|raulpuro	41	st:304
 pc|Sven Co-op|two2dC (svencito)	41	lb:19 st:272
+pc|The Jackbox Party Pack 2|Jackbox en español	41	lb:22
 pc|UFO: Aftermath|juanluisps	41	lb:4 st:276
 pc|Wing Commander: Privateer (doblaje)|Exteban	41	lb:21
 pc|Zniw Adventure|walas74	41	lb:1 st:274
@@ -4884,7 +4887,7 @@ pc|Chronicle of Innsmouth|walas74	40	lb:6 st:234
 pc|Darkness Within 2: The Dark Lineage|Tradupixel	40	lb:2 st:234
 pc|Desperados 2: Cooper's Revenge (subtítulos)|xblastoise99	40	lb:10 st:264
 pc|Earth Must Die|locoroco96	40	st:249
-pc|Fibbage XL|AkiraArtuhaxis	40	lb:1 st:251
+pc|Fibbage XL|Jackbox en español	40	lb:1 st:251
 pc|Gaia Beyond|shadowman1	40	st:240
 pc|Jolly Rover|Cireja, KoKoDie, Pakolmo, Tamara Morales y walas74	40	lb:4 st:236
 pc|King's Quest (AGI)|mondarina	40	lb:12 +3trad
@@ -4968,6 +4971,8 @@ pc|Secret Files: Sam Peters|walas74	39	lb:7 st:206
 pc|Sinking Island|walas74	39	lb:5 st:228
 pc|Sonic Riders|Martin Dubs	39	lb:18
 pc|Succubus Nightmare|traductorjuegos	39	st:207
+pc|The Jackbox Party Pack 3|Jackbox en español	39	lb:18
+pc|The Jackbox Party Pack 4|Jackbox en español	39	lb:19
 pc|WE ARE FOOTBALL 2027 (textos sin traducir)|graficapantonerg-gif	39	st:225
 ps2|Tales of Destiny 2|Yuzuy	39	lb:18
 psp|Shadow of Destiny (Shadow of Memories)|Bytechip	39	lb:19
@@ -5180,6 +5185,7 @@ pc|Sam & Max: Season 3|jackic	36	lb:14
 pc|Sam & Max: The Devil's Playhouse Remastered|Pakolmo	36	lb:15
 pc|Sherlock Holmes: The Awakening|Killogy	36	lb:14
 pc|The Innsmouth Case|shadowman1	36	st:136
+pc|The Jackbox Party Pack 6|Jackbox en español	36	lb:14
 pc|Thief: The Dark Project|Clan DLAN	36	lb:14
 pc|Troublemaker 2|locoroco96	36	st:144
 ps2|Mystic Nights|Veridico Modding	36	lb:14
@@ -5288,6 +5294,7 @@ pc|King's Quest I: Quest for the Crown|SkaZZ	34	lb:12
 pc|Secret Mission|ANZ	34	lb:12
 pc|Super Roboy|shadowman1	34	st:110
 pc|The Few|Clan DLAN	34	st:104
+pc|The Jackbox Party Pack 7|Jackbox en español	34	lb:12
 pc|The Mystery of the Druids|Marta 'Chuti' Cornet	34	lb:8 st:105
 pc|The Severed Gods|locoroco96	34	st:113
 pc|The Whisperer|JoanMon Games	34	lb:5 st:116
@@ -5411,6 +5418,7 @@ pc|Drova - Forsaken Kin|Beat	30	lb:6 +2trad
 pc|Drova - Forsaken Kin|MancoMeLevanto	30	lb:6 +2trad
 pc|If On a Winter's Night, Four Travelers|walas74	30	lb:9
 pc|STALCRAFT|paulvilla	30	lb:9
+pc|The Jackbox Party Pack 5|Jackbox en español	30	lb:9
 pc|The Walking Dead: Temporada 1|Clan DLAN	30	lb:9
 psx|Shin Megami Tensei Devil Children: Kuro no Sho / Aka no Sho|johanderohan (Parches en Castellano)	30	lb:9
 psx|Shin Megami Tensei II|johanderohan (Parches en Castellano)	30	lb:9
@@ -5544,6 +5552,7 @@ pc|Priest Simulator|SrGalletaEXT	26	lb:6
 pc|Simon the Sorcerer 3D|DarkNeo (Ruben Birri)	26	lb:6
 pc|Starlancer|Clan DLAN	26	lb:6
 pc|Starsector|vfernandezmeca	26	lb:6
+pc|The Jackbox Party Pack 8|Jackbox en español	26	lb:6
 pc|The Supper|JoanMon Games	26	lb:6
 ps2|The Tairyou Jigoku|Mr.Nobody	26	lb:6
 psp|Puella Magi Madoka Magica Portable|Christiabel (con Sebox, KanedaVN, Sekaide, IrlyCracker)	26	lb:6
@@ -5812,9 +5821,9 @@ saturn|Heart of Darkness (demo E3 1996)|kitchen34 (Delta Island)	14	lb:2
 scummvm|Abrah: L'Orphelin de l'Espace|mondarina	14	lb:2
 scummvm|Croustibat|pakolmo	14	lb:2
 scummvm|Sfinx|pakolmo	14	lb:2
-switch|The Jackbox Party Pack 2|Jackbox en español (AkiraArtuhaxis)	14	lb:2
-switch|The Jackbox Party Pack 6|Jackbox en español (AkiraArtuhaxis)	14	lb:2
-switch|The Jackbox Party Pack|Jackbox en español (AkiraArtuhaxis)	14	lb:2
+switch|The Jackbox Party Pack 2|Jackbox en español	14	lb:2
+switch|The Jackbox Party Pack 6|Jackbox en español	14	lb:2
+switch|The Jackbox Party Pack|Jackbox en español	14	lb:2
 windows|Duckman: The Graphic Adventures of a Private Dick|pakolmo y Exlibris	14	lb:2
 windows|Rent-a-Hero|Javier Cadenas	14	lb:2
 windows|The Famous 5: Treasure Island|cireja	14	lb:2

@@ -28,6 +28,13 @@ const main = $('main');
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
 // Solo direcciones web en los enlaces que vienen del catálogo (nunca javascript: ni file:).
 const webSegura = u => /^https?:\/\/\S+$/i.test(u || '') ? u : '';
+// La nota de una traducción con sus direcciones como enlaces (la guía o la página de apoyo que pida el autor); se
+// abren en el navegador por el manejador de clics de los enlaces. El punto o el paréntesis del final no entran.
+const notaHtml = n => String(n).split(/(https?:\/\/[^\s<>"]+)/).map((t, i) => {
+  if (!(i % 2)) return esc(t);
+  const url = t.replace(/[.,;:)»]+$/, '');
+  return webSegura(url) ? `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(url)}</a>${esc(t.slice(url.length))}` : esc(t);
+}).join('');
 
 async function api(cmd, args, opciones) {
   try {
@@ -766,7 +773,7 @@ function abrirFicha(r, p) {
     + dl([['Título original', esc(a[F.orig])], ['Versión', esc(a[F.version])], ['Fecha', esc(a[F.fecha])], ['Estado', esc(a[F.estado])],
           ['Formato', esc(a[F.fmt].toUpperCase())], ['Juego que necesitas', esc(a[F.rom]).split(' | ').join('<br>')],
           ['CRC32', a[F.crc] ? `<code>${esc(a[F.crc].toUpperCase())}</code>` : '']])
-    + (a[F.notas] ? `<p class="f-note">${esc(a[F.notas])}</p>` : '');
+    + (a[F.notas] ? `<p class="f-note">${notaHtml(a[F.notas])}</p>` : '');
 
   html += '<div class="f-sec">Tu juego</div>';
   if (A_MANO.has(r.s)) {

@@ -155,6 +155,21 @@ def web_segura(u):
     return u if u.startswith(('https://', 'http://')) and ' ' not in u else ''
 
 
+def nota_html(nota):
+    """La nota de una traducción, con sus direcciones web como enlaces (la guía o la página de apoyo que pida el
+    autor, por ejemplo). El punto o el paréntesis que cierran la frase no entran en el enlace."""
+    trozos = re.split(r'(https?://[^\s<>"]+)', nota)
+    out = []
+    for i, t in enumerate(trozos):
+        if i % 2:
+            url = t.rstrip('.,;:)»')
+            if web_segura(url):
+                out.append(f'<a href="{e(url)}" target="_blank" rel="noopener nofollow">{e(url)}</a>{e(t[len(url):])}')
+                continue
+        out.append(e(t))
+    return ''.join(out)
+
+
 def con_portada(f):
     return bool(f['x'].get('pm') or f['x'].get('p') or f['x'].get('steam') or f['x'].get('pu'))
 
@@ -885,7 +900,7 @@ def tarjeta_trad(f, raiz='../../../', ruta=''):
     return f'''<article class="trad">
   <div class="trad-h"><h3>{nombre_grupo_html(f['grupo'], raiz)}</h3><div class="chips">{chips_trad(f)}</div></div>
   {f'<dl>{dl}</dl>' if dl else ''}
-  {f'<p class="nota">{e(nota)}</p>' if nota else ''}
+  {f'<p class="nota">{nota_html(nota)}</p>' if nota else ''}
   {enlace}
 </article>'''
 
