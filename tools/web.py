@@ -817,7 +817,8 @@ def pagina(raiz, titulo, descripcion, ruta, cuerpo, base, imagen='img/vista-prev
         destino = f'https://{GOATCOUNTER_DOMINIO or GOATCOUNTER + ".goatcounter.com"}/count'
         script = f'{raiz}estadisticas.js' if os.path.isfile(os.path.join(WEB, 'estadisticas.js')) else '//gc.zgo.at/count.js'
         cuenta = f'<script data-goatcounter="{destino}" async src="{script}"></script>\n'
-    nota_cuenta = ' Estadísticas anónimas y sin cookies con <a href="https://www.goatcounter.com/">GoatCounter</a>.' if GOATCOUNTER else ''
+    nota_cuenta = (' Estadísticas anónimas y sin cookies con <a href="https://www.goatcounter.com/">GoatCounter</a>: las visitas y '
+                   'cuántas veces se guarda cada juego en Favoritos.') if GOATCOUNTER else ''
     return f'''<!doctype html>
 <html lang="es">
 <head>
@@ -1102,6 +1103,9 @@ def pagina_juego(gr, sysn, libretro, base, ctx):
                    + '<p class="suave aviso-j">No es un parche: se instala como explica su autor, copiando sus archivos o con su instalador.</p>')
     else:
         botones = f'<a class="btn primario grande" {descarga}>Descargar el programa para Windows</a>'
+    # Cuántas veces se ha guardado en Favoritos (favoritos_fichas()), solo a partir de FAVORITOS_MIN.
+    n_fav = ctx.get('favs', {}).get(gr['ruta'], 0)
+    veces_fav = f'<span class="suave n-fav">Guardado {n_fav:,} veces en Favoritos</span>'.replace(',', '.') if n_fav >= FAVORITOS_MIN else ''
     cuerpo = f"""<main class="juego">
   <nav class="migas" aria-label="Estás en"><a href="{raiz}">Inicio</a> › <a href="{raiz}catalogo/">Catálogo</a> › <a href="{raiz}sistema/{e(s)}/">{e(nombre_sis)}</a></nav>
   <div class="juego-h">
@@ -1113,7 +1117,7 @@ def pagina_juego(gr, sysn, libretro, base, ctx):
       <p class="lede">{hay}{f": {e(quien)}" if quien else ''}.</p>
       {botones}
       {compra}
-      <div class="juego-acciones" data-ruta="{e(gr["ruta"])}" data-sis="{e(s)}" data-sisn="{e(nombre_sis)}" data-titulo="{e(titulo)}" data-port="{e(" ".join(absolutas[:3]))}"><button type="button" class="fav" aria-pressed="false" aria-label="Añadir a Favoritos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7.5-4.6-9.3-9.2C1.4 7.4 3.6 4 7 4c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.4 0 5.6 3.4 4.3 6.8C19.5 15.4 12 20 12 20z"/></svg></button><button type="button" class="btn" id="guardar-lista">Guardar en una lista</button></div>
+      <div class="juego-acciones" data-ruta="{e(gr["ruta"])}" data-sis="{e(s)}" data-sisn="{e(nombre_sis)}" data-titulo="{e(titulo)}" data-port="{e(" ".join(absolutas[:3]))}"><button type="button" class="fav" aria-pressed="false" aria-label="Añadir a Favoritos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7.5-4.6-9.3-9.2C1.4 7.4 3.6 4 7 4c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.4 0 5.6 3.4 4.3 6.8C19.5 15.4 12 20 12 20z"/></svg></button><button type="button" class="btn" id="guardar-lista">Guardar en una lista</button>{veces_fav}</div>
     </div>
   </div>
   <section class="bloque" id="traducciones">
@@ -1643,6 +1647,11 @@ SAGAS = [
     ('phantasy-star', 'Phantasy Star', r'\bPhantasy Star\b'),
 ]
 MAS_VISTOS_DIAS = 30
+# Favoritos: al guardar un juego en Favoritos, web/listas.js manda un evento anónimo de GoatCounter, una sola vez por
+# navegador y juego. La ficha dice cuántas veces se ha guardado (favoritos_fichas()) a partir de FAVORITOS_MIN, que
+# menos luce poco, y la cuenta empieza en FAVORITOS_DESDE.
+FAVORITOS_DESDE = '2026-11-12'
+FAVORITOS_MIN = 3
 # La selección de quien lleva la web: juegos especiales, de los que no suelen salir en las listas, apuntados a mano en
 # web/seleccion.txt. Entran todos, también los que solo tienen traducción con IA (los ha elegido una persona), y no
 # tienen orden: se barajan cada día.
@@ -1650,41 +1659,56 @@ SELECCION_MANO = ('seleccion-del-bibliotecario', 'La selección del bibliotecari
                   'Juegos especiales, de los que es raro ver en las listas, elegidos a mano por quien lleva la Biblioteca de traducciones.')
 
 
-def visitas_fichas():
-    """Visitas a cada ficha de juego en los últimos MAS_VISTOS_DIAS días, de la API de GoatCounter: {ruta: visitas}.
-    Hace falta una clave de solo lectura de estadísticas en la variable GOATCOUNTER_TOKEN (en GitHub, el secreto del
-    mismo nombre que le pasa web.yml). Sin clave, o si la API falla, devuelve {} y «Lo más visto» no sale: la web se
-    genera igual."""
+def api_goatcounter(punto, q, que):
+    """GET a la API de GoatCounter (/api/v0/<punto>, con los parámetros q) con la clave de solo lectura de estadísticas
+    de la variable GOATCOUNTER_TOKEN (en GitHub, el secreto del mismo nombre que le pasa web.yml). Devuelve el JSON de
+    la respuesta, o None sin clave o si falla; en ese caso avisa de qué no se pudo leer (que), sin enseñar la clave.
+    Espera un poco antes de cada petición: la API admite 4 por segundo."""
     clave = os.environ.get('GOATCOUNTER_TOKEN', '').strip()
     if not (clave and GOATCOUNTER):
-        return {}
-    import urllib.error, urllib.request
-    from datetime import datetime, timedelta, timezone
+        return None
+    import time, urllib.error, urllib.request
     from urllib.parse import urlencode
-    # La API pide fecha y hora (RFC 3339), redondeadas a la hora.
-    fin = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
+    time.sleep(0.3)
+    pet = urllib.request.Request(f'https://{GOATCOUNTER}.goatcounter.com/api/v0/{punto}?{urlencode(q)}',
+                                 headers={'Authorization': f'Bearer {clave}', 'Content-Type': 'application/json',
+                                          'User-Agent': 'BibliotecaTraducciones-web'})
+    try:
+        with urllib.request.urlopen(pet, timeout=30) as r:
+            return json.load(r)
+    except Exception as ex:  # nunca se enseña la clave: solo el código y el mensaje de error de la API
+        motivo = type(ex).__name__
+        if isinstance(ex, urllib.error.HTTPError):
+            try:
+                cuerpo = json.loads(ex.read().decode('utf-8', 'replace') or '{}')
+                detalle = cuerpo.get('error') or cuerpo.get('errors') or ''
+            except Exception:
+                detalle = ''
+            motivo = f'HTTP {ex.code} {str(detalle)[:200]}'.strip()
+        print(f'AVISO: no se pudieron leer {que} de GoatCounter ({motivo}); se sigue con lo leído', file=sys.stderr)
+        return None
+
+
+def hora_api(d):
+    """Fecha y hora como las pide la API de GoatCounter (RFC 3339, redondeada a la hora)."""
+    return d.strftime('%Y-%m-%dT%H:00:00Z')
+
+
+def visitas_fichas():
+    """Visitas a cada ficha de juego en los últimos MAS_VISTOS_DIAS días, de la API de GoatCounter: {ruta: visitas}.
+    Sin clave (GOATCOUNTER_TOKEN), o si la API falla, devuelve {} y «Lo más visto» no sale: la web se genera igual."""
+    if not (os.environ.get('GOATCOUNTER_TOKEN', '').strip() and GOATCOUNTER):
+        return {}
+    from datetime import datetime, timedelta, timezone
+    fin = datetime.now(timezone.utc)
     inicio = fin - timedelta(days=MAS_VISTOS_DIAS)
     visitas, vistos = {}, []
     for _ in range(5):  # páginas de 100 rutas, de más visitas a menos
-        q = {'start': inicio.strftime('%Y-%m-%dT%H:%M:%SZ'), 'end': fin.strftime('%Y-%m-%dT%H:%M:%SZ'), 'limit': 100}
+        q = {'start': hora_api(inicio), 'end': hora_api(fin), 'limit': 100}
         if vistos:
             q['exclude_paths'] = ','.join(map(str, vistos))
-        pet = urllib.request.Request(f'https://{GOATCOUNTER}.goatcounter.com/api/v0/stats/hits?{urlencode(q)}',
-                                     headers={'Authorization': f'Bearer {clave}', 'Content-Type': 'application/json',
-                                              'User-Agent': 'BibliotecaTraducciones-web'})
-        try:
-            with urllib.request.urlopen(pet, timeout=30) as r:
-                datos = json.load(r)
-        except Exception as ex:  # nunca se enseña la clave: solo el código y el mensaje de error de la API
-            motivo = type(ex).__name__
-            if isinstance(ex, urllib.error.HTTPError):
-                try:
-                    cuerpo = json.loads(ex.read().decode('utf-8', 'replace') or '{}')
-                    detalle = cuerpo.get('error') or cuerpo.get('errors') or ''
-                except Exception:
-                    detalle = ''
-                motivo = f'HTTP {ex.code} {str(detalle)[:200]}'.strip()
-            print(f'AVISO: no se pudieron leer las visitas de GoatCounter ({motivo}); se sigue con lo leído', file=sys.stderr)
+        datos = api_goatcounter('stats/hits', q, 'las visitas')
+        if datos is None:
             break
         for h in datos.get('hits') or []:
             if h.get('path_id'):
@@ -1696,6 +1720,44 @@ def visitas_fichas():
             break
     print(f'visitas de GoatCounter: {len(visitas)} fichas de juego con visitas en {MAS_VISTOS_DIAS} días', file=sys.stderr)
     return visitas
+
+
+def favoritos_fichas():
+    """Cuántas veces se ha guardado cada juego en Favoritos desde FAVORITOS_DESDE, de la API de GoatCounter:
+    {ruta: veces}. web/listas.js manda el evento «favorito-<sistema>/<juego>» una sola vez por navegador y juego, y
+    GoatCounter da los visitantes de cada evento. La API no filtra por nombre, así que primero se recorren las rutas
+    del sitio (/paths, sin cifras) para sacar las de esos eventos, y luego se piden sus cifras de 100 en 100
+    (/stats/hits con include_paths). Sin clave, o si la API falla, devuelve {} y las fichas no dicen nada."""
+    if not (os.environ.get('GOATCOUNTER_TOKEN', '').strip() and GOATCOUNTER):
+        return {}
+    from datetime import datetime, timezone
+    ids, despues = {}, 0
+    for _ in range(500):  # páginas de 200 rutas, por orden de ID
+        datos = api_goatcounter('paths', {'limit': 200, 'after': despues} if despues else {'limit': 200}, 'las rutas')
+        if datos is None:
+            return {}
+        rutas = datos.get('paths') or []
+        for p in rutas:
+            nombre = (p.get('path') or '').strip('/')
+            if p.get('event') and nombre.startswith('favorito-') and p.get('id'):
+                ids[p['id']] = 'juego/' + nombre.removeprefix('favorito-').strip('/') + '/'
+        if not datos.get('more') or not rutas or rutas[-1].get('id', 0) <= despues:
+            break
+        despues = rutas[-1]['id']
+    veces, lista = {}, sorted(ids)
+    fin = hora_api(datetime.now(timezone.utc))
+    for i in range(0, len(lista), 100):
+        datos = api_goatcounter('stats/hits', {'start': FAVORITOS_DESDE + 'T00:00:00Z', 'end': fin, 'limit': 100,
+                                               'include_paths': ','.join(map(str, lista[i:i + 100]))}, 'los favoritos')
+        if datos is None:
+            return {}
+        for h in datos.get('hits') or []:
+            ruta = ids.get(h.get('path_id'))
+            if ruta:
+                veces[ruta] = veces.get(ruta, 0) + int(h.get('count') or 0)
+    print(f'favoritos de GoatCounter: {len(veces)} juegos guardados en Favoritos desde {FAVORITOS_DESDE}, '
+          f'{sum(1 for v in veces.values() if v >= FAVORITOS_MIN)} con {FAVORITOS_MIN} o más', file=sys.stderr)
+    return veces
 
 
 SISTEMAS_IMPRESCINDIBLES = ['snes', 'nes', 'psx', 'megadrive', 'gba', 'gb', 'n64', 'ps2', 'nds', 'psp', 'saturn', 'dreamcast', 'mastersystem', 'pcengine', 'pc']
@@ -1990,6 +2052,7 @@ def pagina_listas(base):
   <p class="migas"><a href="{raiz}">Inicio</a> › Mis listas</p>
   <h1>Mis listas</h1>
   <p class="lede">Tus favoritos y las listas que hagas, guardados en este navegador. Pulsa el corazón de cualquier juego para añadirlo a Favoritos; en su ficha, «Guardar en una lista» para ponerlo donde quieras.</p>
+  <p class="suave">{'La web cuenta, de forma anónima, cuántas veces se guarda cada juego en Favoritos (una vez por navegador), y lo enseña en su ficha. Tus listas no salen de tu navegador.' if GOATCOUNTER else ''}</p>
   <div id="listas"></div>
 </main>'''
     # Sin contenido propio (todo sale del localStorage de cada uno): fuera de los buscadores.
@@ -2172,6 +2235,7 @@ def main():
             k += 1
         RUTAS_GRUPO[n] = ruta
     sels = selecciones(juegos, sysn, visitas_fichas())
+    ctx['favs'] = favoritos_fichas()
     altas, act = fechas_alta(), actualizadas()
     for f in filas:
         f['alta'] = altas.get(clave_fila(f), '')

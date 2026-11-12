@@ -230,7 +230,8 @@ main { display: block; max-width: var(--ancho); margin: 0 auto; padding: 0 var(-
 .fav svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; }
 .fav:hover { background: rgba(10, 13, 18, 0.9); }
 .fav[aria-pressed="true"] svg { fill: var(--rojo-2); stroke: var(--rojo-2); }
-.juego-acciones { position: relative; display: flex; align-items: center; gap: 10px; margin-top: 14px; }
+.juego-acciones { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 14px; }
+.juego-acciones .n-fav { font-size: 0.9rem; }
 .juego-acciones .fav { position: static; background: var(--panel); border: 1px solid var(--linea); width: 40px; height: 40px; }
 .juego-acciones .btn { margin-top: 0; }
 .menu-listas { position: absolute; top: 100%; left: 50px; z-index: 5; margin-top: 8px; min-width: 240px; padding: 12px 14px; background: var(--panel); border: 1px solid var(--linea); border-radius: 12px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45); display: grid; gap: 8px; }

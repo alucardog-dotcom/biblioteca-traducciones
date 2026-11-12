@@ -61,9 +61,40 @@
     const i = f.juegos.findIndex(x => x.r === j.r);
     if (i >= 0) f.juegos.splice(i, 1); else f.juegos.unshift(j);
     guardar();
+    if (i < 0) contarFav(j.r);
     marcar();
     aviso(i >= 0 ? `Quitado de Favoritos: ${j.t}` : `Guardado en Favoritos: ${j.t}`);
     if ($('listas')) pintarListas();
+  }
+
+  // Cuántas veces se guarda cada juego en Favoritos: al guardarlo se manda a GoatCounter el evento anónimo
+  // «favorito-<sistema>/<juego>», una sola vez por navegador y juego (los ya contados se apuntan aparte, así que
+  // quitarlo y volver a ponerlo no suma). La web lee esas cifras cada día y las pone en la ficha (tools/web.py,
+  // favoritos_fichas). Sin GoatCounter (bloqueado, o aún sin cargar) no se manda nada ni se apunta como contado.
+  const CONTADOS = 'favoritos-contados';
+  function contados() {
+    try {
+      const c = JSON.parse(localStorage.getItem(CONTADOS) || '[]');
+      if (Array.isArray(c)) return c;
+    } catch (e) { }
+    return [];
+  }
+  function contarFav(r) {
+    const gc = window.goatcounter;
+    if (!RUTA_FICHA.test(r || '') || !gc || typeof gc.count !== 'function') return false;
+    const c = contados();
+    if (c.includes(r)) return false;
+    gc.count({path: 'favorito-' + r.slice('juego/'.length, -1), title: 'Guardado en Favoritos', event: true});
+    c.push(r);
+    try { localStorage.setItem(CONTADOS, JSON.stringify(c)); } catch (e) { }
+    return true;
+  }
+  // Los favoritos de antes de que empezara la cuenta (o de otra pestaña) también cuentan: unos pocos en cada
+  // página, separados, para no mandar de golpe los de quien tenga muchos.
+  function contarPendientes() {
+    const c = contados();
+    const pend = fav().juegos.map(j => j.r).filter(r => RUTA_FICHA.test(r || '') && !c.includes(r)).slice(0, 5);
+    pend.forEach((r, k) => setTimeout(() => contarFav(r), k * 400));
   }
 
   // Corazones al día (también los de las tarjetas que llegan después, por el observador de abajo).
@@ -223,6 +254,7 @@
     favoritosInicio();
     pintarListas();
     marcar();
+    setTimeout(contarPendientes, 3000);  // con tiempo para que cargue estadisticas.js, que va con async
     // Las tarjetas que pinta JavaScript más tarde (buscador, Mis juegos) también llevan corazón.
     let t = null;
     new MutationObserver(() => { clearTimeout(t); t = setTimeout(marcar, 50); }).observe(document.body, {childList: true, subtree: true});
