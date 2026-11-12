@@ -6,5 +6,8 @@ pc|Night Call|hasta 2026-11-19
 ps2|Xenosaga Episode II: Jenseits von Gut und Böse|hasta 2026-11-19
 -pc|PEAK|hasta 2026-11-19
 -n64|The Legend of Zelda: Ocarina of Time|hasta 2026-11-19
+# Desde el 12-11-2026: Suikoden III de Yuzuy (sale aunque sus traducciones sean con IA, por estar fijado) y Super Mario 64 fuera.
+ps2|Suikoden III
+-n64|Super Mario 64
 ps3|Drakengard 3
 pc|Danganronpa V3: Killing Harmony

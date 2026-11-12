@@ -632,14 +632,16 @@ def destacados(filas, dias, pins, k=9, vistos=()):
     consultados en la web (vistos, de «Lo más visto»; si GoatCounter no da datos, ninguno), las novedades de los últimos
     días con tirón (web/popularidad.tsv) y, para completar, los juegos de más tirón de todo el catálogo, que rotan cada
     día. Sin IA ni juegos para adultos, con portada, y como mucho dos juegos por sistema y tres por familia, para que no
-    salgan nueve de Super Nintendo. Los juegos con «-» en web/destacados.txt no salen nunca (mosaico_a_mano()).
+    salgan nueve de Super Nintendo. Los juegos con «-» en web/destacados.txt no salen nunca (mosaico_a_mano()). Los
+    fijados a mano salen aunque solo tengan traducciones con IA: los elige una persona, no la web.
     Devuelve [(juego, direcciones de la portada)]."""
     elegidos, titulos, por_sis, por_fam = [], set(), collections.Counter(), collections.Counter()
     fuera = mosaico_a_mano()[1]
 
-    def cabe(g):
+    def cabe(g, fijo=False):
         t = sin_acentos(g['titulo']).lower()
-        if t in titulos or (g['s'], t) in fuera or juego_adulto(g) or all(es_ia(f) for f in g['filas']):
+        if (t in titulos or (g['s'], t) in fuera or juego_adulto(g)
+                or (not fijo and all(es_ia(f) for f in g['filas']))):
             return False
         fam = FAMILIA.get(g['s'], 'otros')
         if por_sis[g['s']] >= 2 or por_fam[fam] >= 3:
@@ -657,7 +659,7 @@ def destacados(filas, dias, pins, k=9, vistos=()):
     for s, j in pins:
         g = next((g for g in juegos if g['s'] == s and sin_acentos(g['titulo']).lower() == sin_acentos(j).lower()), None)
         if g:
-            cabe(g)
+            cabe(g, fijo=True)
     n_vistos = 0
     for g in vistos:
         if n_vistos >= 3 or len(elegidos) >= k:
