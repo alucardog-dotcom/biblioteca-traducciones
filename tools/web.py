@@ -1847,7 +1847,8 @@ EN_CURSO = {'beta', 'parcial', 'en curso', 'en desarrollo', 'en actualización'}
 
 def pagina_en_camino(juegos, sysn, base):
     """Lo que está por llegar: los proyectos en curso de TraduSquare (web/en_camino.json, de herramientas\\mantenimiento\\en_camino.py)
-    y las traducciones del catálogo que aún están a medias (beta, parcial, en curso)."""
+    y las traducciones del catálogo que aún están a medias (beta, parcial, en curso), salvo las de juegos que ya tienen
+    otra completa."""
     raiz = '../'
     ruta = os.path.join(WEB, 'en_camino.json')
     datos = json.load(open(ruta, encoding='utf-8')) if os.path.isfile(ruta) else {'proyectos': [], 'fecha': ''}
@@ -1866,7 +1867,8 @@ def pagina_en_camino(juegos, sysn, base):
     a_medias = []
     for g in juegos:
         fs = [f for f in g['filas'] if f['estado'].strip().lower() in EN_CURSO]
-        if fs:
+        # Un juego que ya tiene una traducción completa (de otro grupo, o una versión terminada) no está «en camino».
+        if fs and not any(f['estado'].strip().lower() == 'completa' for f in g['filas']):
             f = max(fs, key=lambda f: (fecha_iso(f), f['pop']))
             a_medias.append((g, f))
     a_medias.sort(key=lambda gf: (fecha_iso(gf[1]), gf[1]['pop']), reverse=True)
@@ -1878,7 +1880,7 @@ def pagina_en_camino(juegos, sysn, base):
     <p class="texto suave">Proyectos en curso según el listado de TraduSquare del {fecha_larga(datos['fecha'])}. Cada uno lleva a su página, donde el grupo cuenta cómo va.</p>
     <ul class="proys">{proys}</ul></section>""" if proys else ''}
   <section class="bloque"><h2>Se pueden jugar, pero están a medias <span class="n">{len(a_medias)}</span></h2>
-    <p class="texto suave">Traducciones del catálogo en beta, parciales o en curso, de la más reciente a la más antigua.</p>
+    <p class="texto suave">Traducciones del catálogo en beta, parciales o en curso, de la más reciente a la más antigua. Los juegos que ya tienen una traducción completa no salen aquí.</p>
     <ul class="tarjetas">{''.join(tarjeta_juego(g, raiz, sysn, True, fila=f, extra=f' · {e(f["estado"].strip().lower())}') for g, f in a_medias)}</ul></section>
 </main>'''
     desc = 'Traducciones al español de juegos que están en camino: proyectos en curso de los grupos de aficionados y traducciones en beta que ya se pueden jugar.'
