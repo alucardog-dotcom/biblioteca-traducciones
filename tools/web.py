@@ -301,11 +301,41 @@ def tiene_logros(f):
 # ---------------------------------------------------------------- grupos de traducción
 GRUPO_ALIAS = {'Wave': 'Traducciones Wave', 'Charnego': 'CharnegoTranslations'}
 MIN_GRUPO = 3  # traducciones que necesita un grupo para tener página propia
+# El mismo grupo escrito de varias formas en el catálogo («jackic» y «Jackic», «Rod Merida» y «Rod Mérida») es uno
+# solo, con la forma que más se usa: nombre sin mayúsculas ni tildes -> esa forma. La rellena main.
+GRUPO_CANON = {}
+# Páginas que se publicaron y ya no existen -> adónde llevan ahora. Las de grupo con «-2» salían hasta el 12-11-2026
+# porque el catálogo escribía el mismo grupo de dos formas; ahora son una (GRUPO_CANON).
+REDIRIGIR = {'grupo/jackic-2/': 'grupo/jackic/', 'grupo/semco-2/': 'grupo/semco/', 'grupo/pakolmo-2/': 'grupo/pakolmo/',
+             'grupo/emu4ever-2/': 'grupo/emu4ever/', 'grupo/spctrmxd-2/': 'grupo/spctrmxd/'}
+
+
+def clave_grupo(nombre):
+    return sin_acentos(nombre).lower()
 
 
 def partes_grupo(grupo):
-    """Los grupos o personas de una ficha: «pitito / Wesker» son dos."""
-    return [GRUPO_ALIAS.get(p.strip(), p.strip()) for p in re.split(r'\s*/\s*|\s*;\s*', grupo) if p.strip()]
+    """Los grupos o personas de una ficha: «pitito / Wesker» son dos. Cada uno con la forma de escribirlo que más usa
+    el catálogo (GRUPO_CANON)."""
+    partes = [GRUPO_ALIAS.get(p.strip(), p.strip()) for p in re.split(r'\s*/\s*|\s*;\s*', grupo) if p.strip()]
+    return [GRUPO_CANON.get(clave_grupo(p), p) for p in partes]
+
+
+def unificar_grupos(filas):
+    """Rellena GRUPO_CANON: para cada grupo escrito de varias formas, la que más fichas usan."""
+    formas = collections.defaultdict(collections.Counter)
+    for f in filas:
+        for p in partes_grupo(f['grupo']):
+            formas[clave_grupo(p)][p] += 1
+    GRUPO_CANON.update({k: c.most_common(1)[0][0] for k, c in formas.items() if len(c) > 1})
+
+
+def pagina_redireccion(base, destino):
+    """Una dirección que ya no existe: lleva a la nueva al momento, sin que la indexen los buscadores."""
+    u = e(base + destino)
+    return (f'<!doctype html>\n<html lang="es"><head><meta charset="utf-8"><title>Esta página se ha movido · {e(SITIO)}</title>'
+            f'<meta name="robots" content="noindex"><link rel="canonical" href="{u}"><meta http-equiv="refresh" content="0; url={u}">'
+            f'</head><body><p>Esta página se ha movido a <a href="{u}">{u}</a>.</p></body></html>\n')
 
 
 RUTAS_GRUPO = {}  # nombre -> ruta, sin repetir (la rellena main)
@@ -2227,6 +2257,7 @@ def main():
 
     sysn = sistemas_app()
     filas, libretro = cargar()
+    unificar_grupos(filas)
     LIBRETRO.update(libretro)
     juegos = agrupar(filas)
     usados = set()
@@ -2351,6 +2382,12 @@ def main():
     escribir(salida, 'sitemap.xml', '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
              + ''.join(f'<url><loc>{e(base + r)}</loc>' + (f'<lastmod>{d}</lastmod>' if d else '') + '</url>\n' for r, d in rutas) + '</urlset>\n')
     escribir(salida, 'robots.txt', f'User-agent: *\nAllow: /\nSitemap: {base}sitemap.xml\n')
+    existentes = {r for r, _ in rutas}
+    for viejo, nuevo in REDIRIGIR.items():
+        if viejo not in existentes and nuevo in existentes:
+            escribir(salida, viejo + 'index.html', pagina_redireccion(base, nuevo))
+        else:
+            print(f'AVISO: no se redirige {viejo} a {nuevo} (la vieja aún existe o la nueva no)')
     print(f'Web en {salida}: {n_juegos} juegos, {len(por_sis)} sistemas, {len(rutas)} páginas; novedades: {len(altas)} altas en {len(dias)} días. Dirección: {base}')
 
 
