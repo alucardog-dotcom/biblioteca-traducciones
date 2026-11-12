@@ -484,9 +484,13 @@ def portadas(gr, libretro, raiz):
 
     # La puesta a mano ya viene como «portadas/<fichero>», igual que en ui/.
     urls = [raiz + x['pm']] if x.get('pm') else []
-    if x.get('steam'):
+    if x.get('steam') and x.get('pu'):
+        # preparar_centro.py solo pone «pu» a un juego de Steam que no tiene ni la vertical ni la cabecera en la
+        # dirección de siempre: esas dos darían 404 (y la vista previa para redes se quedaría sin imagen).
+        urls.append(x['pu'])
+    elif x.get('steam'):
         st = f"https://cdn.cloudflare.steamstatic.com/steam/apps/{encode(str(x['steam']))}/"
-        urls += [st + 'library_600x900.jpg', x.get('pu'), st + 'header.jpg']
+        urls += [st + 'library_600x900.jpg', st + 'header.jpg']
     elif x.get('p') and sis:
         urls += [thumb(tipo), x.get('pu'), thumb(alt)]
     else:
