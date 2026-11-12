@@ -255,6 +255,15 @@ button.chip:hover { border-color: var(--suave); }
 button.chip[aria-pressed="true"] { background: var(--amarillo); color: #141922; border-color: transparent; font-weight: 700; }
 .chip-l { display: inline-flex; align-items: center; gap: 6px; font-size: 0.85rem; color: var(--suave); margin-left: auto; }
 html:not(.adultos) .tarjeta[data-a18] { display: none; }
+/* Ficha de un juego para adultos (body.a18): quien llega directamente ve el aviso de mayoría de edad en lugar de la
+   ficha, hasta que lo acepta (clase «mayor18» en <html>) o si ya activó los juegos para adultos en el catálogo. */
+.aviso18 { display: none; max-width: 560px; margin: 72px auto; padding: 32px 24px; text-align: center; gap: 16px; justify-items: center;
+  background: var(--panel); border: 1px solid var(--linea); border-radius: 16px; }
+.aviso18 p { margin: 0; }
+.aviso18 .botones { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 8px; }
+.aviso18 button { font: inherit; font-weight: 700; cursor: pointer; }
+html:not(.adultos):not(.mayor18) body.a18 main { display: none; }
+html:not(.adultos):not(.mayor18) body.a18 .aviso18 { display: grid; }
 
 /* Portada: el buscador en la cabecera, las novedades, el programa y el cierre */
 .heroe.uno { grid-template-columns: minmax(0, 1fr); padding-top: 48px; }

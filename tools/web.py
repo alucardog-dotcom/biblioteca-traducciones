@@ -742,13 +742,26 @@ def migas_ld(base, pasos):
 
 
 # ---------------------------------------------------------------- páginas
-def pagina(raiz, titulo, descripcion, ruta, cuerpo, base, imagen='img/vista-previa.png', tipo='website', ld=None, indexar=True, previa=''):
+def pagina(raiz, titulo, descripcion, ruta, cuerpo, base, imagen='img/vista-previa.png', tipo='website', ld=None, indexar=True, previa='',
+           adulto=False):
     """`indexar=False` pide a los buscadores que no guarden la página (Mis listas y la 404, sin contenido propio);
-    `previa` es el origen (https://host) de la imagen principal, para abrir la conexión antes de que el navegador la pida."""
+    `previa` es el origen (https://host) de la imagen principal, para abrir la conexión antes de que el navegador la pida.
+    `adulto=True` es la ficha de un juego para adultos: quien llega directamente (desde un buscador o un enlace) ve
+    primero un aviso de mayoría de edad en lugar de la ficha. No sale a quien ya activó «Mostrar juegos para adultos»
+    en el catálogo ni a quien ya lo aceptó (localStorage «mayor18»); el contenido va en la página, oculto con CSS
+    (estilo.css, `.aviso18`). Lleva además `rating: adult`, para el filtro de contenido de los buscadores."""
     canon = base + ruta
     og_imagen = imagen if imagen.startswith('http') else base + imagen
     extra = ('' if indexar else '<meta name="robots" content="noindex, follow">\n') + (
+        '<meta name="rating" content="adult">\n' if adulto else '') + (
         f'<link rel="preconnect" href="{e(previa)}">\n' if previa else '')
+    aviso18 = f'''<section class="aviso18" aria-labelledby="aviso18-t">
+  <h2 id="aviso18-t">Contenido para adultos</h2>
+  <p>Esta ficha es de un juego para adultos (+18). Para verla tienes que ser mayor de 18 años.</p>
+  <p class="botones"><button type="button" class="btn primario" onclick="mayor18()">Soy mayor de 18 años</button>
+  <a class="btn" href="{raiz}catalogo/">Volver al catálogo</a></p>
+</section>
+''' if adulto else ''
     cuenta = ''
     if GOATCOUNTER:
         destino = f'https://{GOATCOUNTER_DOMINIO or GOATCOUNTER + ".goatcounter.com"}/count'
@@ -778,9 +791,9 @@ def pagina(raiz, titulo, descripcion, ruta, cuerpo, base, imagen='img/vista-prev
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:site" content="@{X_CUENTA}">
 {jsonld(ld) if ld else ''}
-<script>try{{if(localStorage.getItem('adultos')==='1')document.documentElement.classList.add('adultos')}}catch(e){{}}function sig(i){{var r=(i.dataset.alt||'').split(' ').filter(Boolean);if(!r.length){{i.parentNode.classList.add('sin');i.remove();return}}i.src=r.shift();i.dataset.alt=r.join(' ')}}function yt(b){{if(!/^[A-Za-z0-9_-]{{11}}$/.test(b.dataset.v))return;var f=document.createElement('iframe');f.src='https://www.youtube-nocookie.com/embed/'+b.dataset.v+'?autoplay=1';f.allow='autoplay; encrypted-media; picture-in-picture; fullscreen';f.allowFullscreen=true;f.title=b.title;f.className='video';b.replaceWith(f)}}</script>
+<script>try{{if(localStorage.getItem('adultos')==='1')document.documentElement.classList.add('adultos');if(localStorage.getItem('mayor18')==='1')document.documentElement.classList.add('mayor18')}}catch(e){{}}function mayor18(){{try{{localStorage.setItem('mayor18','1')}}catch(e){{}}document.documentElement.classList.add('mayor18')}}function sig(i){{var r=(i.dataset.alt||'').split(' ').filter(Boolean);if(!r.length){{i.parentNode.classList.add('sin');i.remove();return}}i.src=r.shift();i.dataset.alt=r.join(' ')}}function yt(b){{if(!/^[A-Za-z0-9_-]{{11}}$/.test(b.dataset.v))return;var f=document.createElement('iframe');f.src='https://www.youtube-nocookie.com/embed/'+b.dataset.v+'?autoplay=1';f.allow='autoplay; encrypted-media; picture-in-picture; fullscreen';f.allowFullscreen=true;f.title=b.title;f.className='video';b.replaceWith(f)}}</script>
 </head>
-<body>
+<body{' class="a18"' if adulto else ''}>
 <div class="franja" aria-hidden="true"></div>
 <header class="barra">
   <a class="marca" href="{raiz or './'}"><img src="{raiz}icono.svg" alt="" width="32" height="32"><span>Biblioteca de traducciones</span></a>
@@ -794,7 +807,7 @@ def pagina(raiz, titulo, descripcion, ruta, cuerpo, base, imagen='img/vista-prev
     <a class="btn primario" href="{INSTALADOR}" data-goatcounter-click="descarga-cabecera">Descargar</a>
   </nav>
 </header>
-{cuerpo}
+{aviso18}{cuerpo}
 <footer class="pie">
   <div class="pie-in">
     <p><b>Biblioteca de traducciones</b> es gratuita y de código libre (<a href="{REPO}/blob/main/LICENSE">GPL-3.0</a>). Las traducciones son de sus autores: este programa solo las encuentra y las aplica, y nunca descarga juegos.</p>
@@ -918,7 +931,8 @@ def pagina_juego(gr, sysn, libretro, base, ctx):
     previa = re.match(r'https://[^/]+', urls[0]).group(0) if urls and urls[0].startswith('https://') else ''
     # Para las redes y los buscadores, la portada con dirección completa.
     absolutas = portadas(gr, libretro, base)
-    imagen = absolutas[0] if absolutas else 'img/vista-previa.png'
+    # Las fichas de juegos para adultos no llevan su portada a las tarjetas de las redes: va la imagen de la web.
+    imagen = absolutas[0] if absolutas and not juego_adulto(gr) else 'img/vista-previa.png'
     quien = ', '.join(grupos[:3]) + (' y otros' if len(grupos) > 3 else '')
     orig = titulo_original(gr)
     # Los que están en Steam (tienen AppID): enlace a su página de la tienda, sin afiliado.
@@ -1099,7 +1113,8 @@ def pagina_juego(gr, sysn, libretro, base, ctx):
     ld = {'@context': 'https://schema.org', '@graph': [
         migas_ld(base, [('Inicio', ''), ('Catálogo', 'catalogo/'), (nombre_sis, f'sistema/{s}/'), (titulo, gr['ruta'])]),
         {'@type': 'WebPage', '@id': canon, 'url': canon, 'name': titulo_pagina, 'description': desc, 'inLanguage': 'es', 'about': juego}]}
-    return pagina(raiz, titulo_pagina, desc, gr['ruta'], cuerpo, base, imagen=imagen, tipo='article', ld=ld, previa=previa)
+    return pagina(raiz, titulo_pagina, desc, gr['ruta'], cuerpo, base, imagen=imagen, tipo='article', ld=ld, previa=previa,
+                  adulto=juego_adulto(gr))
 
 
 def pagina_sistema(s, juegos, sysn, base):
@@ -1654,13 +1669,14 @@ def seleccion_a_mano(juegos, dia=None):
 
 def selecciones(juegos, sysn, visitas=None):
     """Las selecciones: [(slug, título, entradilla, [juegos])], de más tirón a menos, sin los juegos que solo tienen traducciones con IA.
-    «Lo más visto» va la primera y ordena por las visitas a la ficha (visitas_fichas), con todos los juegos; la segunda,
-    la selección hecha a mano (SELECCION_MANO)."""
+    «Lo más visto» va la primera y ordena por las visitas a la ficha (visitas_fichas), con todos los juegos menos los
+    que son para adultos (desde el 12-11-2026 no entran, se activen o no en el catálogo); la segunda, la selección hecha
+    a mano (SELECCION_MANO)."""
     validos = [g for g in juegos if not all(es_ia(f) for f in g['filas']) and any(f['pop'] for f in g['filas'])]
     tiron = lambda g: -max(f['pop'] for f in g['filas'])
     out = []
     if visitas:
-        gs = sorted((g for g in juegos if visitas.get(g['ruta'], 0) >= 2), key=lambda g: (-visitas[g['ruta']], tiron(g) if any(f['pop'] for f in g['filas']) else 0))
+        gs = sorted((g for g in juegos if visitas.get(g['ruta'], 0) >= 2 and not juego_adulto(g)), key=lambda g: (-visitas[g['ruta']], tiron(g) if any(f['pop'] for f in g['filas']) else 0))
         if len(gs) >= 8:
             out.append(('lo-mas-visto', 'Lo más visto', f'Los juegos cuyas fichas más se han consultado en la web en los últimos {MAS_VISTOS_DIAS} días.',
                         gs[:MAX_SELECCION]))
