@@ -145,9 +145,33 @@ def lista_juegos(nombre):
     return [tuple(l.strip().split('|', 1)) for l in open(ruta, encoding='utf-8') if l.strip() and not l.startswith('#') and '|' in l]
 
 
+def mosaico_a_mano():
+    """Lo que se decide a mano del mosaico de la portada (web/destacados.txt): (fijados, fuera). Cada línea es
+    sistema|título tal como está en el catálogo; con «-» delante del sistema, ese juego no sale en el mosaico; con
+    «|hasta AAAA-MM-DD» al final, la línea solo vale hasta ese día incluido (un detalle de una semana con un autor,
+    por ejemplo). La web se regenera cada día, así que la línea caducada deja de contar sola."""
+    ruta = os.path.join(WEB, 'destacados.txt')
+    fij, fuera = [], set()
+    if not os.path.isfile(ruta):
+        return fij, fuera
+    hoy = date.today().isoformat()
+    for l in open(ruta, encoding='utf-8'):
+        partes = [p.strip() for p in l.strip().split('|')]
+        if len(partes) < 2 or partes[0].startswith('#'):
+            continue
+        hasta = next((p[6:].strip() for p in partes[2:] if p.startswith('hasta ')), '')
+        if hasta and hoy > hasta:
+            continue
+        if partes[0].startswith('-'):
+            fuera.add((partes[0][1:].strip(), sin_acentos(partes[1]).lower()))
+        else:
+            fij.append((partes[0], partes[1]))
+    return fij, fuera
+
+
 def fijados():
-    """Los juegos que van siempre en el mosaico de la portada (web/destacados.txt)."""
-    return lista_juegos('destacados.txt')
+    """Los juegos que van siempre en el mosaico de la portada (web/destacados.txt), sin los caducados."""
+    return mosaico_a_mano()[0]
 
 
 def web_segura(u):
@@ -608,12 +632,14 @@ def destacados(filas, dias, pins, k=9, vistos=()):
     consultados en la web (vistos, de «Lo más visto»; si GoatCounter no da datos, ninguno), las novedades de los últimos
     días con tirón (web/popularidad.tsv) y, para completar, los juegos de más tirón de todo el catálogo, que rotan cada
     día. Sin IA ni juegos para adultos, con portada, y como mucho dos juegos por sistema y tres por familia, para que no
-    salgan nueve de Super Nintendo. Devuelve [(juego, direcciones de la portada)]."""
+    salgan nueve de Super Nintendo. Los juegos con «-» en web/destacados.txt no salen nunca (mosaico_a_mano()).
+    Devuelve [(juego, direcciones de la portada)]."""
     elegidos, titulos, por_sis, por_fam = [], set(), collections.Counter(), collections.Counter()
+    fuera = mosaico_a_mano()[1]
 
     def cabe(g):
         t = sin_acentos(g['titulo']).lower()
-        if t in titulos or juego_adulto(g) or all(es_ia(f) for f in g['filas']):
+        if t in titulos or (g['s'], t) in fuera or juego_adulto(g) or all(es_ia(f) for f in g['filas']):
             return False
         fam = FAMILIA.get(g['s'], 'otros')
         if por_sis[g['s']] >= 2 or por_fam[fam] >= 3:
