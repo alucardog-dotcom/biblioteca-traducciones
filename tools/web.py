@@ -305,9 +305,42 @@ MIN_GRUPO = 3  # traducciones que necesita un grupo para tener página propia
 # solo, con la forma que más se usa: nombre sin mayúsculas ni tildes -> esa forma. La rellena main.
 GRUPO_CANON = {}
 # Páginas que se publicaron y ya no existen -> adónde llevan ahora. Las de grupo con «-2» salían hasta el 12-11-2026
-# porque el catálogo escribía el mismo grupo de dos formas; ahora son una (GRUPO_CANON).
+# porque el catálogo escribía el mismo grupo de dos formas; ahora son una (GRUPO_CANON). Las de juego van en
+# web/redirecciones.tsv (main las añade aquí).
 REDIRIGIR = {'grupo/jackic-2/': 'grupo/jackic/', 'grupo/semco-2/': 'grupo/semco/', 'grupo/pakolmo-2/': 'grupo/pakolmo/',
              'grupo/emu4ever-2/': 'grupo/emu4ever/', 'grupo/spctrmxd-2/': 'grupo/spctrmxd/'}
+
+
+def redirecciones_tsv():
+    """Las fichas de juego que cambiaron de sistema o se fundieron con otra (web/redirecciones.tsv: ruta vieja <TAB>
+    ruta nueva <TAB> fecha <TAB> motivo). El 13-11-2026, 85 juegos de Game Gear que estaban como de Master System."""
+    ruta = os.path.join(WEB, 'redirecciones.tsv')
+    if not os.path.isfile(ruta):
+        return {}
+    out = {}
+    for l in open(ruta, encoding='utf-8'):
+        if not l.startswith('#') and '\t' in l:
+            viejo, nuevo = (x.strip() for x in l.rstrip('\n').split('\t')[:2])
+            out[viejo] = nuevo
+    return out
+
+
+def ruta_actual(ruta):
+    """Adónde lleva hoy una ruta: ella misma o, si se movió, la última de la cadena de REDIRIGIR."""
+    vistas = {ruta}
+    while ruta in REDIRIGIR and REDIRIGIR[ruta] not in vistas:
+        ruta = REDIRIGIR[ruta]
+        vistas.add(ruta)
+    return ruta
+
+
+def con_movidas(veces):
+    """{ruta: veces} con lo de cada página movida sumado a la ruta adonde lleva: un juego que cambia de ruta no pierde
+    sus favoritos ni sus visitas."""
+    out = {}
+    for r, v in veces.items():
+        out[ruta_actual(r)] = out.get(ruta_actual(r), 0) + v
+    return out
 
 
 def clave_grupo(nombre):
@@ -1830,7 +1863,7 @@ def favoritos_sin_bajar(nuevos, base, rutas):
             with urllib.request.urlopen(pet, timeout=30) as r:
                 d = json.load(r)
             if isinstance(d, dict):
-                publicados = {k: v for k, v in d.items() if isinstance(k, str) and type(v) is int and v > 0}
+                publicados = con_movidas({k: v for k, v in d.items() if isinstance(k, str) and type(v) is int and v > 0})
             break
         except Exception as ex:
             if isinstance(ex, urllib.error.HTTPError) and ex.code == 404:
@@ -2331,8 +2364,9 @@ def main():
             ruta = f'grupo/{base_slug}-{k}/'
             k += 1
         RUTAS_GRUPO[n] = ruta
-    ctx['favs'] = favoritos_sin_bajar(favoritos_con_base(favoritos_fichas()), base, {g['ruta'] for g in juegos})
-    sels = selecciones(juegos, sysn, visitas_fichas(), ctx['favs'])
+    REDIRIGIR.update({v: n for v, n in redirecciones_tsv().items() if v not in REDIRIGIR})
+    ctx['favs'] = favoritos_sin_bajar(con_movidas(favoritos_con_base(favoritos_fichas())), base, {g['ruta'] for g in juegos})
+    sels = selecciones(juegos, sysn, con_movidas(visitas_fichas()), ctx['favs'])
     altas, act = fechas_alta(), actualizadas()
     for f in filas:
         f['alta'] = altas.get(clave_fila(f), '')
@@ -2389,6 +2423,13 @@ def main():
     escribir(salida, 'selecciones/index.html', miles(pagina_selecciones(sels, base, sorted({id(f['gr']): f['gr'] for f in filas if doblaje(f)}.values(), key=lambda g: -max(x['pop'] for x in g['filas'])))))
     for sel in sels:
         escribir(salida, f'selecciones/{sel[0]}/index.html', miles(pagina_seleccion(sel, sysn, base)))
+    # Una selección que se queda sin los juegos que pide deja de salir: su página lleva a las selecciones, para no dar
+    # un 404 a quien llegue de un buscador (13-11-2026: la de Phantasy Star bajó de 8 a 7 juegos al fundir el Phantasy
+    # Star Gaiden que salía dos veces, como de Master System y de Game Gear).
+    posibles = (['lo-mas-visto', MAS_FAVORITOS[0], SELECCION_MANO[0]] + [f'imprescindibles-{slug(sysn.get(s, s))}' for s in SISTEMAS_IMPRESCINDIBLES]
+                + [x[0] for x in SELECCIONES_GENERO] + [x[0] for x in TEMAS] + [f'saga-{x[0]}' for x in SAGAS])
+    for sl in dict.fromkeys(posibles).keys() - {s[0] for s in sels}:
+        escribir(salida, f'selecciones/{sl}/index.html', pagina_redireccion(base, 'selecciones/'))
     escribir(salida, 'en-camino/index.html', miles(pagina_en_camino(juegos, sysn, base)))
     escribir(salida, 'perdidas/index.html', miles(pagina_perdidas(filas, sysn, base)))
     indice = []
@@ -2419,7 +2460,8 @@ def main():
              + ''.join(f'<url><loc>{e(base + r)}</loc>' + (f'<lastmod>{d}</lastmod>' if d else '') + '</url>\n' for r, d in rutas) + '</urlset>\n')
     escribir(salida, 'robots.txt', f'User-agent: *\nAllow: /\nSitemap: {base}sitemap.xml\n')
     existentes = {r for r, _ in rutas}
-    for viejo, nuevo in REDIRIGIR.items():
+    for viejo in REDIRIGIR:
+        nuevo = ruta_actual(viejo)
         if viejo not in existentes and nuevo in existentes:
             escribir(salida, viejo + 'index.html', pagina_redireccion(base, nuevo))
         else:
