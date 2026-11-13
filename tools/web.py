@@ -972,7 +972,7 @@ def pagina(raiz, titulo, descripcion, ruta, cuerpo, base, imagen='img/vista-prev
 <footer class="pie">
   <div class="pie-in">
     <p><b>Biblioteca de traducciones</b> es gratuita y de código libre (<a href="{REPO}/blob/main/LICENSE">GPL-3.0</a>). Las traducciones son de sus autores: este programa solo las encuentra y las aplica, y nunca descarga juegos.</p>
-    <p>Los archivos de las traducciones están en las páginas de sus autores: no los alojamos ni podemos revisarlos uno a uno. Pásales el antivirus antes de abrirlos y, si alguno da problemas, avísanos y retiramos el enlace.</p>
+    <p>Los archivos de las traducciones están, casi siempre, en las páginas de sus autores, y no podemos revisarlos uno a uno. Pásales el antivirus antes de abrirlos y, si alguno da problemas, avísanos y retiramos el enlace.</p>
     <p><a href="{raiz}grupos/">Grupos de traducción</a> · <a href="{raiz}en-camino/">Traducciones en camino</a> · <a href="{raiz}perdidas/">Traducciones perdidas</a> · <a href="{raiz}selecciones/">Selecciones</a> · <a href="{raiz}parchear/">Parchear en el navegador</a></p>
     <p><a href="{REPO}" data-goatcounter-click="estrella-github">Código en GitHub: si te es útil, dale una estrella ★</a> · <a href="{X}" rel="me noopener" data-goatcounter-click="x-pie">Síguenos en X (Twitter): @{X_CUENTA}</a></p>
     <p>Contacto, para avisar de un error, pedir una traducción que falta o retirar la tuya: {contacto(clic='correo-pie')}</p>
@@ -1506,7 +1506,7 @@ def pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version, dias, filas, p
     <details><summary>¿Solo hay traducciones en español de España?</summary><p>No. El catálogo recoge todas las traducciones al español que encuentra, hechas en España y en Latinoamérica, y cuando sus autores indican la variante (español de España, latino o neutro) la ficha lo dice; en el catálogo puedes filtrar por «Español latino». Si conoces una traducción latina que falta, escríbeme a {contacto('Falta una traducción latina')}.</p></details>
     <details><summary>¿Hace falta instalar algo?</summary><p>No. La web busca en el mismo catálogo que el programa, cada ficha enlaza a la traducción y la página <a href="parchear/">Parchear</a> aplica los parches en el navegador sin subir nada a ningún sitio. El programa para Windows añade buscar tus juegos él solo, comprobar tu copia por su CRC32, portadas y listas, y el botón Jugar con RetroBat.</p></details>
     <details><summary>¿Descarga juegos?</summary><p>No. Ni la web ni el programa descargan juegos: solo los parches de traducción, que se aplican sobre la copia que ya tienes.</p></details>
-    <details><summary>¿Es seguro descargar las traducciones?</summary><p>Los parches de las consolas clásicas (IPS, BPS, xdelta…) no son programas: solo cambian los datos del juego. Las traducciones de PC y de consolas actuales, en cambio, a veces traen un instalador o un .exe, y a esos conviene pasarles el antivirus antes de abrirlos o analizarlos en <a href="{VIRUSTOTAL}" target="_blank" rel="noopener">VirusTotal</a>; igual que a un parcheador .exe que venga dentro de un zip. Los archivos están en las páginas de sus autores: no los alojamos ni podemos revisarlos uno a uno. Si alguno da problemas, escríbeme a {contacto('Un archivo da problemas')} y retiro el enlace.</p></details>
+    <details><summary>¿Es seguro descargar las traducciones?</summary><p>Los parches de las consolas clásicas (IPS, BPS, xdelta…) no son programas: solo cambian los datos del juego. Las traducciones de PC y de consolas actuales, en cambio, a veces traen un instalador o un .exe, y a esos conviene pasarles el antivirus antes de abrirlos o analizarlos en <a href="{VIRUSTOTAL}" target="_blank" rel="noopener">VirusTotal</a>; igual que a un parcheador .exe que venga dentro de un zip. Los archivos están, casi siempre, en las páginas de sus autores, y no podemos revisarlos uno a uno; las pocas copias que guardamos de traducciones que costó encontrar van tal cual las publicaron. Si alguno da problemas, escríbeme a {contacto('Un archivo da problemas')} y retiro el enlace.</p></details>
     <details><summary>¿Cuánto cuesta?</summary><p>Nada. Es gratuito y de código libre, con licencia GPL-3.0.</p></details>
     <details><summary>Falta una traducción o una ficha está mal</summary><p>Escríbeme a {contacto('Falta una traducción o una ficha está mal')}. El catálogo se pone al día en la web y en el programa sin reinstalar nada.</p></details>
     <details><summary>Windows dice «Windows protegió su PC». ¿Es seguro?</summary><p>El instalador no está firmado y por eso Windows avisa. Pulsa «Más información» y «Ejecutar de todas formas». El código está en <a href="{REPO}">GitHub</a> para quien quiera revisarlo.</p></details>
@@ -2153,7 +2153,8 @@ def pagina_en_camino(juegos, sysn, base):
 
 def pagina_perdidas(filas, sysn, base):
     """Traducciones de las que solo queda la página donde se anunciaban (ver PERDIDA): se piden copias a quien las conserve.
-    Un parche que aparezca solo se aloja con permiso de su autor."""
+    Un parche que aparezca puede guardarse en web/conservadas tal cual se publicó, con su crédito; si su autor prefiere
+    que no esté, se quita (decisión del usuario, 14-11-2026)."""
     raiz = '../'
     perdidas = [f for f in filas if perdida(f)]
     por_sis = {}
@@ -2203,7 +2204,7 @@ def pagina_perdidas(filas, sysn, base):
       <li><b>Busca el fichero.</b> Cada traducción lleva el nombre exacto que tenía (por ejemplo, <code>dreams_frogger2_100.zip</code>) y su tamaño, cuando se conoce.</li>
       <li><b>Avisa con «La tengo».</b> Abre un correo a {CORREO} con los datos ya puestos. No adjuntes el archivo todavía: cuéntanos qué tienes y te contestaremos.</li>
       <li><b>Solo parches.</b> No mandes juegos ni ROMs ya parcheadas.</li>
-      <li><b>Si eres el autor, o sabes cómo dar con él, dilo también.</b> Un parche recuperado solo se aloja aquí con permiso de su autor, y su ficha dirá a quién se le debe.</li>
+      <li><b>Si eres el autor, o sabes cómo dar con él, dilo también.</b> Un parche recuperado se guarda aquí tal cual se publicó, para que no vuelva a perderse, y su ficha dirá a quién se le debe. Si eres su autor y prefieres que no esté, escríbenos y lo quitamos.</li>
     </ol>
   </section>
   {bloque_halladas}
@@ -2449,6 +2450,10 @@ def main():
     # apunta a ellas en "pu", también para el programa.
     if os.path.isdir(os.path.join(WEB, 'miniaturas')):
         shutil.copytree(os.path.join(WEB, 'miniaturas'), os.path.join(salida, 'miniaturas'))
+    # Copias que conserva la Biblioteca de traducciones que costó encontrar (web/conservadas, desde el 14-11-2026):
+    # los ficheros tal cual los publicaron sus autores, sin tocar; sus fichas enlazan a ellas en la nota.
+    if os.path.isdir(os.path.join(WEB, 'conservadas')):
+        shutil.copytree(os.path.join(WEB, 'conservadas'), os.path.join(salida, 'conservadas'))
     # El logotipo (web/icono.svg: el cartucho con las iniciales BT, desde el 12-11-2026) o, si no está, el del programa;
     # y sus copias en PNG para el iPhone (fondo blanco) y en ICO para quien pida /favicon.ico.
     icono = os.path.join(WEB, 'icono.svg')
