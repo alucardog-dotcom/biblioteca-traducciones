@@ -201,6 +201,22 @@ def actualizadas():
     return out
 
 
+def encontradas():
+    """Traducciones perdidas o que nadie tenía a mano y han vuelto a aparecer (web/encontradas.txt): cada línea es
+    sistema|juego|grupo|AAAA-MM-DD|de dónde salió, con juego y grupo tal como están en el catálogo. Salen arriba en
+    «Traducciones perdidas», de la más reciente a la más antigua, con enlace a su ficha. Devuelve [(sistema, juego,
+    grupo, fecha, de dónde)]."""
+    ruta = os.path.join(WEB, 'encontradas.txt')
+    if not os.path.isfile(ruta):
+        return []
+    out = []
+    for l in open(ruta, encoding='utf-8'):
+        partes = [p.strip() for p in l.strip().split('|')]
+        if len(partes) >= 4 and not partes[0].startswith('#') and re.fullmatch(r'\d{4}-\d{2}-\d{2}', partes[3]):
+            out.append((partes[0], partes[1], partes[2], partes[3], partes[4] if len(partes) > 4 else ''))
+    return sorted(out, key=lambda x: x[3], reverse=True)
+
+
 def web_segura(u):
     """Solo direcciones web en los href que vienen del catálogo (nunca javascript: ni file:)."""
     return u if u.startswith(('https://', 'http://')) and ' ' not in u else ''
@@ -2144,6 +2160,19 @@ def pagina_perdidas(filas, sysn, base):
     for f in sorted(perdidas, key=lambda f: sin_acentos(f['juego']).lower()):
         por_sis.setdefault(f['sistema'], []).append(f)
     webs = collections.Counter(f['fuente'].split(' (')[0].strip() for f in perdidas)
+    # Las que han vuelto a aparecer (web/encontradas.txt), arriba: ya se descargan desde su ficha.
+    halladas = []
+    for s, j, g, d, donde in encontradas():
+        f = next((f for f in filas if f['sistema'] == s and f['juego'] == j and f['grupo'] == g), None)
+        if f is None:
+            print(f'AVISO: {s}|{j}|{g} (web/encontradas.txt) no es de ninguna traducción del catálogo')
+            continue
+        halladas.append(f'<li class="proy"><a href="{raiz}{f["ruta"]}"><b>{e(j)}</b></a>'
+                        f'<span class="suave">{e(sysn.get(s, s))} · {e(g)}{" · " + e(f["fecha"][:4]) if f["fecha"][:4].isdigit() else ""}</span>'
+                        f'<span class="suave">Encontrada el {fecha_larga(d)}{": " + e(donde) if donde else ""}</span></li>')
+    bloque_halladas = (f'<section class="bloque encontradas"><h2>Encontradas <span class="n">{len(halladas)}</span></h2>'
+                       '<p class="texto suave">Traducciones que se daban por perdidas o que nadie tenía a mano y han vuelto a aparecer. '
+                       f'Ya se pueden descargar desde su ficha.</p><ul class="proys">{"".join(halladas)}</ul></section>') if halladas else ''
     bloques = ''
     for s, fs in sorted(por_sis.items(), key=lambda sf: (-len(sf[1]), sysn.get(sf[0], sf[0]))):
         items = ''
@@ -2177,6 +2206,7 @@ def pagina_perdidas(filas, sysn, base):
       <li><b>Si eres el autor, o sabes cómo dar con él, dilo también.</b> Un parche recuperado solo se aloja aquí con permiso de su autor, y su ficha dirá a quién se le debe.</li>
     </ol>
   </section>
+  {bloque_halladas}
   {bloques}
   <section class="bloque"><h2>De dónde salen</h2>
     <p class="texto suave">De copias de archive.org de webs que ya no existen: {origen}. TodoTradus (2002-2004) reunía los parches de casi todos los grupos de la época, entre ellos los de BnD Translations, los equipos Babel y Dreams de El Otro Lado. Las traducciones cuyo parche sí guarda archive.org no salen aquí: su ficha lleva a él.</p>

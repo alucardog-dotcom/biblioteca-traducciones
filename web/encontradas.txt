@@ -1,0 +1,3 @@
+# Traducciones perdidas, o que nadie tenía a mano, que han vuelto a aparecer: salen arriba en «Traducciones perdidas».
+# Una por línea: sistema|juego|grupo|AAAA-MM-DD (el día en que apareció)|de dónde salió, con juego y grupo tal como están en el catálogo.
+psx|Castlevania: Symphony of the Night|BiT ARS0NiST / YuPiKaIe|2026-11-14|en un adjunto que su autor subió a El Otro Lado en 2006
