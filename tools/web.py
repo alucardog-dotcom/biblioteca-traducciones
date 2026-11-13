@@ -29,6 +29,14 @@ CORREO = 'contacto@bibliotecadetraducciones.com'
 # La cuenta de X (Twitter) de la Biblioteca: enlace en el pie de todas las páginas y «twitter:site» en las tarjetas.
 X_CUENTA = 'bibliotecatradu'
 X = 'https://x.com/' + X_CUENTA
+# Los archivos de las traducciones están en las páginas de sus autores y no se revisan uno a uno (13-11-2026). Los
+# parches de ROM no son programas, pero las traducciones de PC, de consolas actuales y las que se instalan a mano
+# pueden traer un instalador o un .exe: sus fichas llevan este aviso en «Cómo jugarlo». Lo mismo, en corto, en el pie
+# de todas las páginas y en las preguntas de la portada.
+VIRUSTOTAL = 'https://www.virustotal.com/'
+ANTIVIRUS = ('<p class="antivirus"><b>Antes de abrir un instalador o un .exe, pásale el antivirus</b> o analízalo en '
+             f'<a href="{VIRUSTOTAL}" target="_blank" rel="noopener">VirusTotal</a>. Los archivos están en la página de su autor: '
+             'no los alojamos ni podemos revisarlos uno a uno.</p>')
 LIBRETRO = {}  # nombres de los sistemas en thumbnails.libretro.com (de centro_datos.json); lo rellena main()
 PC = {'dos', 'windows', 'scummvm', 'easyrpg', 'pc'}
 # Consolas de hoy: sus traducciones son mods que se instalan a mano (como MODERNAS en ui/app.js).
@@ -719,7 +727,8 @@ def destacados(filas, dias, pins, k=9, vistos=()):
     días con tirón (web/popularidad.tsv) y, para completar, los juegos de más tirón de todo el catálogo, que rotan cada
     día. Sin IA ni juegos para adultos, con portada, y como mucho dos juegos por sistema y tres por familia, para que no
     salgan nueve de Super Nintendo. Los juegos con «-» en web/destacados.txt no salen nunca (mosaico_a_mano()). Los
-    fijados a mano salen aunque solo tengan traducciones con IA: los elige una persona, no la web.
+    fijados a mano salen aunque solo tengan traducciones con IA o pasen de esos topes (cuentan para los demás): los
+    elige una persona, no la web.
     Devuelve [(juego, direcciones de la portada)]."""
     elegidos, titulos, por_sis, por_fam = [], set(), collections.Counter(), collections.Counter()
     fuera = mosaico_a_mano()[1]
@@ -730,7 +739,7 @@ def destacados(filas, dias, pins, k=9, vistos=()):
                 or (not fijo and all(es_ia(f) for f in g['filas']))):
             return False
         fam = FAMILIA.get(g['s'], 'otros')
-        if por_sis[g['s']] >= 2 or por_fam[fam] >= 3:
+        if not fijo and (por_sis[g['s']] >= 2 or por_fam[fam] >= 3):  # los fijados a mano entran aunque se pasen
             return False
         urls = portadas(g, LIBRETRO, '')
         if not urls:
@@ -802,16 +811,22 @@ def fechas_alta():
         return {}
 
 
+def enviada_por_autor(f):
+    """La traducción nos la mandó su propio autor para que la añadiéramos (fuente «Enviada por su autor…»)."""
+    return f['fuente'].startswith('Enviada por su autor')
+
+
 def novedades(filas, sin_adultos=False):
     """Las filas con fecha de alta por días, del más nuevo al más antiguo: [(AAAA-MM-DD, [filas])]. Dentro de un día,
-    primero las que tienen portada y no son de IA, y luego por la fecha de la traducción, para que la portada luzca."""
+    primero las que nos mandan sus propios autores, que encabezan el día aunque sean de IA; luego las que tienen portada
+    y no son de IA, y luego por la fecha de la traducción, para que la portada luzca."""
     dias = {}
     for f in filas:
         if f.get('alta') and not (sin_adultos and juego_adulto(f['gr'])):
             dias.setdefault(f['alta'], []).append(f)
     for fs in dias.values():
         fs.sort(key=fecha_iso, reverse=True)
-        fs.sort(key=lambda f: (not con_portada(f), es_ia(f)))
+        fs.sort(key=lambda f: (not enviada_por_autor(f), not con_portada(f), es_ia(f)))
     return sorted(dias.items(), reverse=True)
 
 
@@ -929,6 +944,7 @@ def pagina(raiz, titulo, descripcion, ruta, cuerpo, base, imagen='img/vista-prev
 <footer class="pie">
   <div class="pie-in">
     <p><b>Biblioteca de traducciones</b> es gratuita y de código libre (<a href="{REPO}/blob/main/LICENSE">GPL-3.0</a>). Las traducciones son de sus autores: este programa solo las encuentra y las aplica, y nunca descarga juegos.</p>
+    <p>Los archivos de las traducciones están en las páginas de sus autores: no los alojamos ni podemos revisarlos uno a uno. Pásales el antivirus antes de abrirlos y, si alguno da problemas, avísanos y retiramos el enlace.</p>
     <p><a href="{raiz}grupos/">Grupos de traducción</a> · <a href="{raiz}en-camino/">Traducciones en camino</a> · <a href="{raiz}perdidas/">Traducciones perdidas</a> · <a href="{raiz}selecciones/">Selecciones</a> · <a href="{raiz}parchear/">Parchear en el navegador</a></p>
     <p><a href="{REPO}" data-goatcounter-click="estrella-github">Código en GitHub: si te es útil, dale una estrella ★</a> · <a href="{X}" rel="me noopener" data-goatcounter-click="x-pie">Síguenos en X (Twitter): @{X_CUENTA}</a></p>
     <p>Contacto, para avisar de un error, pedir una traducción que falta o retirar la tuya: {contacto(clic='correo-pie')}</p>
@@ -1151,6 +1167,9 @@ def pagina_juego(gr, sysn, libretro, base, ctx):
       <li><b>Con el programa para Windows:</b> dile en qué carpeta tienes tus juegos, busca «{e(titulo)}» y pulsa <b>Traducir</b>. Comprueba que tu copia es la versión que pide la traducción y la aplica; tu original no se toca.</li>
     </ol>
     <p class="suave">Necesitas tu propia copia del juego: ni la web ni el programa descargan juegos, solo los parches de traducción.</p>"""
+    # Las de PC, consolas actuales e instalación a mano pueden traer un instalador o un .exe: aviso de pasarles el antivirus.
+    if modo in ('pc', 'manual') and not abandonadas:
+        como += '\n    ' + ANTIVIRUS
     # El botón principal de la ficha, con una línea que explica por qué cuando no es el navegador.
     descarga = f'href="{INSTALADOR}" data-goatcounter-click="descarga-juego"'
     if modo == 'navegador':
@@ -1459,6 +1478,7 @@ def pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version, dias, filas, p
     <details><summary>¿Solo hay traducciones en español de España?</summary><p>No. El catálogo recoge todas las traducciones al español que encuentra, hechas en España y en Latinoamérica, y cuando sus autores indican la variante (español de España, latino o neutro) la ficha lo dice; en el catálogo puedes filtrar por «Español latino». Si conoces una traducción latina que falta, escríbeme a {contacto('Falta una traducción latina')}.</p></details>
     <details><summary>¿Hace falta instalar algo?</summary><p>No. La web busca en el mismo catálogo que el programa, cada ficha enlaza a la traducción y la página <a href="parchear/">Parchear</a> aplica los parches en el navegador sin subir nada a ningún sitio. El programa para Windows añade buscar tus juegos él solo, comprobar tu copia por su CRC32, portadas y listas, y el botón Jugar con RetroBat.</p></details>
     <details><summary>¿Descarga juegos?</summary><p>No. Ni la web ni el programa descargan juegos: solo los parches de traducción, que se aplican sobre la copia que ya tienes.</p></details>
+    <details><summary>¿Es seguro descargar las traducciones?</summary><p>Los parches de las consolas clásicas (IPS, BPS, xdelta…) no son programas: solo cambian los datos del juego. Las traducciones de PC y de consolas actuales, en cambio, a veces traen un instalador o un .exe, y a esos conviene pasarles el antivirus antes de abrirlos o analizarlos en <a href="{VIRUSTOTAL}" target="_blank" rel="noopener">VirusTotal</a>; igual que a un parcheador .exe que venga dentro de un zip. Los archivos están en las páginas de sus autores: no los alojamos ni podemos revisarlos uno a uno. Si alguno da problemas, escríbeme a {contacto('Un archivo da problemas')} y retiro el enlace.</p></details>
     <details><summary>¿Cuánto cuesta?</summary><p>Nada. Es gratuito y de código libre, con licencia GPL-3.0.</p></details>
     <details><summary>Falta una traducción o una ficha está mal</summary><p>Escríbeme a {contacto('Falta una traducción o una ficha está mal')}. El catálogo se pone al día en la web y en el programa sin reinstalar nada.</p></details>
     <details><summary>Windows dice «Windows protegió su PC». ¿Es seguro?</summary><p>El instalador no está firmado y por eso Windows avisa. Pulsa «Más información» y «Ejecutar de todas formas». El código está en <a href="{REPO}">GitHub</a> para quien quiera revisarlo.</p></details>

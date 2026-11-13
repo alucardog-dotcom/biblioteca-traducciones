@@ -15,3 +15,6 @@ psvita|Chaos Rings III|hasta 2026-11-19
 ps2|Suikoden III
 -n64|Super Mario 64
 pc|Danganronpa V3: Killing Harmony
+# Del 13 al 20-11-2026: The Caligula Effect: Overdose de Lemulte, la primera traducción que nos manda su propio autor; Super Robot Wars UX le deja sitio.
+pc|The Caligula Effect: Overdose|hasta 2026-11-20
+-3ds|Super Robot Wars UX|hasta 2026-11-20
