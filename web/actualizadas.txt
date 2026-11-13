@@ -1,3 +1,4 @@
 # Traducciones puestas al día que salen en las novedades del día indicado, como «Actualizado», en vez de en el día en que entraron.
 # Una por línea: sistema|juego|grupo|AAAA-MM-DD, con juego y grupo tal como están en el catálogo. Pasados 120 días dejan de contar solas.
 psvita|Chaos Rings III|Joseas|2026-11-12
+snes|Mystic Ark|Migue84|2026-11-13
