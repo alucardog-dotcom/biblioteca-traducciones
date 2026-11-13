@@ -18,3 +18,5 @@ pc|Danganronpa V3: Killing Harmony
 # Del 13 al 20-11-2026: The Caligula Effect: Overdose de Lemulte, la primera traducción que nos manda su propio autor; Super Robot Wars UX le deja sitio.
 pc|The Caligula Effect: Overdose|hasta 2026-11-20
 -3ds|Super Robot Wars UX|hasta 2026-11-20
+# Desde el 13-11-2026: Drakengard 3 de Traducciones Vacuno, que vuelve al catálogo con su permiso (como se les ofreció).
+ps3|Drakengard 3
