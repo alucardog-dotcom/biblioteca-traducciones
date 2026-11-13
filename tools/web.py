@@ -1138,7 +1138,7 @@ def pagina_juego(gr, sysn, libretro, base, ctx):
     else:
         botones = f'<a class="btn primario grande" {descarga}>Descargar el programa para Windows</a>'
     # Cuántas veces se ha guardado en Favoritos (favoritos_fichas()), solo a partir de FAVORITOS_MIN.
-    n_fav = ctx.get('favs', {}).get(gr['ruta'], 0)
+    n_fav = ctx.get('favs_ver', {}).get(gr['ruta'], 0)
     veces_fav = f'<span class="suave n-fav">Guardado {n_fav:,} veces en Favoritos</span>'.replace(',', '.') if n_fav >= FAVORITOS_MIN else ''
     cuerpo = f"""<main class="juego">
   <nav class="migas" aria-label="Estás en"><a href="{raiz}">Inicio</a> › <a href="{raiz}catalogo/">Catálogo</a> › <a href="{raiz}sistema/{e(s)}/">{e(nombre_sis)}</a></nav>
@@ -1339,6 +1339,13 @@ def pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version, dias, filas, p
     <p class="texto suave">Los juegos cuyas fichas más se han consultado en la web en los últimos {MAS_VISTOS_DIAS} días.</p>
     <ul class="tarjetas">{''.join(tarjeta_juego(g, raiz, sysn, True) for g in vistos)}</ul>
   </section>''' if len(vistos) >= 6 else ''
+    # «Los más guardados en Favoritos»: sus seis primeros, detrás de «Lo más visto», para animar a usar el corazón.
+    todos_favs = next((s[3] for s in sels if s[0] == MAS_FAVORITOS[0]), [])
+    bloque_favs = f'''<section class="bloque novedades favoritos">
+    <div class="cab"><h2>{MAS_FAVORITOS[1]}</h2><p class="suave"><a href="selecciones/{MAS_FAVORITOS[0]}/">Los {len(todos_favs)} más guardados</a></p></div>
+    <p class="texto suave">Los juegos que más veces se han guardado en Favoritos. Pulsa el corazón de cualquier juego para guardarlo tú también.</p>
+    <ul class="tarjetas">{''.join(tarjeta_juego(g, raiz, sysn, True) for g in todos_favs[:6])}</ul>
+  </section>''' if len(todos_favs) >= 6 else ''
     portada_sels = explora(sels)
     usadas = set()  # que una misma portada no salga en dos tarjetas
     bloque_explora = (f'''<section class="bloque explora">
@@ -1371,6 +1378,8 @@ def pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version, dias, filas, p
   {bloque_nov}
 
   {bloque_vistos}
+
+  {bloque_favs}
 
   {bloque_dob}
 
@@ -1687,6 +1696,9 @@ MAS_VISTOS_DIAS = 30
 # (favoritos_sin_bajar()).
 FAVORITOS_DESDE = '2026-11-12'
 FAVORITOS_MIN = 3
+# «Los más guardados en Favoritos»: los juegos con FAVORITOS_MIN o más, de más a menos (sin los de adultos).
+MAS_FAVORITOS = ('mas-favoritos', 'Los más guardados en Favoritos',
+                 'Los juegos que más veces se han guardado en Favoritos en la web. Pulsa el corazón de cualquier juego para guardarlo tú también.')
 # La selección de quien lleva la web: juegos especiales, de los que no suelen salir en las listas, apuntados a mano en
 # web/seleccion.txt. Entran todos, también los que solo tienen traducción con IA (los ha elegido una persona), y no
 # tienen orden: se barajan cada día.
@@ -1795,6 +1807,19 @@ def favoritos_fichas():
     return veces
 
 
+def favoritos_iniciales(favs):
+    """Lo que enseña la web: los favoritos contados (favs) más los de partida de web/favoritos_iniciales.tsv (ruta <TAB>
+    cuántos se suman), puestos a mano el 13-11-2026. favoritos.json sigue publicando solo los contados, que son los que
+    favoritos_sin_bajar() conserva de una generación a otra."""
+    extra, ruta_tsv = {}, os.path.join(WEB, 'favoritos_iniciales.tsv')
+    if os.path.isfile(ruta_tsv):
+        for l in open(ruta_tsv, encoding='utf-8'):
+            p = l.rstrip('\n').split('\t')
+            if not l.startswith('#') and len(p) == 2 and p[1].strip().isdigit():
+                extra[p[0].strip()] = int(p[1])
+    return {r: favs.get(r, 0) + extra.get(r, 0) for r in set(favs) | set(extra) if favs.get(r, 0) + extra.get(r, 0) > 0}
+
+
 def favoritos_sin_bajar(nuevos, base, rutas):
     """La cifra de Favoritos de una ficha nunca baja: cada generación publica favoritos.json ({ruta: veces}) y la
     siguiente se queda, juego a juego, con lo mayor entre lo publicado y lo que dé GoatCounter. Así la ficha no pierde
@@ -1843,19 +1868,25 @@ def seleccion_a_mano(juegos, dia=None):
     return gs
 
 
-def selecciones(juegos, sysn, visitas=None):
+def selecciones(juegos, sysn, visitas=None, favs=None):
     """Las selecciones: [(slug, título, entradilla, [juegos])], de más tirón a menos, sin los juegos que solo tienen traducciones con IA.
     «Lo más visto» va la primera y ordena por las visitas a la ficha (visitas_fichas), con todos los juegos menos los
-    que son para adultos (desde el 12-11-2026 no entran, se activen o no en el catálogo); la segunda, la selección hecha
-    a mano (SELECCION_MANO)."""
+    que son para adultos (desde el 12-11-2026 no entran, se activen o no en el catálogo); detrás, «Los más guardados en
+    Favoritos» (MAS_FAVORITOS, con favs: {ruta: veces}, también sin adultos), y luego la selección hecha a mano
+    (SELECCION_MANO)."""
     validos = [g for g in juegos if not all(es_ia(f) for f in g['filas']) and any(f['pop'] for f in g['filas'])]
     tiron = lambda g: -max(f['pop'] for f in g['filas'])
+    tiron_o_0 = lambda g: tiron(g) if any(f['pop'] for f in g['filas']) else 0
     out = []
     if visitas:
-        gs = sorted((g for g in juegos if visitas.get(g['ruta'], 0) >= 2 and not juego_adulto(g)), key=lambda g: (-visitas[g['ruta']], tiron(g) if any(f['pop'] for f in g['filas']) else 0))
+        gs = sorted((g for g in juegos if visitas.get(g['ruta'], 0) >= 2 and not juego_adulto(g)), key=lambda g: (-visitas[g['ruta']], tiron_o_0(g)))
         if len(gs) >= 8:
             out.append(('lo-mas-visto', 'Lo más visto', f'Los juegos cuyas fichas más se han consultado en la web en los últimos {MAS_VISTOS_DIAS} días.',
                         gs[:MAX_SELECCION]))
+    if favs:
+        gs = sorted((g for g in juegos if favs.get(g['ruta'], 0) >= FAVORITOS_MIN and not juego_adulto(g)), key=lambda g: (-favs[g['ruta']], tiron_o_0(g)))
+        if len(gs) >= 6:
+            out.append((*MAS_FAVORITOS, gs[:MAX_SELECCION]))
     mano = seleccion_a_mano(juegos)
     if len(mano) >= 4:
         out.append((*SELECCION_MANO, mano))
@@ -1898,7 +1929,7 @@ def explora(sels, dia=None):
     imp = [s for s in sels if s[0].startswith('imprescindibles-')]
     sagas = [s for s in sels if s[0].startswith('saga-')]
     # «RPG» se parece demasiado a «RPG japoneses», que es fija.
-    generos = [s for s in sels if s not in fijas and not s[0].startswith(('imprescindibles-', 'saga-')) and s[0] not in ('lo-mas-visto', 'rpg')]
+    generos = [s for s in sels if s not in fijas and not s[0].startswith(('imprescindibles-', 'saga-')) and s[0] not in ('lo-mas-visto', MAS_FAVORITOS[0], 'rpg')]
     rotan = rnd.sample(imp, min(2, len(imp))) + rnd.sample(sagas, min(1, len(sagas))) + rnd.sample(generos, min(1, len(generos)))
     # Intercaladas: una que rota, una fija…; si faltan, se completa con las que quedan.
     out = [s for par in zip(rotan, fijas) for s in par] + rotan[len(fijas):] + fijas[len(rotan):]
@@ -1931,6 +1962,8 @@ def pagina_seleccion(sel, sysn, base):
     if sl == 'lo-mas-visto':
         pie_orden = (f'Ordenados por las visitas a su ficha en los últimos {MAS_VISTOS_DIAS} días (estadísticas anónimas y sin cookies '
                      'de GoatCounter). Se pone al día cada día. ')
+    elif sl == MAS_FAVORITOS[0]:
+        pie_orden = 'Ordenados por las veces que se han guardado en Favoritos. Se pone al día cada día. '
     elif a_mano:
         pie_orden = ('Elegidos a mano y sin ningún orden: se barajan cada día. Alguno solo tiene, por ahora, una traducción hecha '
                      'con IA; lo avisa su ficha. ')
@@ -1959,6 +1992,8 @@ def pagina_seleccion(sel, sysn, base):
         opciones = [f'{titulo}: {len(gs)} juegos traducidos', titulo]
     elif sl == 'lo-mas-visto':
         opciones = [f'Lo más visto: los {len(gs)} juegos traducidos más consultados', titulo]
+    elif sl == MAS_FAVORITOS[0]:
+        opciones = [f'Los {len(gs)} juegos traducidos más guardados en Favoritos', titulo]
     elif sl == 'para-jugar-acompanado':
         opciones = [f'{len(gs)} juegos en español para jugar acompañado', titulo]
     elif a_mano:
@@ -1973,9 +2008,9 @@ def pagina_selecciones(sels, base, doblados=()):
     raiz = '../'
     sistemas = [s for s in sels if s[0].startswith('imprescindibles-')]
     sagas = [s for s in sels if s[0].startswith('saga-')]
-    vistos = [s for s in sels if s[0] == 'lo-mas-visto']
+    vistos = [s for s in sels if s[0] in ('lo-mas-visto', MAS_FAVORITOS[0])]
     mano = [s for s in sels if s[0] == SELECCION_MANO[0]]
-    otras = [s for s in sels if not s[0].startswith(('imprescindibles-', 'saga-')) and s[0] not in ('lo-mas-visto', SELECCION_MANO[0])]
+    otras = [s for s in sels if not s[0].startswith(('imprescindibles-', 'saga-')) and s[0] not in ('lo-mas-visto', MAS_FAVORITOS[0], SELECCION_MANO[0])]
     cuerpo = f'''<main class="sistema selecciones-p">
   <p class="migas"><a href="{raiz}">Inicio</a> › Selecciones</p>
   <h1>Selecciones</h1>
@@ -2299,8 +2334,9 @@ def main():
             ruta = f'grupo/{base_slug}-{k}/'
             k += 1
         RUTAS_GRUPO[n] = ruta
-    sels = selecciones(juegos, sysn, visitas_fichas())
     ctx['favs'] = favoritos_sin_bajar(favoritos_fichas(), base, {g['ruta'] for g in juegos})
+    ctx['favs_ver'] = favoritos_iniciales(ctx['favs'])
+    sels = selecciones(juegos, sysn, visitas_fichas(), ctx['favs_ver'])
     altas, act = fechas_alta(), actualizadas()
     for f in filas:
         f['alta'] = altas.get(clave_fila(f), '')
