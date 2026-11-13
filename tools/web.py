@@ -1138,7 +1138,7 @@ def pagina_juego(gr, sysn, libretro, base, ctx):
     else:
         botones = f'<a class="btn primario grande" {descarga}>Descargar el programa para Windows</a>'
     # Cuántas veces se ha guardado en Favoritos (favoritos_fichas()), solo a partir de FAVORITOS_MIN.
-    n_fav = ctx.get('favs_ver', {}).get(gr['ruta'], 0)
+    n_fav = ctx.get('favs', {}).get(gr['ruta'], 0)
     veces_fav = f'<span class="suave n-fav">Guardado {n_fav:,} veces en Favoritos</span>'.replace(',', '.') if n_fav >= FAVORITOS_MIN else ''
     cuerpo = f"""<main class="juego">
   <nav class="migas" aria-label="Estás en"><a href="{raiz}">Inicio</a> › <a href="{raiz}catalogo/">Catálogo</a> › <a href="{raiz}sistema/{e(s)}/">{e(nombre_sis)}</a></nav>
@@ -1691,10 +1691,10 @@ SAGAS = [
 ]
 MAS_VISTOS_DIAS = 30
 # Favoritos: al guardar un juego en Favoritos, web/listas.js manda un evento anónimo de GoatCounter, una sola vez por
-# navegador y juego; quitarlo no manda nada. La ficha dice cuántas veces se ha guardado (favoritos_fichas()) a partir
-# de FAVORITOS_MIN, que menos luce poco, y la cuenta empieza en FAVORITOS_DESDE. La cifra solo sube, nunca baja
-# (favoritos_sin_bajar()).
-FAVORITOS_DESDE = '2026-11-12'
+# navegador y juego; quitarlo no manda nada. La ficha dice cuántas veces se ha guardado a partir de FAVORITOS_MIN, que
+# menos luce poco: la cifra de partida de cada juego (web/favoritos_base.json, hasta FAVORITOS_DESDE) más lo que cuenta
+# GoatCounter desde entonces (favoritos_fichas()). La cifra solo sube, nunca baja (favoritos_sin_bajar()).
+FAVORITOS_DESDE = '2026-11-13T07:00:00Z'
 FAVORITOS_MIN = 3
 # «Los más guardados en Favoritos»: los juegos con FAVORITOS_MIN o más, de más a menos (sin los de adultos).
 MAS_FAVORITOS = ('mas-favoritos', 'Los más guardados en Favoritos',
@@ -1794,7 +1794,7 @@ def favoritos_fichas():
     veces, lista = {}, sorted(ids)
     fin = hora_api(datetime.now(timezone.utc))
     for i in range(0, len(lista), 100):
-        datos = api_goatcounter('stats/hits', {'start': FAVORITOS_DESDE + 'T00:00:00Z', 'end': fin, 'limit': 100,
+        datos = api_goatcounter('stats/hits', {'start': FAVORITOS_DESDE, 'end': fin, 'limit': 100,
                                                'include_paths': ','.join(map(str, lista[i:i + 100]))}, 'los favoritos')
         if datos is None:
             return {}
@@ -1807,17 +1807,13 @@ def favoritos_fichas():
     return veces
 
 
-def favoritos_iniciales(favs):
-    """Lo que enseña la web: los favoritos contados (favs) más los de partida de web/favoritos_iniciales.tsv (ruta <TAB>
-    cuántos se suman), puestos a mano el 13-11-2026. favoritos.json sigue publicando solo los contados, que son los que
-    favoritos_sin_bajar() conserva de una generación a otra."""
-    extra, ruta_tsv = {}, os.path.join(WEB, 'favoritos_iniciales.tsv')
-    if os.path.isfile(ruta_tsv):
-        for l in open(ruta_tsv, encoding='utf-8'):
-            p = l.rstrip('\n').split('\t')
-            if not l.startswith('#') and len(p) == 2 and p[1].strip().isdigit():
-                extra[p[0].strip()] = int(p[1])
-    return {r: favs.get(r, 0) + extra.get(r, 0) for r in set(favs) | set(extra) if favs.get(r, 0) + extra.get(r, 0) > 0}
+def favoritos_con_base(nuevos):
+    """La cifra de partida de cada juego (web/favoritos_base.json, {ruta: veces} hasta FAVORITOS_DESDE) más lo que ha
+    contado GoatCounter desde entonces (nuevos)."""
+    ruta = os.path.join(WEB, 'favoritos_base.json')
+    base = json.load(open(ruta, encoding='utf-8')) if os.path.isfile(ruta) else {}
+    base = {k: v for k, v in base.items() if isinstance(k, str) and type(v) is int and v > 0}
+    return {r: base.get(r, 0) + nuevos.get(r, 0) for r in set(base) | set(nuevos)}
 
 
 def favoritos_sin_bajar(nuevos, base, rutas):
@@ -2334,9 +2330,8 @@ def main():
             ruta = f'grupo/{base_slug}-{k}/'
             k += 1
         RUTAS_GRUPO[n] = ruta
-    ctx['favs'] = favoritos_sin_bajar(favoritos_fichas(), base, {g['ruta'] for g in juegos})
-    ctx['favs_ver'] = favoritos_iniciales(ctx['favs'])
-    sels = selecciones(juegos, sysn, visitas_fichas(), ctx['favs_ver'])
+    ctx['favs'] = favoritos_sin_bajar(favoritos_con_base(favoritos_fichas()), base, {g['ruta'] for g in juegos})
+    sels = selecciones(juegos, sysn, visitas_fichas(), ctx['favs'])
     altas, act = fechas_alta(), actualizadas()
     for f in filas:
         f['alta'] = altas.get(clave_fila(f), '')
