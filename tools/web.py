@@ -1139,7 +1139,8 @@ def pagina_juego(gr, sysn, libretro, base, ctx):
         botones = f'<a class="btn primario grande" {descarga}>Descargar el programa para Windows</a>'
     # Cuántas veces se ha guardado en Favoritos (favoritos_fichas()), solo a partir de FAVORITOS_MIN.
     n_fav = ctx.get('favs', {}).get(gr['ruta'], 0)
-    veces_fav = f'<span class="suave n-fav">Guardado {n_fav:,} veces en Favoritos</span>'.replace(',', '.') if n_fav >= FAVORITOS_MIN else ''
+    veces_fav = (f'<span class="suave n-fav">Guardado {n_fav:,} {"vez" if n_fav == 1 else "veces"} en Favoritos</span>'.replace(',', '.')
+                 if n_fav >= FAVORITOS_MIN else '')
     cuerpo = f"""<main class="juego">
   <nav class="migas" aria-label="Estás en"><a href="{raiz}">Inicio</a> › <a href="{raiz}catalogo/">Catálogo</a> › <a href="{raiz}sistema/{e(s)}/">{e(nombre_sis)}</a></nav>
   <div class="juego-h">
@@ -1691,11 +1692,11 @@ SAGAS = [
 ]
 MAS_VISTOS_DIAS = 30
 # Favoritos: al guardar un juego en Favoritos, web/listas.js manda un evento anónimo de GoatCounter, una sola vez por
-# navegador y juego; quitarlo no manda nada. La ficha dice cuántas veces se ha guardado a partir de FAVORITOS_MIN, que
-# menos luce poco: la cifra de partida de cada juego (web/favoritos_base.json, hasta FAVORITOS_DESDE) más lo que cuenta
-# GoatCounter desde entonces (favoritos_fichas()). La cifra solo sube, nunca baja (favoritos_sin_bajar()).
+# navegador y juego; quitarlo no manda nada. La ficha dice cuántas veces se ha guardado a partir de FAVORITOS_MIN (desde
+# el 13-11-2026, en cuanto hay uno): la cifra de partida de cada juego (web/favoritos_base.json, hasta FAVORITOS_DESDE)
+# más lo que cuenta GoatCounter desde entonces (favoritos_fichas()). La cifra solo sube, nunca baja (favoritos_sin_bajar()).
 FAVORITOS_DESDE = '2026-11-13T07:00:00Z'
-FAVORITOS_MIN = 3
+FAVORITOS_MIN = 1
 # «Los más guardados en Favoritos»: los juegos con FAVORITOS_MIN o más, de más a menos (sin los de adultos).
 MAS_FAVORITOS = ('mas-favoritos', 'Los más guardados en Favoritos',
                  'Los juegos que más veces se han guardado en Favoritos en la web. Pulsa el corazón de cualquier juego para guardarlo tú también.')
