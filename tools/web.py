@@ -774,12 +774,17 @@ def destacados(filas, dias, pins, k=9, vistos=()):
     return elegidos[:k]
 
 
+READMITIDAS = set()  # claves de las filas que volvieron al catálogo después de salir (las llena fechas_alta())
+
+
 def fechas_alta():
     """Cuándo entró cada traducción en el catálogo, según el historial de git del CSV: clave de la fila -> AAAA-MM-DD.
     Se miran los commits de los últimos DIAS_NOVEDADES días; las filas que ya estaban en el más antiguo de ellos no
     llevan fecha, porque no se sabe cuándo entraron. Si en un commit desaparece una fila y aparece la del mismo juego con
     los mismos autores y alguno más (se acredita a quien no constaba, o se suma quien la retocó), es la misma ficha:
-    conserva su fecha y no sale como novedad. Sin git o sin historial (un clon superficial), no hay fechas."""
+    conserva su fecha y no sale como novedad. Una fila que sale del catálogo y vuelve después (un grupo que se retiró
+    y da permiso: Drakengard 3 de Traducciones Vacuno, 13-11-2026) cuenta como alta del día en que vuelve, y su clave
+    queda en READMITIDAS. Sin git o sin historial (un clon superficial), no hay fechas."""
     ruta = 'src-tauri/recursos/catalogo/traducciones_fan.csv'
 
     def git(*args):
@@ -795,6 +800,10 @@ def fechas_alta():
             claves = {clave_fila(f) for f in csv.DictReader(io.StringIO(git('show', f'{sha}:{ruta}').decode('utf-8-sig')))}
             base = i == 0 or fecha < NOVEDADES_DESDE
             idas = previas - claves  # las filas que desaparecen en este commit: borradas o con otro grupo
+            if not base:
+                for c in (claves - previas) & conocidas:  # vuelven después de haber salido
+                    altas[c] = fecha
+                    READMITIDAS.add(c)
             for c in claves - conocidas:
                 if not base:
                     sis, jue, gru = c.split('|', 2)
@@ -818,15 +827,18 @@ def enviada_por_autor(f):
 
 def novedades(filas, sin_adultos=False):
     """Las filas con fecha de alta por días, del más nuevo al más antiguo: [(AAAA-MM-DD, [filas])]. Dentro de un día,
-    primero las que nos mandan sus propios autores, que encabezan el día aunque sean de IA; luego las que tienen portada
-    y no son de IA, y luego por la fecha de la traducción, para que la portada luzca."""
+    primero las que vuelven al catálogo con el permiso de sus autores (READMITIDAS; decisión del usuario el 13-11-2026,
+    con Drakengard 3 de Traducciones Vacuno), luego las que nos mandan sus propios autores, que encabezan el día aunque
+    sean de IA; luego las que tienen portada y no son de IA, y luego por la fecha de la traducción, para que la portada
+    luzca."""
     dias = {}
     for f in filas:
         if f.get('alta') and not (sin_adultos and juego_adulto(f['gr'])):
             dias.setdefault(f['alta'], []).append(f)
     for fs in dias.values():
         fs.sort(key=fecha_iso, reverse=True)
-        fs.sort(key=lambda f: (not enviada_por_autor(f), not con_portada(f), es_ia(f)))
+        fs.sort(key=lambda f: (clave_fila(f) not in READMITIDAS or bool(f.get('act')), not enviada_por_autor(f),
+                               not con_portada(f), es_ia(f)))
     return sorted(dias.items(), reverse=True)
 
 
