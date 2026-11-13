@@ -18,7 +18,7 @@ Más de 6.000 traducciones hechas por aficionados, de la NES a la Switch y los j
 
 ## Qué hace
 
-- **Catálogo** de 6.767 traducciones al español de 5.963 juegos: consolas y ordenadores clásicos (NES, Super Nintendo, Mega Drive, Game Boy, PlayStation, PS2, Nintendo DS…), MS-DOS, PC y consolas actuales (Switch, PS3, PS4 y Xbox 360). Cada juego tiene una sola ficha, y dentro eliges entre sus traducciones.
+- **Catálogo** de 6.706 traducciones al español de 5.888 juegos: consolas y ordenadores clásicos (NES, Super Nintendo, Mega Drive, Game Boy, PlayStation, PS2, Nintendo DS…), MS-DOS, PC y consolas actuales (Switch, PS3, PS4 y Xbox 360). Cada juego tiene una sola ficha, y dentro eliges entre sus traducciones.
 - **Busca tus juegos** en las carpetas que elijas: ROMs sueltas o en .zip, .7z y .rar; discos .cue/.bin, .gdi y .chd; juegos de Switch, Wii U, PS3, PS4 y Xbox 360 (.nsp, .xci, .wua, .pkg, .xex…). También encuentra los juegos de PC que tienes instalados con Steam, GOG y Epic.
 - **Comprueba que tu copia es la buena**: por su CRC32 sabe si es la versión que pide la traducción, también sin la cabecera de NES o de SNES.
 - **Descarga el parche y lo aplica**: IPS, BPS, UPS, PPF, APS y xdelta. Saca el juego de su comprimido o de su .chd y devuelve los discos traducidos en .chd. El traducido queda junto al original con la etiqueta `[T-Es]`, o en la carpeta que elijas.
