@@ -4,7 +4,7 @@
 # El dominio va en web/CNAME; si no está, la web queda en la dirección de GitHub Pages. Los ficheros de
 # verificación de Google Search Console (google….html) y Bing (BingSiteAuth.xml) se dejan en web/ y van a la raíz.
 import collections, csv, html, io, json, os, random, re, shutil, subprocess, sys, unicodedata
-from datetime import date
+from datetime import date, timedelta
 from urllib.parse import quote
 
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -706,6 +706,7 @@ def recientes(filas, raiz, sysn, k, con_sistema):
 
 # ---------------------------------------------------------------- novedades
 DIAS_NOVEDADES = 120  # cuántos días atrás se mira el historial del catálogo para las novedades
+DIAS_DOBLAJES = 30  # «Últimos doblajes» de la portada: los que han entrado en estos días (si no hay tres, los de más tirón)
 # Antes de esta fecha el catálogo se estaba reordenando en el repositorio (duplicados, títulos corregidos) y cada
 # retoque parecería una ficha nueva: lo anterior cuenta como fondo, no como novedad.
 NOVEDADES_DESDE = '2026-11-03'
@@ -858,6 +859,17 @@ def novedades(filas, sin_adultos=False):
     return sorted(dias.items(), reverse=True)
 
 
+def solo_de(dias, doblajes):
+    """Las novedades de un tipo: con doblajes=True, solo los doblajes; con False, solo las traducciones sin voces. Los
+    días que se quedan vacíos no salen."""
+    out = [(d, [f for f in fs if bool(doblaje(f)) == doblajes]) for d, fs in dias]
+    return [(d, fs) for d, fs in out if fs]
+
+
+def cuantas(n, uno, varios):
+    return f'{n:,} {uno if n == 1 else varios}'.replace(',', '.')
+
+
 def tarjetas_novedades(dias, raiz, sysn, k=None, con_fecha=True):
     """Las tarjetas de las novedades, un juego por tarjeta con su traducción nueva (o puesta al día, si está en
     web/actualizadas.txt), hasta k. Con k (la portada), el mismo título en dos sistemas sale una sola vez."""
@@ -873,7 +885,9 @@ def tarjetas_novedades(dias, raiz, sysn, k=None, con_fecha=True):
                 pie = f'<span class="m alta">Actualizado{" el " + fecha_corta(fecha) if con_fecha else ""}</span>'
             else:
                 pie = f'<span class="m alta">Añadido el {fecha_corta(fecha)}</span>' if con_fecha else ''
-            items.append(tarjeta_juego(g, raiz, sysn, True, fila=f, pie=pie))
+            tarjeta = tarjeta_juego(g, raiz, sysn, True, fila=f, pie=pie)
+            # data-dob: el selector de /novedades/ separa los doblajes de las traducciones.
+            items.append(tarjeta.replace('<li class="tarjeta"', '<li class="tarjeta" data-dob="1"', 1) if doblaje(f) else tarjeta)
             if k and len(items) == k:
                 return items
     return items
@@ -1387,11 +1401,13 @@ def pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version, dias, filas, p
     mosaico = ''.join(f'<a href="{e(g["ruta"])}" title="{e(g["titulo"])}"><img src="{e(u[0])}" data-alt="{e(" ".join(u[1:]))}" alt="" '
                       f'referrerpolicy="no-referrer" onerror="sig(this)" onload="this.classList.add(\'ok\')"><span class="ph">{e(g["titulo"])}</span></a>'
                       for g, u in destacados(filas, dias, pins, vistos=next((s[3] for s in sels if s[0] == 'lo-mas-visto'), ())))
+    # Las novedades van en dos bloques: las traducciones aquí y los doblajes en «Últimos doblajes» (bloque_dob), para que
+    # un doblaje no se pierda entre las traducciones de un día con muchas (14-11-2026).
     if dias:
         bloque_nov = f'''<section class="bloque novedades">
-    <div class="cab"><h2>Últimas novedades</h2><p class="suave"><a href="novedades/">Todas las novedades</a> · <a href="novedades.xml">Canal RSS</a></p></div>
-    <p class="texto suave">Lo último que ha entrado en el catálogo. Cada tarjeta lleva a la ficha del juego y de ahí a la traducción.</p>
-    <ul class="tarjetas">{''.join(tarjetas_novedades(dias, raiz, sysn, 12))}</ul>
+    <div class="cab"><h2>Últimas traducciones</h2><p class="suave"><a href="novedades/?solo=traducciones">Todas las novedades</a> · <a href="novedades.xml">Canal RSS</a></p></div>
+    <p class="texto suave">Las últimas traducciones que han entrado en el catálogo. Cada tarjeta lleva a la ficha del juego y de ahí a la traducción.</p>
+    <ul class="tarjetas">{''.join(tarjetas_novedades(solo_de(dias, False), raiz, sysn, 12))}</ul>
   </section>'''
     else:
         bloque_nov = f'''<section class="bloque novedades">
@@ -1406,7 +1422,18 @@ def pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version, dias, filas, p
             vistos.add(t)
             dob.append(tarjeta_juego(f['gr'], raiz, sysn, True, fila=f))
     n_dob = len({id(f['gr']) for f in filas if doblaje(f)})
-    bloque_dob = f'''<section class="bloque novedades doblajes">
+    # «Últimos doblajes»: los seis que han entrado más tarde. Si en DIAS_DOBLAJES días no han entrado al menos tres, el
+    # bloque vuelve a ser el de los doblajes de más tirón, para que la portada no enseñe como novedad algo viejo.
+    limite = (date.today() - timedelta(days=DIAS_DOBLAJES)).isoformat()
+    ultimos = tarjetas_novedades([(d, fs) for d, fs in solo_de(dias, True) if d >= limite], raiz, sysn, 6) if dias else []
+    if len(ultimos) >= 3:
+        bloque_dob = f'''<section class="bloque novedades doblajes">
+    <div class="cab"><h2>Últimos doblajes</h2><p class="suave"><a href="novedades/?solo=doblajes">Todas las novedades de doblajes</a> · <a href="doblajes/">Los {n_dob} doblajes</a></p></div>
+    <p class="texto suave">Los últimos juegos con voces en español hechas por aficionados que han entrado en el catálogo.</p>
+    <ul class="tarjetas">{''.join(ultimos)}</ul>
+  </section>'''
+    else:
+        bloque_dob = f'''<section class="bloque novedades doblajes">
     <div class="cab"><h2>Doblajes al español</h2><p class="suave"><a href="doblajes/">Los {n_dob} doblajes</a></p></div>
     <p class="texto suave">Juegos con voces en español gracias a grupos de aficionados, de Resident Evil y Silent Hill a Lies of P.</p>
     <ul class="tarjetas">{''.join(dob[:6])}</ul>
@@ -1458,11 +1485,11 @@ def pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version, dias, filas, p
 
   {bloque_nov}
 
+  {bloque_dob}
+
   {bloque_vistos}
 
   {bloque_favs}
-
-  {bloque_dob}
 
   {bloque_explora}
 
@@ -1541,14 +1568,29 @@ def pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version, dias, filas, p
 def pagina_novedades(dias, filas, sysn, base):
     """Lo que ha entrado en el catálogo, por días (los juegos para adultos van ocultos, como en el catálogo)."""
     raiz = '../'
+    selector = ''
     if dias:
         n = sum(len(fs) for _, fs in dias)
+        n_dob = sum(1 for _, fs in dias for f in fs if doblaje(f))
+
+        def cifras(fs):
+            d = sum(1 for f in fs if doblaje(f))
+            partes = ([cuantas(len(fs) - d, 'traducción', 'traducciones')] if len(fs) > d else []) + ([cuantas(d, 'doblaje', 'doblajes')] if d else [])
+            return ' y '.join(partes)
         bloques = ''.join(
-            f'<section class="letra" id="d{fecha}"><h2>{fecha_larga(fecha)} <span class="n">{len(fs)} {"traducción" if len(fs) == 1 else "traducciones"}</span></h2>'
+            f'<section class="letra" id="d{fecha}"><h2>{fecha_larga(fecha)} <span class="n">{cifras(fs)}</span></h2>'
             f'<ul class="tarjetas">{"".join(tarjetas_novedades([(fecha, fs)], raiz, sysn, con_fecha=False))}</ul></section>\n'
             for fecha, fs in dias)
-        intro = (f'Las {n:,} traducciones que han entrado en el catálogo en los últimos {DIAS_NOVEDADES} días, de la más reciente a la más antigua. '
-                 'Cada tarjeta lleva a la ficha del juego y de ahí a la traducción.')
+        intro = (f'Las {cuantas(n - n_dob, "traducción", "traducciones")} y {cuantas(n_dob, "doblaje", "doblajes")} que han entrado en el catálogo '
+                 f'en los últimos {DIAS_NOVEDADES} días, de lo más reciente a lo más antiguo. Cada tarjeta lleva a la ficha del juego y de ahí a la traducción.')
+        # Todo, solo traducciones o solo doblajes: lo elige el botón o ?solo=traducciones|doblajes (los enlaces de la
+        # portada); los días que se quedan sin tarjetas se ocultan con :has() en estilo.css.
+        selector = '''<div class="filtros ver-nov" role="group" aria-label="Qué novedades ver">
+    <button type="button" class="chip" data-solo="" aria-pressed="true">Todo</button>
+    <button type="button" class="chip" data-solo="traducciones" aria-pressed="false">Traducciones</button>
+    <button type="button" class="chip" data-solo="doblajes" aria-pressed="false">Doblajes</button>
+  </div>
+  <script>(function(){var m=document.querySelector('main.novedades-p'),bs=m.querySelectorAll('.ver-nov button');function ver(s,h){if(s!=='traducciones'&&s!=='doblajes')s='';m.classList.toggle('solo-trad',s==='traducciones');m.classList.toggle('solo-dob',s==='doblajes');bs.forEach(function(b){b.setAttribute('aria-pressed',b.dataset.solo===s?'true':'false')});if(h){var u=new URL(location.href);if(s)u.searchParams.set('solo',s);else u.searchParams.delete('solo');history.replaceState(null,'',u)}}bs.forEach(function(b){b.addEventListener('click',function(){ver(b.dataset.solo,true)})});ver(new URLSearchParams(location.search).get('solo')||'',false)})();</script>'''
     else:
         bloques = f'<section class="bloque"><h2>Últimas traducciones</h2>{recientes(filas, raiz, sysn, 60, True)}</section>'
         intro = 'Las últimas traducciones publicadas, por su fecha.'
@@ -1558,6 +1600,8 @@ def pagina_novedades(dias, filas, sysn, base):
   <p class="lede">{intro} También como <a href="{raiz}novedades.xml">canal RSS</a>.</p>
   {bloques}
 </main>'''
+    if selector:  # el selector va justo debajo de la entradilla, y su script detrás de él (necesita el <main> ya leído)
+        cuerpo = cuerpo.replace('canal RSS</a>.</p>\n', 'canal RSS</a>.</p>\n  ' + selector + '\n', 1)
     desc = 'Las últimas traducciones al español añadidas al catálogo de la Biblioteca de traducciones, día a día.'
     ld = {'@context': 'https://schema.org', '@graph': [migas_ld(base, [('Inicio', ''), ('Novedades', 'novedades/')])]}
     return pagina(raiz, 'Novedades: últimas traducciones de juegos al español', desc, 'novedades/', cuerpo, base, ld=ld)

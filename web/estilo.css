@@ -298,6 +298,10 @@ html:not(.adultos):not(.mayor18) body.a18 .aviso18 { display: grid; }
 .programa .suave { margin: 0; }
 .final .acciones { margin: 0; justify-content: center; }
 .novedades-p .letra h2 .n { font-size: 0.8rem; vertical-align: middle; margin-left: 8px; color: var(--suave); }
+/* Novedades: «Todo», «Traducciones» o «Doblajes» (las tarjetas de doblajes llevan data-dob) */
+.novedades-p .ver-nov { margin-top: 4px; }
+.novedades-p.solo-trad .tarjeta[data-dob], .novedades-p.solo-dob .tarjeta:not([data-dob]) { display: none; }
+.novedades-p.solo-trad .letra:not(:has(.tarjeta:not([data-dob]))), .novedades-p.solo-dob .letra:not(:has(.tarjeta[data-dob])) { display: none; }
 @media (max-width: 480px) { .heroe .buscador .btn { flex: 1 1 100%; } }
 
 /* El mosaico de portadas de la portada (destacados() en tools/web.py) y la nota sobre las variantes del español */
