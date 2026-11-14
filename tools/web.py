@@ -1495,6 +1495,7 @@ def pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version, dias, filas, p
 
   <section class="cifras" aria-label="El catálogo en cifras">
     <div><b>{n_trad:,}</b><span>traducciones</span></div>
+    <a href="doblajes/"><b>{n_dob:,}</b><span>doblajes</span></a>
     <div><b>{n_juegos:,}</b><span>juegos</span></div>
     <div><b>{len(por_sis)}</b><span>sistemas</span></div>
   </section>
