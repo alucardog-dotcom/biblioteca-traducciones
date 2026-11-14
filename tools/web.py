@@ -317,6 +317,18 @@ def doblaje(f):
     return '' if not m else ('doblaje' if m.group(1) == 'Doblaje' else 'ambos')
 
 
+# Las voces de un doblaje, de España ('espana') o latinas ('latino'): lo dice la misma frase fija («Doblaje al
+# castellano.», «… al español latino.») o, si solo pone «al español», la nota («textos en castellano y voces en latino»).
+# Si no lo dice ninguna, '' y no se afirma nada (en /doblajes/ solo sale con «Todos»).
+RE_VOCES = re.compile(r'(?:Traducción y doblaje|Doblaje)(?: parcial)? al (castellano|español latino)')
+RE_VOCES_NOTA = re.compile(r'voces(?:/[a-zá-ú]+)? en (?:español )?(latino|castellano)')
+
+
+def voces(f):
+    m = RE_VOCES.search(f['notas']) or RE_VOCES_NOTA.search(f['notas'])
+    return '' if not m else ('latino' if m.group(1).endswith('latino') else 'espana')
+
+
 def tiene_logros(f):
     """La versión de esta traducción que guarda RetroAchievements en GitHub (RAPatches): con ella, el juego traducido tiene logros."""
     return 'RAPatches' in json.dumps(f['x'].get('d', '')) + f['url'] + f['fuente']
@@ -1623,15 +1635,36 @@ def pagina_doblajes(filas, sysn, base):
                 por_tipo[t][id(f['gr'])] = f
     juegos = {id(f['gr']): f for d in por_tipo.values() for f in d.values()}
 
+    # Cada tarjeta lleva data-voces (latino o espana) y lo dice debajo; el selector de arriba deja solo unas u otras.
+    ETIQUETA = {'latino': 'Voces en latino', 'espana': 'Voces en castellano'}
+
+    def tarjeta(f):
+        v = voces(f)
+        t = tarjeta_juego(f['gr'], raiz, sysn, True, fila=f, pie=f'<span class="m voces">{ETIQUETA[v]}</span>' if v else '')
+        return t.replace('<li class="tarjeta"', f'<li class="tarjeta" data-voces="{v}"', 1) if v else t
+
     def lista(fs):
         fs = sorted(fs, key=lambda f: (-f['pop'], sin_acentos(f['gr']['titulo']).lower()))
-        return '<ul class="tarjetas">' + ''.join(tarjeta_juego(f['gr'], raiz, sysn, True, fila=f) for f in fs) + '</ul>'
+        return '<ul class="tarjetas">' + ''.join(tarjeta(f) for f in fs) + '</ul>'
     solo, ambos = list(por_tipo['doblaje'].values()), list(por_tipo['ambos'].values())
-    latinos = sum(1 for f in juegos.values() if variante(f) == 'latino')
+    latinos = sum(1 for f in juegos.values() if voces(f) == 'latino')
+    espana = sum(1 for f in juegos.values() if voces(f) == 'espana')
+    partes = [cuantas(latinos, 'con voces latinas', 'con voces latinas'), cuantas(espana, 'en castellano', 'en castellano')]
+    variantes = ': ' + ' y '.join(p for p, n in zip(partes, (latinos, espana)) if n) if latinos or espana else ''
+    # «Todos», «Castellano» o «Latino»: lo elige el botón o ?voces=castellano|latino; los apartados que se quedan sin
+    # tarjetas se ocultan con :has() en estilo.css, y el script (al final del <main>, porque cuenta las tarjetas) pone
+    # en su cifra las que quedan.
+    selector = f'''<div class="filtros ver-voces" role="group" aria-label="Qué doblajes ver">
+    <button type="button" class="chip" data-voces="" aria-pressed="true">Todos <span class="n">{len(juegos)}</span></button>
+    <button type="button" class="chip" data-voces="castellano" aria-pressed="false">Castellano <span class="n">{espana}</span></button>
+    <button type="button" class="chip" data-voces="latino" aria-pressed="false">Latino <span class="n">{latinos}</span></button>
+  </div>'''
+    script = f'''<script>(function(){{var m=document.querySelector('main.doblajes-p'),bs=m.querySelectorAll('.ver-voces button'),cl={{castellano:'espana',latino:'latino'}};function ver(s,h){{if(!cl[s])s='';m.classList.toggle('solo-espana',s==='castellano');m.classList.toggle('solo-latino',s==='latino');bs.forEach(function(b){{b.setAttribute('aria-pressed',b.dataset.voces===s?'true':'false')}});m.querySelectorAll('section.bloque').forEach(function(sec){{var n=sec.querySelector('h2 .n');if(n)n.textContent=sec.querySelectorAll(s?'.tarjeta[data-voces="'+cl[s]+'"]':'.tarjeta').length}});if(h){{var u=new URL(location.href);if(s)u.searchParams.set('voces',s);else u.searchParams.delete('voces');history.replaceState(null,'',u)}}}}bs.forEach(function(b){{b.addEventListener('click',function(){{ver(b.dataset.voces,true)}})}});ver(new URLSearchParams(location.search).get('voces')||'',false)}})();</script>'''
     cuerpo = f'''<main class="sistema doblajes-p">
   <p class="migas"><a href="{raiz}">Inicio</a> › Doblajes</p>
   <h1>Doblajes al español</h1>
-  <p class="lede">{len(juegos)} juegos con voces en español gracias a grupos de aficionados{f", {latinos} de ellos en español latino" if latinos else ""}. Unos doblan juegos que ya tenían los textos en español; otros traducen y doblan a la vez. Cada ficha dice qué pide el doblaje y te lleva a su página.</p>
+  <p class="lede">{len(juegos)} juegos con voces en español gracias a grupos de aficionados{variantes}. Unos doblan juegos que ya tenían los textos en español; otros traducen y doblan a la vez. Cada ficha dice qué pide el doblaje y te lleva a su página.</p>
+  {selector}
   <section class="bloque">
     <h2>Traducciones con doblaje <span class="n">{len(ambos)}</span></h2>
     <p class="texto suave">Textos y voces en español, del mismo grupo o de dos que trabajan juntos.</p>
@@ -1643,6 +1676,7 @@ def pagina_doblajes(filas, sysn, base):
     {lista(solo)}
   </section>
   <p class="suave">¿Conoces un doblaje de aficionados que falta? Escríbeme a {contacto('Falta un doblaje')}.</p>
+  {script}
 </main>'''
     desc = f'{len(juegos)} juegos con doblaje al español hecho por aficionados: voces en castellano y en latino para juegos de PlayStation, Dreamcast, PC y más.'
     ld = {'@context': 'https://schema.org', '@graph': [migas_ld(base, [('Inicio', ''), ('Doblajes', 'doblajes/')])]}

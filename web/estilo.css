@@ -329,6 +329,13 @@ html:not(.adultos):not(.mayor18) body.a18 .aviso18 { display: grid; }
 /* Página de doblajes */
 .doblajes-p .bloque h2 .n { font-size: 0.8rem; vertical-align: middle; margin-left: 8px; color: var(--suave); }
 .doblajes-p .bloque .texto { margin: -8px 0 0; }
+/* «Todos», «Castellano» o «Latino» (las tarjetas llevan data-voces, y debajo «Voces en latino» o «en castellano») */
+.doblajes-p .ver-voces { margin-top: 4px; }
+.ver-voces .chip .n { margin-left: 6px; padding: 0 6px; }
+.ver-voces .chip[aria-pressed="true"] .n { color: #141922; border-color: rgba(20, 25, 34, 0.35); }
+.doblajes-p.solo-espana .tarjeta:not([data-voces="espana"]), .doblajes-p.solo-latino .tarjeta:not([data-voces="latino"]) { display: none; }
+.doblajes-p.solo-espana .bloque:not(:has(.tarjeta[data-voces="espana"])), .doblajes-p.solo-latino .bloque:not(:has(.tarjeta[data-voces="latino"])) { display: none; }
+.tarjeta .m.voces { color: #9FD3FF; }
 
 /* Ficha: el juego (datos, capturas y vídeo) y los dos botones de arriba */
 .acciones-j { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
