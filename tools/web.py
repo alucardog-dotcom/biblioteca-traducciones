@@ -655,6 +655,9 @@ def item_juego(g, raiz, sysn, con_sistema=False):
     return f'<li><a href="{raiz}{g["ruta"]}">{e(g["titulo"])}</a>{extra}</li>'
 
 
+IA_PORT = '<span class="ia-port" title="{}">IA</span>'
+
+
 def tarjeta_juego(g, raiz, sysn, con_sistema=True, fila=None, extra='', pie=''):
     """Un juego como en el programa: la portada (con las alternativas por si una falla), el título, el sistema
     y sus traducciones. El título queda debajo mientras la portada carga, y se queda si no hay ninguna."""
@@ -663,12 +666,17 @@ def tarjeta_juego(g, raiz, sysn, con_sistema=True, fila=None, extra='', pie=''):
            f'onerror="sig(this)" onload="this.classList.add(\'ok\')">') if urls else ''
     n = len(g['filas'])
     f = fila or g['filas'][0]
+    # «IA» en la esquina izquierda de la portada (el corazón va a la derecha): si la tarjeta es de una traducción
+    # (fila), cuando esa lo es; si es del juego, cuando lo son todas las suyas (catalogo.js y parchear.js, igual).
+    marca = ''
+    if (es_ia(fila) if fila else all(es_ia(x) for x in g['filas'])):
+        marca = IA_PORT.format('Doblaje hecho con IA' if fila and doblaje(fila) == 'doblaje' else 'Traducción hecha con IA o traducción automática')
     partes = [e(sysn.get(g['s'], g['s'])) if con_sistema else '',
               e(f['grupo'].strip()) if (fila or n == 1) and f['grupo'].strip() else '',
               f'{n} traducciones' if n > 1 else '',
               '<b>Un clic</b>' if any(directa(x) for x in g['filas']) else '']
     return (f'<li class="tarjeta" data-ruta="{e(g["ruta"])}" data-sis="{e(g["s"])}" data-sisn="{e(sysn.get(g["s"], g["s"]))}" data-titulo="{e(g["titulo"])}"{' data-a18="1"' if juego_adulto(g) else ''}>'
-            f'<a href="{raiz}{g["ruta"]}"><span class="port{"" if img else " sin"}">{img}<span class="ph">{e(g["titulo"])}</span></span>'
+            f'<a href="{raiz}{g["ruta"]}"><span class="port{"" if img else " sin"}">{img}<span class="ph">{e(g["titulo"])}</span>{marca}</span>'
             f'<span class="cuerpo"><span class="t">{e(g["titulo"])}</span><span class="m">{" · ".join(p for p in partes if p)}{extra}</span>{pie}</span></a><button type="button" class="fav" aria-pressed="false" aria-label="Añadir a Favoritos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7.5-4.6-9.3-9.2C1.4 7.4 3.6 4 7 4c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.4 0 5.6 3.4 4.3 6.8C19.5 15.4 12 20 12 20z"/></svg></button></li>')
 
 

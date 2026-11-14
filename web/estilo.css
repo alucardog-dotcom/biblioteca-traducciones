@@ -211,6 +211,8 @@ main { display: block; max-width: var(--ancho); margin: 0 auto; padding: 0 var(-
 .tarjeta .port img.ok { opacity: 1; }
 .tarjeta .port .ph { padding: 12px; text-align: center; color: var(--suave); font: 700 0.9rem/1.25 var(--display); }
 .tarjeta .port:has(img.ok) .ph { visibility: hidden; }
+/* «IA» en la esquina izquierda de la portada, a juego con el corazón de la derecha (.fav) */
+.tarjeta .port .ia-port { position: absolute; top: 12px; left: 8px; display: grid; place-items: center; height: 28px; padding: 0 9px; border-radius: 8px; background: rgba(255, 255, 255, 0.94); color: #C8324C; font: 800 0.85rem/1 var(--sans); letter-spacing: 0.04em; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45); }
 .tarjeta .cuerpo { display: grid; gap: 3px; padding: 9px 11px 11px; }
 .tarjeta .t { font-weight: 650; font-size: 0.93rem; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .tarjeta .m { color: var(--suave); font-size: 0.78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
