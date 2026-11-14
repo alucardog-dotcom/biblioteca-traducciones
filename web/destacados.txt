@@ -20,3 +20,5 @@ pc|The Caligula Effect: Overdose|hasta 2026-11-20
 -3ds|Super Robot Wars UX|hasta 2026-11-20
 # Desde el 13-11-2026: Drakengard 3 de Traducciones Vacuno, que vuelve al catálogo con su permiso (como se les ofreció).
 ps3|Drakengard 3
+# Del 14 al 21-11-2026: The Caligula Effect 2 de Lemulte, la segunda traducción que nos manda su autor.
+pc|The Caligula Effect 2|hasta 2026-11-21
