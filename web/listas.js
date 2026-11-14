@@ -238,6 +238,49 @@
       <ul class="tarjetas">${f.juegos.slice(0, 12).map(j => tarjeta(j)).join('')}</ul></section>`;
   }
 
+  // ---------------------------------------------------------------- ficha: ¿te ha servido?
+  // Al pulsar el enlace de una traducción en la ficha (su página o su descarga), si el juego no está en Favoritos se
+  // pregunta «¿Te ha servido? Guárdalo en Favoritos». Una sola vez por juego y navegador, y nunca sin poder apuntarlo.
+  const PREGUNTADOS = 'favoritos-preguntados';
+  const DESCARGA = '.trad a.btn:not(.tienda)';
+  function preguntados() {
+    try {
+      const p = JSON.parse(localStorage.getItem(PREGUNTADOS) || '[]');
+      if (Array.isArray(p)) return p;
+    } catch (e) { }
+    return [];
+  }
+  function cerrarPregunta() {
+    const c = $('pregunta-fav');
+    if (!c) return;
+    c.classList.remove('ver');
+    setTimeout(() => c.remove(), 250);
+  }
+  function preguntarFav() {
+    const el = document.querySelector('.juego-acciones[data-ruta]');
+    const r = el && el.dataset.ruta;
+    if (!RUTA_FICHA.test(r || '') || enLista(fav(), r) || $('pregunta-fav')) return;
+    const p = preguntados();
+    if (p.includes(r)) return;
+    p.push(r);
+    try { localStorage.setItem(PREGUNTADOS, JSON.stringify(p.slice(-500))); } catch (e) { return; }
+    const c = document.createElement('div');
+    c.id = 'pregunta-fav';
+    c.className = 'pregunta-fav';
+    c.setAttribute('role', 'dialog');
+    c.setAttribute('aria-label', 'Guardar en Favoritos');
+    c.innerHTML = `<p>¿Te ha servido? Guárdalo en Favoritos</p>
+      <button type="button" class="btn primario" data-pregunta="si">${FAV}Guardar en Favoritos</button>
+      <button type="button" class="btn ghost" data-pregunta="no">Ahora no</button>`;
+    document.body.append(c);
+    requestAnimationFrame(() => requestAnimationFrame(() => c.classList.add('ver')));
+  }
+  function respuesta(boton) {
+    const el = document.querySelector('.juego-acciones[data-ruta]');
+    if (boton.dataset.pregunta === 'si' && el && !enLista(fav(), el.dataset.ruta)) alternarFav(el);
+    cerrarPregunta();
+  }
+
   // ---------------------------------------------------------------- arranque
   document.addEventListener('click', e => {
     const b = e.target.closest('.fav');
@@ -247,9 +290,15 @@
       if (el) alternarFav(el);
       return;
     }
+    const q = e.target.closest('[data-pregunta]');
+    if (q) { respuesta(q); return; }
+    if (e.target.closest(DESCARGA)) setTimeout(preguntarFav, 400);
     const g = e.target.closest('#guardar-lista');
     if (g) { e.preventDefault(); menuListas(g); }
   });
+  // Abrir el enlace con el botón central también es una descarga; Escape cierra la pregunta.
+  document.addEventListener('auxclick', e => { if (e.button === 1 && e.target.closest(DESCARGA)) setTimeout(preguntarFav, 400); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrarPregunta(); });
   const listo = () => {
     favoritosInicio();
     pintarListas();

@@ -227,15 +227,29 @@ main { display: block; max-width: var(--ancho); margin: 0 auto; padding: 0 var(-
 
 /* Favoritos y listas */
 .tarjeta { position: relative; }
-.fav { position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; border-radius: 50%; border: 0; background: rgba(10, 13, 18, 0.72); color: #fff; display: grid; place-items: center; cursor: pointer; padding: 0; }
-.fav svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; }
-.fav:hover { background: rgba(10, 13, 18, 0.9); }
-.fav[aria-pressed="true"] svg { fill: var(--rojo-2); stroke: var(--rojo-2); }
+/* El corazón de las tarjetas, blanco con el corazón rojo para que se vea sobre cualquier portada; guardado, al revés. */
+.fav { position: absolute; top: 8px; right: 8px; width: 36px; height: 36px; border-radius: 50%; border: 0; background: rgba(255, 255, 255, 0.94); color: var(--rojo); display: grid; place-items: center; cursor: pointer; padding: 0; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45); transition: transform .15s; }
+.fav svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.4; }
+.fav:hover { transform: scale(1.1); }
+.fav[aria-pressed="true"] { background: var(--rojo); color: #fff; }
+.fav[aria-pressed="true"] svg { fill: currentColor; }
+.fav-si, .fav[aria-pressed="true"] .fav-no { display: none; }
+.fav[aria-pressed="true"] .fav-si { display: inline; }
 .juego-acciones { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 14px; }
 .juego-acciones .n-fav { font-size: 0.9rem; }
-.juego-acciones .fav { position: static; background: var(--panel); border: 1px solid var(--linea); width: 40px; height: 40px; }
+/* En la ficha, un botón grande con texto: «Guardar en Favoritos» en rojo, y «En tus Favoritos» cuando ya está. */
+.juego-acciones .fav { position: static; display: inline-flex; align-items: center; gap: 8px; width: auto; height: auto; padding: 10px 20px 10px 16px; border-radius: 10px; background: linear-gradient(135deg, var(--rojo-2), var(--rojo)); color: #fff; font: 600 1rem var(--sans); box-shadow: none; }
+.juego-acciones .fav:hover { transform: none; filter: brightness(1.1); }
+.juego-acciones .fav[aria-pressed="true"] { background: var(--panel); border: 1px solid var(--linea); color: var(--texto); }
+.juego-acciones .fav[aria-pressed="true"] svg { color: var(--rojo-2); }
 .juego-acciones .btn { margin-top: 0; }
-.menu-listas { position: absolute; top: 100%; left: 50px; z-index: 5; margin-top: 8px; min-width: 240px; padding: 12px 14px; background: var(--panel); border: 1px solid var(--linea); border-radius: 12px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45); display: grid; gap: 8px; }
+/* Tras pulsar una descarga en la ficha: «¿Te ha servido? Guárdalo en Favoritos» (web/listas.js). */
+.pregunta-fav { position: fixed; left: 50%; bottom: 16px; z-index: 21; width: min(440px, calc(100% - 32px)); transform: translate(-50%, 12px); display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; padding: 14px 16px; background: var(--panel-2); border: 1px solid var(--linea); border-radius: 12px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5); opacity: 0; transition: opacity .2s, transform .2s; }
+.pregunta-fav.ver { opacity: 1; transform: translate(-50%, 0); }
+.pregunta-fav p { margin: 0; flex: 1 1 100%; font-weight: 600; }
+.pregunta-fav .btn { margin-top: 0; }
+.pregunta-fav .btn svg { width: 18px; height: 18px; fill: currentColor; }
+.menu-listas { position: absolute; top: 100%; left: 0; z-index: 5; margin-top: 8px; min-width: 240px; padding: 12px 14px; background: var(--panel); border: 1px solid var(--linea); border-radius: 12px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45); display: grid; gap: 8px; }
 .menu-listas p { margin: 0; }
 .menu-listas label { display: flex; gap: 8px; align-items: center; }
 .nueva { display: flex; gap: 8px; margin-top: 4px; }
