@@ -866,16 +866,18 @@ def novedades(filas, sin_adultos=False):
     """Las filas con fecha de alta por días, del más nuevo al más antiguo: [(AAAA-MM-DD, [filas])]. Dentro de un día,
     primero las que vuelven al catálogo con el permiso de sus autores (READMITIDAS; decisión del usuario el 13-11-2026,
     con Drakengard 3 de Traducciones Vacuno), luego las que nos mandan sus propios autores, que encabezan el día aunque
-    sean de IA; luego las que tienen portada y no son de IA, y luego por la fecha de la traducción, para que la portada
-    luzca."""
+    sean de IA; luego las nuevas antes que las puestas al día; luego las que tienen portada y no son de IA, y luego por
+    la fecha de la traducción, para que la portada luzca."""
     dias = {}
     for f in filas:
         if f.get('alta') and not (sin_adultos and juego_adulto(f['gr'])):
             dias.setdefault(f['alta'], []).append(f)
     for fs in dias.values():
         fs.sort(key=fecha_iso, reverse=True)
+        # Las puestas al día («Actualizado», de web/actualizadas.txt) van detrás de las nuevas de su día: desde el
+        # 15-11-2026 llegan de 20 en 20 con la revisión semanal de actualizaciones y no deben tapar las altas.
         fs.sort(key=lambda f: (clave_fila(f) not in READMITIDAS or bool(f.get('act')), not enviada_por_autor(f),
-                               not con_portada(f), es_ia(f)))
+                               bool(f.get('act')), not con_portada(f), es_ia(f)))
     return sorted(dias.items(), reverse=True)
 
 

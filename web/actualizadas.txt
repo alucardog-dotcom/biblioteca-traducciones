@@ -2,3 +2,28 @@
 # Una por línea: sistema|juego|grupo|AAAA-MM-DD, con juego y grupo tal como están en el catálogo. Pasados 120 días dejan de contar solas.
 psvita|Chaos Rings III|Joseas|2026-11-12
 snes|Mystic Ark|Migue84|2026-11-13
+3ds|Inazuma Eleven 1·2·3!! Endō Mamoru Densetsu|luishidalgoa|2026-11-15
+gb|Kid Dracula|Traducciones Wave|2026-11-15
+gba|Pokemon Ghost Grey|SeCaVa|2026-11-15
+gba|Pokemon Unbound|SeCaVa|2026-11-15
+gba|Pokémon Odyssey|SeCaVa|2026-11-15
+megadrive|It Came From The Desert|Traducciones Wave|2026-11-15
+nes|Karnov|Traducciones Wave|2026-11-15
+nes|Terminator 2: Judgment Day|Traducciones Wave|2026-11-15
+pc|Danganronpa V3: Killing Harmony|ManuelCMS|2026-11-15
+pc|Digimon RPG Online (español latino)|Rhethos|2026-11-15
+pc|Dressmaker|MasterwinPro|2026-11-15
+pc|Fatal Frame: Maiden of Black Water|darkxex, Angel Xex, Jonaand y Vagrant|2026-11-15
+pc|Girls' Frontline 2: Exilium (cliente chino)|jhon1466|2026-11-15
+pc|GNOSIA (parcheador multilingüe con español)|leonardoreali|2026-11-15
+pc|Heroes of Might and Magic III (traducción para VCMI)|vcmi-mods (comunidad VCMI)|2026-11-15
+pc|Little Goody Two Shoes|Iro (IrodoriCiel)|2026-11-15
+pc|Pizza Tower (Traducción Definitiva)|mrpasmado|2026-11-15
+pc|Resident Evil 4 (2023)|3sper|2026-11-15
+pc|Star Citizen|SC en Español|2026-11-15
+pc|Star Citizen (ES Plus)|LetalDark|2026-11-15
+pc|Stationeers|LetalDark|2026-11-15
+pc|The Jackbox Party Pack 2|Jackbox en español|2026-11-15
+snes|Captain Tsubasa IV: Pro no Rival-tachi PLUS|vhernandezm|2026-11-15
+snes|Captain Tsubasa V: Hasha no Shougou Campione PLUS|vhernandezm|2026-11-15
+switch|The Jackbox Party Pack 2|Jackbox en español|2026-11-15
