@@ -963,6 +963,9 @@ def pagina(raiz, titulo, descripcion, ruta, cuerpo, base, imagen='img/vista-prev
         cuenta = f'<script data-goatcounter="{destino}" async src="{script}"></script>\n'
     nota_cuenta = (' Estadísticas anónimas y sin cookies con <a href="https://www.goatcounter.com/">GoatCounter</a>: las visitas y '
                    'cuántas veces se guarda cada juego en Favoritos.') if GOATCOUNTER else ''
+    # «Descargar» en la cabecera solo en la portada (ruta ''): en una ficha se leía como descargar el juego (15-11-2026).
+    descargar = (f'\n    <a class="btn primario" href="{INSTALADOR}" data-goatcounter-click="descarga-cabecera">Descargar</a>'
+                 if not ruta else '')
     return f'''<!doctype html>
 <html lang="es">
 <head>
@@ -998,8 +1001,7 @@ def pagina(raiz, titulo, descripcion, ruta, cuerpo, base, imagen='img/vista-prev
     <a href="{raiz}selecciones/">Selecciones</a>
     <a href="{raiz}doblajes/">Doblajes</a>
     <a href="{raiz}mis-listas/" id="nav-listas">Mis listas</a>
-    <a href="{raiz}perdidas/"><span class="nav-largo">Traducciones perdidas</span><span class="nav-corto">Perdidas</span></a>
-    <a class="btn primario" href="{INSTALADOR}" data-goatcounter-click="descarga-cabecera">Descargar</a>
+    <a href="{raiz}perdidas/"><span class="nav-largo">Traducciones perdidas</span><span class="nav-corto">Perdidas</span></a>{descargar}
   </nav>
 </header>
 {aviso18}{cuerpo}
