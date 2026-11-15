@@ -303,6 +303,7 @@ nes|Teenage Mutant Ninja Turtles|DJ Traducciones	80	lb:319 +2trad
 nes|Teenage Mutant Ninja Turtles|Traducciones Wave	80	lb:319 +2trad
 pc|Dead Space (2023)|ErehYagger	80	lb:157 st:64471
 pc|Oneshot|Clan DLAN	80	lb:28 st:60059
+pc|The Elder Scrolls IV: Oblivion Remastered|ondaplana	80	lb:63 st:60189
 snes|Final Fantasy II|PaladinKnights	80	lb:324 +2trad
 snes|Final Fantasy II|Sayans Traductions	80	lb:324 +2trad
 snes|Mega Man VII|DCD Soft	80	lb:266 +4trad
@@ -470,6 +471,7 @@ pc|Sonic Generations (2011)|señorDane	76	lb:193 st:20312 +2trad
 pc|VA-11 Hall-A: Cyberpunk Bartender Action|Clan DLAN; guía de Søach	76	lb:20 st:33977
 pc|Wandering Sword|shadowman1	76	lb:3 st:37910
 pc|Warm Snow|shadowman1	76	lb:6 st:35380
+pc|Wolfenstein II: The New Colossus|Fur3r	76	lb:111 st:35738
 psx|Breath of Fire III|Vagrant Traducciones	76	lb:232 +2trad
 psx|Breath of Fire III|Vegetal Translations	76	lb:232 +2trad
 psx|Vagrant Story|SK50 Translate	76	lb:240 +2trad
@@ -567,6 +569,7 @@ pcengine|Blazing Lazers|Traducciones Wave	74	lb:201 +2trad
 pc|Battle Brothers|MagnusLioncaster, Hjensikk, AMarauder, ElGranFoca y backmind	74	lb:13 st:26433
 pc|CrossCode (Steam Workshop)|	74	lb:41 st:16509 +2trad
 pc|CrossCode|tralph3 y traductores voluntarios	74	lb:41 st:16509 +2trad
+pc|Gothic 1 Remake|LuizaoDev	74	st:27534
 pc|Half-Life: Opposing Force|Ghost1432802	74	lb:78 st:25729
 pc|Librarian: Tidy Up the Arcane Library|JU4N73RR4	74	st:26320
 pc|Nuclear Throne|polifonika!studio	74	lb:60 st:15122 +2trad
@@ -955,6 +958,7 @@ pc|Chill With You: Lo-Fi Story (español latino)|Susumi (Lirienne16)	68	st:12762
 pc|HighFleet|Darien999	68	st:7094 +2trad
 pc|HighFleet|Lord Kur	68	st:7094 +2trad
 pc|Inazuma Eleven: Victory Road (mejoras de traducción)|Shadorossa_	68	lb:6 st:11264
+pc|Kingdom Hearts II Final Mix|Svenchu	68	st:11395
 pc|Rise to Ruins (español latino)|ZeroKuvo	68	lb:2 st:7243 +2trad
 pc|Rise to Ruins|David9753	68	lb:2 st:7243 +2trad
 pc|Serious Sam 2|Nightwolf (Clan DLAN)	68	lb:32 st:12088
@@ -2966,6 +2970,8 @@ pc|STEINS;GATE: My Darling's Embrace|Chaos Gate Team; guía de Waldo y Arthurian
 pc|Star Ocean The Divine Force|Yuzuy	54	lb:10 st:1695
 pc|System Shock|SkaZZ	54	lb:41 st:1793
 pc|The Basement|cireja	54	lb:6 st:1688
+pc|The Necromancer's Tale|Egarath	54	st:980 +2trad
+pc|The Necromancer's Tale|shadowman1	54	st:980 +2trad
 ps2|Disaster Report|atchuss	54	lb:58
 ps2|Evil Dead: Regeneration|	54	lb:58
 psp|Valkyria Chronicles II|Selvaria Team	54	lb:59
@@ -3647,7 +3653,6 @@ pc|Quiplash|Jackbox en español	50	lb:14 st:1000
 pc|Sea Bed|Sharin-Sub	50	st:1011
 pc|The Fruit of Grisaia|Sharin-Sub	50	lb:6 st:1035
 pc|The Inner World|darkpadawan	50	lb:8 st:934
-pc|The Necromancer's Tale|shadowman1	50	st:980
 pc|The Void|darkpadawan	50	lb:7 st:945
 pc|Trails to Azure|locoroco96	50	st:1008
 pc|Troublemaker|locoroco96	50	lb:5 st:946
@@ -3848,6 +3853,7 @@ pc|Strangeland|malariax	49	lb:6 st:854
 pc|Super Neptunia RPG|CepitaUva	49	lb:6 st:874
 pc|Superdimension Neptune VS Sega Hard Girls|CepitaUva	49	lb:7 st:880
 pc|The Murder of Sonic the Hedgehog|Sonic Sunset; guía de .::CONTe::.	49	lb:41
+pc|Vasilisa and Baba Yaga|ORider	49	st:882
 pc|Xanadu Next|Aion	49	lb:9 st:897
 pc|Yesterday|SergioMejias	49	lb:11 st:824
 ps2|Digimon World: Data Squad|Kiridor y colaboradores (PS2 Traducciones)	49	lb:39
@@ -4394,7 +4400,6 @@ pc|Belladonna|ORider	45	lb:5 st:479
 pc|Blackwell 4: Deception|walas74	45	st:519
 pc|Ciconia When They Cry - Phase 1: For You, the Replaceable Ones|Aris Rhiannon	45	st:517
 pc|Fabled Lands|shadowman1	45	lb:1 st:526
-pc|Fantasian Neo Dimension|LuX	45	lb:3 st:516
 pc|Karakara 2|Alei Translations	45	st:518
 pc|Kat's Trigger (español latino)|Skyline-core	45	st:510
 pc|Kill The Shadow|locoroco96	45	st:491
@@ -4511,6 +4516,7 @@ pc|Silence of the Sleep|Tradupixel	44	lb:2 st:446
 pc|SimCity 3000 Unlimited|EstMP	44	lb:27
 pc|Someday You'll Return|muermo	44	st:454
 pc|TIE Fighter Total Conversion (Classic Edition)|darkpadawan	44	st:415
+pc|The Caligula Effect 2|Lemulte	44	st:454
 pc|The Jackbox Party Pack 11|Jackbox en español	44	st:424
 pc|X-Wing Redux|darkpadawan	44	st:415
 pc|Yume Nikki|TheFireRed, Lautaro1428 y AegisTrad; guía de V I R A L	44	lb:28
@@ -5223,7 +5229,6 @@ msx1|Super Cobra|Traducciones Wave	34	lb:12
 msx1|Zaxxon|Traducciones Wave	34	lb:12
 msx2|Arkanoid 2|Traducciones Wave	34	lb:12
 msx2|Zanac EX|Traducciones Wave	34	lb:12
-nds|Ni no Kuni: Shikkoku no Madoushi|Jefelin	34	lb:12
 nes|Gardman|Traducciones Wave	34	lb:12
 nes|Lightgun Game 2 in 1 - Tough Cop + Super Tough Cop|Traducciones Wave	34	lb:12
 nes|Sunman|Traducciones Wave	34	lb:12
@@ -5242,6 +5247,7 @@ pc|Island Diary|Taikutsu Translations (TaikutsuTL)	34	st:104
 pc|King's Bounty: Warriors Of The North + Ice and Fire|Clan DLAN	34	lb:12
 pc|King's Quest I VGA Remake|raulpuro	34	lb:12
 pc|King's Quest I: Quest for the Crown|SkaZZ	34	lb:12
+pc|Little Kite|ORider	34	st:105
 pc|Secret Mission|ANZ	34	lb:12
 pc|Super Roboy|shadowman1	34	st:110
 pc|The Few|Clan DLAN	34	st:104
@@ -5366,6 +5372,7 @@ pc|Drova - Forsaken Kin|MancoMeLevanto	30	lb:6 +2trad
 pc|If On a Winter's Night, Four Travelers|walas74	30	lb:9
 pc|STALCRAFT|paulvilla	30	lb:9
 pc|The Walking Dead: Temporada 1|Clan DLAN	30	lb:9
+ps2|Neon Genesis Evangelion 2|alexen64bits	30	lb:9
 psx|Shin Megami Tensei Devil Children: Kuro no Sho / Aka no Sho|johanderohan (Parches en Castellano)	30	lb:9
 psx|Shin Megami Tensei II|johanderohan (Parches en Castellano)	30	lb:9
 scummvm|Fuck Quest|El Club del Alpedismo	30	lb:9
@@ -5415,6 +5422,7 @@ pc|Mad TV 2|Johan	29	lb:8
 pc|Sonic.EXE: The Disaster 2D Remake|ismaell47	29	lb:8
 ps2|Rockman: Power Battle Fighters|[John]	29	lb:8
 psp|Hajime no Ippo Portable: Victorious Spirits|miguelajhuacho	29	lb:8
+psvita|Deception IV: Blood Ties|alexen64bits	29	lb:8
 psx|Germs Nerawareta Machi|Mr.Nobody	29	lb:8
 psx|King of Crusher|Mr.Nobody	29	lb:8
 psx|Planet Laika|Mr.Nobody	29	lb:8
@@ -5462,6 +5470,7 @@ pc|Broken Sword 2.5: El Retorno de los Templarios|Miguel Herrero Obeso	27	lb:7
 pc|Night of the Hermit (talkie)|Pakolmo	27	lb:7
 pc|Quest for Glory II: Trial by Fire|Chyron	27	lb:7
 pc|The Lost Crown: A Ghost-Hunting Adventure|Tradupixel	27	lb:7
+ps2|Rurouni Kenshin: Enjou! Kyoto Rinne|alexen64bits	27	lb:7
 psp|Ore no Imouto ga Konna ni Kawaii Wake ga Nai Portable ga Tsuzuku Wake ga Nai|christ-gm	27	lb:7
 psvita|Catherine: Full Body|froid_san	27	lb:7
 psx|Densha de Go! Professional Shiyou|johanderohan (Parches en Castellano)	27	lb:7
