@@ -22,3 +22,5 @@ pc|The Caligula Effect: Overdose|hasta 2026-11-20
 ps3|Drakengard 3
 # Del 14 al 21-11-2026: The Caligula Effect 2 de Lemulte, la segunda traducción que nos manda su autor.
 pc|The Caligula Effect 2|hasta 2026-11-21
+# Del 15 al 22-11-2026: Shadow Hearts: Covenant - Director's Cut (UnDub) de Lemulte, la tercera traducción que nos manda su autor.
+ps2|Shadow Hearts: Covenant - Director's Cut (UnDub)|hasta 2026-11-22
