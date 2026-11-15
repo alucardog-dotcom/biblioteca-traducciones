@@ -299,6 +299,7 @@ html:not(.adultos):not(.mayor18) body.a18 .aviso18 { display: grid; }
 .novedades .tarjetas { margin-top: 0; }
 .tarjeta .alta { color: var(--amarillo-t); }
 .programa .eti { margin: 0 0 -8px; }
+#programa { scroll-margin-top: 24px; }
 .programa .acciones { margin: 4px 0 0; }
 .programa .suave { margin: 0; }
 .final .acciones { margin: 0; justify-content: center; }

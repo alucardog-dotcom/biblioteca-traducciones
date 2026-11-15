@@ -1206,14 +1206,14 @@ def pagina_juego(gr, sysn, libretro, base, ctx):
     </ol>
     <p class="suave">Necesitas tu propia copia del juego: ni la web ni el programa descargan juegos.</p>"""
     elif s in PC:
-        como = """<ol class="pasos">
-      <li>Descarga la Biblioteca de traducciones e instálala.</li>
-      <li>Si tienes el juego en Steam, GOG o Epic, la biblioteca lo encuentra sola.</li>
-      <li>Las traducciones de PC se instalan a mano: abre la ficha del juego y te lleva a la página de la traducción y a la carpeta del juego.</li>
+        como = f"""<ol class="pasos">
+      <li>Abre la página de la traducción y comprueba qué versión del juego pide.</li>
+      <li>Instálala como explique su autor: normalmente, copiando sus archivos en la carpeta del juego o con su instalador.</li>
+      <li>Si tienes el juego en Steam, GOG o Epic, <a href="{raiz}#programa">el programa para Windows</a> lo encuentra solo y te lleva a la página de la traducción y a la carpeta del juego.</li>
     </ol>"""
     elif modo == 'programa':
         como = f"""<ol class="pasos">
-      <li><b>Con el programa para Windows:</b> dile en qué carpeta tienes tus juegos, busca «{e(titulo)}» y pulsa <b>Traducir</b>. Comprueba que tu copia es la versión que pide la traducción y aplica el parche xdelta; si el juego está en .zip, .7z, .rar o .chd, lo saca y monta el disco traducido en .chd. Tu original no se toca.</li>
+      <li><b>Con <a href="{raiz}#programa">el programa para Windows</a>:</b> dile en qué carpeta tienes tus juegos, busca «{e(titulo)}» y pulsa <b>Traducir</b>. Comprueba que tu copia es la versión que pide la traducción y aplica el parche xdelta; si el juego está en .zip, .7z, .rar o .chd, lo saca y monta el disco traducido en .chd. Tu original no se toca.</li>
       <li><b>Sin Windows:</b> baja el parche de la página de su autor y aplícalo con un parcheador de xdelta, como Delta Patcher, sobre la versión del juego que pide.</li>
     </ol>
     <p class="suave">El navegador todavía no aplica parches xdelta. Necesitas tu propia copia del juego: ni la web ni el programa descargan juegos, solo los parches de traducción.</p>"""
@@ -1226,31 +1226,43 @@ def pagina_juego(gr, sysn, libretro, base, ctx):
     else:
         como = f"""<ol class="pasos">
       <li><b>Sin instalar nada:</b> abre <a href="{raiz}parchear/">Parchear en el navegador</a> y elige tu ROM, o toda tu carpeta de juegos. La página reconoce el juego por su CRC32, baja el parche de su autor (o usa el que hayas descargado tú) y te da el juego traducido. Nada sale de tu equipo.</li>
-      <li><b>Con el programa para Windows:</b> dile en qué carpeta tienes tus juegos, busca «{e(titulo)}» y pulsa <b>Traducir</b>. Comprueba que tu copia es la versión que pide la traducción y la aplica; tu original no se toca.</li>
+      <li><b>Con <a href="{raiz}#programa">el programa para Windows</a>:</b> dile en qué carpeta tienes tus juegos, busca «{e(titulo)}» y pulsa <b>Traducir</b>. Comprueba que tu copia es la versión que pide la traducción y la aplica; tu original no se toca.</li>
     </ol>
     <p class="suave">Necesitas tu propia copia del juego: ni la web ni el programa descargan juegos, solo los parches de traducción.</p>"""
     # Las de PC, consolas actuales e instalación a mano pueden traer un instalador o un .exe: aviso de pasarles el antivirus.
     if modo in ('pc', 'manual') and not abandonadas:
         como += '\n    ' + ANTIVIRUS
-    # El botón principal de la ficha, con una línea que explica por qué cuando no es el navegador.
-    descarga = f'href="{INSTALADOR}" data-goatcounter-click="descarga-juego"'
+    # El botón principal de la ficha, con una línea que explica por qué cuando no es el navegador. Desde el 15-11-2026 la
+    # ficha no tiene botón de descargar el programa (se confundía con descargar el juego): solo lo nombra y enlaza a la
+    # portada (#programa), que es donde se descarga.
+    programa = f'<a href="{raiz}#programa">el programa para Windows</a>'
+    evento = f' data-goatcounter-click="trad-{e(gr["ruta"].removeprefix("juego/").strip("/"))}"' if GOATCOUNTER else ''
+
+    def ir_a_la_traduccion(autor):
+        """«Ir a la traducción» (su página, si es una sola y segura) o «Ver las traducciones» (su apartado de la ficha)."""
+        if autor:
+            return (f'<a class="btn primario grande" href="{e(autor["url"])}" target="_blank" rel="noopener"{evento}>'
+                    f'{"Ir al doblaje" if solo_dob else "Ir a la traducción"}</a>')
+        cosa = ('el doblaje' if solo_dob else 'la traducción') if n == 1 else ('los doblajes' if solo_dob else 'las traducciones')
+        return f'<a class="btn primario grande" href="#traducciones">Ver {cosa}</a>'
+    una = next((f for f in gr['filas'] if web_segura(f['url'])), None) if n == 1 else None
     if modo == 'navegador':
-        botones = (f'<div class="acciones-j"><a class="btn primario grande" href="{raiz}parchear/">Traducir en el navegador</a>'
-                   f'<a class="btn grande" {descarga}>Programa para Windows</a></div>')
+        botones = f'<a class="btn primario grande" href="{raiz}parchear/">Traducir en el navegador</a>'
     elif modo == 'programa':
-        por_que = ('El parche es xdelta y el navegador todavía no puede aplicarlo; el programa para Windows sí.' if xdelta else
-                   f'Las traducciones de {e(nombre_sis)} suelen ser parches xdelta, que el navegador todavía no aplica; el programa '
-                   f'para Windows sí. Si el parche resulta ser IPS, BPS, UPS, PPF o APS, también vale '
+        por_que = (f'El parche es xdelta y el navegador todavía no puede aplicarlo: se aplica con {programa} o con un parcheador de xdelta.' if xdelta else
+                   f'Las traducciones de {e(nombre_sis)} suelen ser parches xdelta, que el navegador todavía no aplica: se aplican con '
+                   f'{programa} o con un parcheador de xdelta. Si el parche resulta ser IPS, BPS, UPS, PPF o APS, también vale '
                    f'<a href="{raiz}parchear/">Parchear en el navegador</a>.')
-        botones = f'<a class="btn primario grande" {descarga}>Traducir con el programa para Windows</a><p class="suave aviso-j">{por_que}</p>'
+        botones = ir_a_la_traduccion(una) + f'<p class="suave aviso-j">{por_que}</p>'
     elif modo == 'manual':
         autor = next((f for f in gr['filas'] if web_segura(f['url'])), None)
-        evento = f' data-goatcounter-click="trad-{e(gr["ruta"].removeprefix("juego/").strip("/"))}"' if GOATCOUNTER else ''
         botones = ((f'<a class="btn primario grande" href="{e(autor["url"])}" target="_blank" rel="noopener"{evento}>Ir a la traducción</a>'
                     if autor else '<a class="btn primario grande" href="#traducciones">Ver la traducción</a>')
                    + '<p class="suave aviso-j">No es un parche: se instala como explica su autor, copiando sus archivos o con su instalador.</p>')
-    else:
-        botones = f'<a class="btn primario grande" {descarga}>Descargar el programa para Windows</a>'
+    else:  # PC y consolas de hoy: se instalan a mano
+        donde = 'en la carpeta del juego' if s in PC else 'como mod en el emulador o en la consola'
+        botones = ir_a_la_traduccion(una) + ('' if abandonadas else
+                                             f'<p class="suave aviso-j">Se instala{"n" if n > 1 else ""} a mano, {donde}, como explica su autor.</p>')
     # Cuántas veces se ha guardado en Favoritos (favoritos_fichas()), solo a partir de FAVORITOS_MIN.
     n_fav = ctx.get('favs', {}).get(gr['ruta'], 0)
     veces_fav = (f'<span class="suave n-fav">Guardado {n_fav:,} {"vez" if n_fav == 1 else "veces"} en Favoritos</span>'.replace(',', '.')
@@ -1525,7 +1537,7 @@ def pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version, dias, filas, p
     <div class="sistemas">{chips_sistemas(por_sis, sysn, raiz)}</div>
   </section>
 
-  <section class="bloque programa">
+  <section class="bloque programa" id="programa">
     <div>
       <p class="eti">El programa para Windows</p>
       <h2>Si prefieres que lo haga todo él</h2>
