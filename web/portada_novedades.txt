@@ -1,0 +1,5 @@
+# Juegos que no salen en «Últimas traducciones» ni en «Últimos doblajes» de la portada (siguen en /novedades/ y en su ficha).
+# Una línea por juego: -sistema|título tal como está en el catálogo. Con «|hasta AAAA-MM-DD» al final, la línea vale hasta ese día incluido.
+# Las traducciones propias de la Biblioteca van siempre las primeras de su día (web.py, propia()).
+# 16-11-2026: Athena, la traducción propia, ocupa en la portada el sitio de Dissidia 012, por decisión del usuario.
+-psp|Dissidia 012 [duodecim] Final Fantasy|hasta 2026-11-23

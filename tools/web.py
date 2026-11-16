@@ -182,6 +182,31 @@ def fijados():
     return mosaico_a_mano()[0]
 
 
+def fuera_de_novedades_portada():
+    """Juegos que se sacan a mano de «Últimas traducciones» y «Últimos doblajes» de la portada (web/portada_novedades.txt;
+    siguen en /novedades/ y en su ficha). Cada línea es -sistema|título tal como está en el catálogo, con «|hasta
+    AAAA-MM-DD» opcional, como en web/destacados.txt. Desde el 16-11-2026: Athena, la traducción propia, ocupa el sitio de
+    Dissidia 012, por decisión del usuario. Devuelve {(sistema, título sin acentos en minúsculas)}."""
+    ruta = os.path.join(WEB, 'portada_novedades.txt')
+    fuera = set()
+    if not os.path.isfile(ruta):
+        return fuera
+    hoy = date.today().isoformat()
+    for l in open(ruta, encoding='utf-8'):
+        partes = [p.strip() for p in l.strip().split('|')]
+        if len(partes) < 2 or not partes[0].startswith('-'):
+            continue
+        hasta = next((p[6:].strip() for p in partes[2:] if p.startswith('hasta ')), '')
+        if not (hasta and hoy > hasta):
+            fuera.add((partes[0][1:].strip(), sin_acentos(partes[1]).lower()))
+    return fuera
+
+
+def propia(f):
+    """Traducción hecha por la propia Biblioteca (Athena, 16-11-2026): va la primera de su día en las novedades."""
+    return f['grupo'].strip() == 'Biblioteca de traducciones'
+
+
 def actualizadas():
     """Traducciones puestas al día que se decide sacar en las novedades (web/actualizadas.txt): cada línea es
     sistema|juego|grupo|AAAA-MM-DD, con juego y grupo tal como están en el catálogo. Salen en las novedades de ese día
@@ -883,7 +908,8 @@ def enviada_por_autor(f):
 
 def novedades(filas, sin_adultos=False):
     """Las filas con fecha de alta por días, del más nuevo al más antiguo: [(AAAA-MM-DD, [filas])]. Dentro de un día,
-    primero las que vuelven al catálogo con el permiso de sus autores (READMITIDAS; decisión del usuario el 13-11-2026,
+    primero las propias de la Biblioteca (propia(); desde el 16-11-2026), luego
+    las que vuelven al catálogo con el permiso de sus autores (READMITIDAS; decisión del usuario el 13-11-2026,
     con Drakengard 3 de Traducciones Vacuno), luego las que nos mandan sus propios autores, que encabezan el día aunque
     sean de IA; luego las nuevas antes que las puestas al día; luego las que tienen portada y no son de IA, y luego por
     la fecha de la traducción, para que la portada luzca."""
@@ -895,7 +921,7 @@ def novedades(filas, sin_adultos=False):
         fs.sort(key=fecha_iso, reverse=True)
         # Las puestas al día («Actualizado», de web/actualizadas.txt) van detrás de las nuevas de su día: desde el
         # 15-11-2026 llegan de 20 en 20 con la revisión semanal de actualizaciones y no deben tapar las altas.
-        fs.sort(key=lambda f: (clave_fila(f) not in READMITIDAS or bool(f.get('act')), not enviada_por_autor(f),
+        fs.sort(key=lambda f: (not propia(f), clave_fila(f) not in READMITIDAS or bool(f.get('act')), not enviada_por_autor(f),
                                bool(f.get('act')), not con_portada(f), es_ia(f)))
     return sorted(dias.items(), reverse=True)
 
@@ -1458,7 +1484,10 @@ def pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version, dias, filas, p
                       f'referrerpolicy="no-referrer" onerror="sig(this)" onload="this.classList.add(\'ok\')"><span class="ph">{e(g["titulo"])}</span></a>'
                       for g, u in destacados(filas, dias, pins, vistos=next((s[3] for s in sels if s[0] == 'lo-mas-visto'), ())))
     # Las novedades van en dos bloques: las traducciones aquí y los doblajes en «Últimos doblajes» (bloque_dob), para que
-    # un doblaje no se pierda entre las traducciones de un día con muchas (14-11-2026).
+    # un doblaje no se pierda entre las traducciones de un día con muchas (14-11-2026). Antes se quitan los que se sacan
+    # a mano de la portada (web/portada_novedades.txt).
+    fuera_nov = fuera_de_novedades_portada()
+    dias = [(d, [f for f in fs if (f['sistema'], sin_acentos(f['juego']).lower()) not in fuera_nov]) for d, fs in dias]
     if dias:
         bloque_nov = f'''<section class="bloque novedades">
     <div class="cab"><h2>Últimas traducciones</h2><p class="suave"><a href="novedades/?solo=traducciones">Todas las novedades</a> · <a href="novedades.xml">Canal RSS</a></p></div>

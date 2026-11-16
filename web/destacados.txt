@@ -3,26 +3,27 @@
 # Con «-» delante del sistema, el juego no sale en el mosaico. Con «|hasta AAAA-MM-DD» al final, la línea vale hasta ese día incluido.
 # Desde el 16-11-2026: Athena: Awakening from the Ordinary Life, la primera traducción propia de la Biblioteca.
 psx|Athena: Awakening from the Ordinary Life
-# Del 12 al 19-11-2026: Night Call, como detalle con su autor, y Xenosaga Episode II de JinK; PEAK y el Ocarina of Time les dejan sitio.
-pc|Night Call|hasta 2026-11-19
-ps2|Xenosaga Episode II: Jenseits von Gut und Böse|hasta 2026-11-19
--pc|PEAK|hasta 2026-11-19
--n64|The Legend of Zelda: Ocarina of Time|hasta 2026-11-19
-# Del 12 al 19-11-2026: Chaos Rings III y Final Fantasy Explorers de Joseas, que dio permiso el 12-11; Chrono Trigger y A Link to the Past les dejan sitio.
-psvita|Chaos Rings III|hasta 2026-11-19
-3ds|Final Fantasy Explorers|hasta 2026-11-19
--snes|Chrono Trigger|hasta 2026-11-19
--snes|The Legend of Zelda - A Link to the Past|hasta 2026-11-19
-# Desde el 12-11-2026: Suikoden III de Yuzuy (sale aunque sus traducciones sean con IA, por estar fijado) y Super Mario 64 fuera.
-ps2|Suikoden III
--n64|Super Mario 64
-pc|Danganronpa V3: Killing Harmony
-# Del 13 al 20-11-2026: The Caligula Effect: Overdose de Lemulte, la primera traducción que nos manda su propio autor; Super Robot Wars UX le deja sitio.
-pc|The Caligula Effect: Overdose|hasta 2026-11-20
--3ds|Super Robot Wars UX|hasta 2026-11-20
 # Desde el 13-11-2026: Drakengard 3 de Traducciones Vacuno, que vuelve al catálogo con su permiso (como se les ofreció).
 ps3|Drakengard 3
-# Del 14 al 21-11-2026: The Caligula Effect 2 de Lemulte, la segunda traducción que nos manda su autor.
-pc|The Caligula Effect 2|hasta 2026-11-21
-# Del 15 al 22-11-2026: Shadow Hearts: Covenant - Director's Cut (UnDub) de Lemulte, la tercera traducción que nos manda su autor.
-ps2|Shadow Hearts: Covenant - Director's Cut (UnDub)|hasta 2026-11-22
+# Desde el 16-11-2026, elegidos por el usuario (el mosaico solo con lo que más tira le parecía demasiado genérico):
+psvita|Ray Gigant
+pc|Fakin' It XL
+psx|Echo Night 2: El Señor de las Pesadillas
+pc|GNOSIA
+# y tres del mismo estilo, para completar los nueve:
+pc|The Hundred Line -Last Defense Academy-
+dreamcast|Grandia II
+pc|Little Goody Two Shoes
+# Desde el 12-11-2026: Super Mario 64 fuera.
+-n64|Super Mario 64
+# 16-11-2026: el usuario pidió rehacer el mosaico con juegos completamente distintos de los que había. Los que estaban
+# fijados no vuelven a salir solos durante una semana.
+-pc|Night Call|hasta 2026-11-23
+-ps2|Xenosaga Episode II: Jenseits von Gut und Böse|hasta 2026-11-23
+-psvita|Chaos Rings III|hasta 2026-11-23
+-3ds|Final Fantasy Explorers|hasta 2026-11-23
+-ps2|Suikoden III|hasta 2026-11-23
+-pc|Danganronpa V3: Killing Harmony|hasta 2026-11-23
+-pc|The Caligula Effect: Overdose|hasta 2026-11-23
+-pc|The Caligula Effect 2|hasta 2026-11-23
+-ps2|Shadow Hearts: Covenant - Director's Cut (UnDub)|hasta 2026-11-23
