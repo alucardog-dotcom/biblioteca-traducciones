@@ -1,6 +1,8 @@
 # Juegos que van siempre en el mosaico de la portada de la web (si tienen portada), uno por línea: sistema|título tal como está en el catálogo.
 # El resto del mosaico lo eligen las novedades con tirón y los juegos de más tirón del catálogo (web/popularidad.tsv).
 # Con «-» delante del sistema, el juego no sale en el mosaico. Con «|hasta AAAA-MM-DD» al final, la línea vale hasta ese día incluido.
+# Desde el 16-11-2026: Athena: Awakening from the Ordinary Life, la primera traducción propia de la Biblioteca.
+psx|Athena: Awakening from the Ordinary Life
 # Del 12 al 19-11-2026: Night Call, como detalle con su autor, y Xenosaga Episode II de JinK; PEAK y el Ocarina of Time les dejan sitio.
 pc|Night Call|hasta 2026-11-19
 ps2|Xenosaga Episode II: Jenseits von Gut und Böse|hasta 2026-11-19

@@ -472,6 +472,25 @@ def descripcion_juego(gr, nombre_sis):
     return frase
 
 
+def seccion_en_espanol(gr, raiz):
+    """«Así se ve en español»: capturas del juego ya traducido, si las hay en web/capturas_es/<sistema>/<ficha>/."""
+    sub = gr['ruta'].strip('/').split('/', 1)[-1]
+    carpeta = os.path.join(WEB, 'capturas_es', *sub.split('/'))
+    if not os.path.isdir(carpeta):
+        return ''
+    imgs = sorted(f for f in os.listdir(carpeta) if f.lower().endswith(('.webp', '.png', '.jpg')))
+    if not imgs:
+        return ''
+    titulo = gr['titulo']
+    capturas = ''.join(f'<a href="{e(raiz)}capturas_es/{e(sub)}/{e(f)}" target="_blank" rel="noopener"><img loading="lazy" '
+                       f'src="{e(raiz)}capturas_es/{e(sub)}/{e(f)}" alt="Captura de {e(titulo)} en español"></a>' for f in imgs)
+    return f'''<section class="bloque en-espanol">
+    <h2>Así se ve en español</h2>
+    <div class="capturas">{capturas}</div>
+    <p class="suave">Capturas del juego con la traducción puesta, sacadas en un emulador.</p>
+  </section>'''
+
+
 def seccion_juego(gr, nombre_sis):
     """«El juego»: la descripción, sus datos, capturas del juego original y el vídeo (que no se carga hasta que lo pulsas)."""
     d = gr['dj']
@@ -1290,6 +1309,7 @@ def pagina_juego(gr, sysn, libretro, base, ctx):
           else 'Los doblajes' if solo_dob else 'Las traducciones')}</h2>
     <div class="trads">{''.join(tarjeta_trad(f, ruta=gr['ruta']) for f in gr['filas'])}</div>
   </section>
+  {seccion_en_espanol(gr, raiz)}
   {seccion_juego(gr, nombre_sis)}
   <section class="bloque">
     <h2>En resumen</h2>
@@ -2557,6 +2577,10 @@ def main():
     # los ficheros tal cual los publicaron sus autores, sin tocar; sus fichas enlazan a ellas en la nota.
     if os.path.isdir(os.path.join(WEB, 'conservadas')):
         shutil.copytree(os.path.join(WEB, 'conservadas'), os.path.join(salida, 'conservadas'))
+    # Capturas de juegos ya traducidos (web/capturas_es/<sistema>/<ficha>/, desde el 16-11-2026): las sacamos nosotros
+    # en un emulador y salen en la ficha como «Así se ve en español».
+    if os.path.isdir(os.path.join(WEB, 'capturas_es')):
+        shutil.copytree(os.path.join(WEB, 'capturas_es'), os.path.join(salida, 'capturas_es'))
     # El logotipo (web/icono.svg: el cartucho con las iniciales BT, desde el 12-11-2026) o, si no está, el del programa;
     # y sus copias en PNG para el iPhone (fondo blanco) y en ICO para quien pida /favicon.ico.
     icono = os.path.join(WEB, 'icono.svg')
