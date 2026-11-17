@@ -449,6 +449,10 @@ GENEROS = {'Platform': 'plataformas', 'Action': 'acción', 'Shooter': 'disparos'
            'Education': 'educativo', 'Vehicle Simulation': 'simulación de vehículos', 'Party': 'party', 'MMO': 'MMO', 'Quiz': 'preguntas',
            'Music': 'musical', 'Casino': 'casino', 'Simulation': 'simulación'}
 IMG_LB = 'https://images.launchbox-app.com/'
+# La plataforma de las capturas de otra versión del juego («sp» en datos_juegos.json), como la dice la web.
+PLATAFORMA_CAPTURAS = {'Windows': 'PC', 'Windows 3.X': 'Windows 3.1', 'Nintendo Switch': 'Switch', 'Sony Playstation 3': 'PS3',
+                       'Sony Playstation 4': 'PS4', 'Sony Playstation 5': 'PS5', 'Sony Playstation Vita': 'PS Vita',
+                       'Nintendo Wii U': 'Wii U', 'Microsoft Xbox 360': 'Xbox 360', 'Microsoft Xbox One': 'Xbox One'}
 IMG_STEAM = 'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/'
 
 
@@ -531,6 +535,10 @@ def seccion_juego(gr, nombre_sis):
                        f'referrerpolicy="no-referrer" onerror="this.parentNode.remove()"></a>' for mini, grande in map(captura, imgs))
     # Las de Steam son panorámicas (16:9) y las de LaunchBox, casi todas de 4:3.
     de_steam = bool(imgs) and all(i.startswith('steam:') for i in imgs)
+    # Si el juego no las tiene en su sistema, son de otra versión que se ve igual («sp», de datos_launchbox.py o de
+    # datos_steam.py): la de PC de una consola de hoy, o la de MS-DOS o de otra consola de un juego de PC.
+    sp = d.get('sp', '')
+    version = f', de su versión de {PLATAFORMA_CAPTURAS.get(sp, sp)}' if sp else ''
     v = d.get('v', '')
     video = (f'<button type="button" class="video" data-v="{e(v)}" title="Vídeo de {e(titulo)}" onclick="yt(this)">'
              f'<img loading="lazy" src="https://i.ytimg.com/vi/{e(v)}/hqdefault.jpg" alt="" referrerpolicy="no-referrer"><span>Ver un vídeo del juego</span></button>'
@@ -541,7 +549,7 @@ def seccion_juego(gr, nombre_sis):
     <h2>El juego</h2>
     <p class="texto">{e(descripcion_juego(gr, nombre_sis))}</p>
     {f'<dl class="datos">{dl}</dl>' if dl else ''}
-    {f'<div class="capturas{" anchas" if de_steam else ""}">{capturas}</div><p class="suave">Capturas del juego original, sin traducir (de {"su página de Steam" if de_steam else "LaunchBox"}).</p>' if capturas else ''}
+    {f'<div class="capturas{" anchas" if de_steam else ""}">{capturas}</div><p class="suave">Capturas del juego original, sin traducir{version} (de {"su página de Steam" if de_steam else "LaunchBox"}).</p>' if capturas else ''}
     {video}
     {f'<p class="suave">{wiki}{" · " if wiki and video else ""}{"El vídeo es de YouTube y no se carga hasta que lo pulsas." if video else ""}</p>' if wiki or video else ''}
   </section>'''
