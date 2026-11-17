@@ -137,12 +137,42 @@ def cargar():
     # y, para los juegos de Steam que LaunchBox no tiene o tiene sin capturas, de datos_steam.py.
     ruta_dj = os.path.join(WEB, 'datos_juegos.json')
     dj = json.load(open(ruta_dj, encoding='utf-8')) if os.path.isfile(ruta_dj) else {}
+    a_mano = datos_a_mano()
     for f in filas:
         clave = f"{f['sistema']}|{f['juego']}|{f['grupo']}"
         f['x'] = centro['filas'].get(clave, {})
         f['pop'] = pop.get(clave, 0)
         f['dj'] = dj.get(clave, {})
+        if extra := a_mano.get((f['sistema'], sin_acentos(f['juego']).lower())):
+            d = dict(f['dj'])
+            if 's' in extra or 't' in extra:  # las capturas puestas a mano sustituyen a las que hubiera
+                for k in ('s', 't', 'sp', 'si'):
+                    d.pop(k, None)
+            d.update(extra)
+            f['dj'] = d
     return filas, centro['sistemas']
+
+
+def datos_a_mano():
+    """Vídeo y capturas puestos a mano (web/datos_a_mano.tsv) para los juegos a los que LaunchBox no se los da (17-11-2026,
+    Iwatobi Penguin Rocky x Hopper 2). Cada línea: sistema|título tal como está en el catálogo, el campo («v», el código
+    de YouTube; «t», la pantalla de título; «s», una captura, en orden) y su valor. Una imagen de LaunchBox es su nombre de
+    fichero; una de libretro-thumbnails, «libretro:<sistema>/<tipo>/<nombre>.png». Devuelve
+    {(sistema, título sin acentos en minúsculas): {'v': …, 't': …, 's': [...]}}."""
+    ruta, a_mano = os.path.join(WEB, 'datos_a_mano.tsv'), {}
+    if not os.path.isfile(ruta):
+        return a_mano
+    for l in open(ruta, encoding='utf-8'):
+        p = [x.strip() for x in l.rstrip('\n').split('\t')]
+        if l.startswith('#') or len(p) < 3 or '|' not in p[0] or p[1] not in ('v', 't', 's') or not p[2]:
+            continue
+        sistema, titulo = p[0].split('|', 1)
+        d = a_mano.setdefault((sistema.strip(), sin_acentos(titulo.strip()).lower()), {})
+        if p[1] == 's':
+            d.setdefault('s', []).append(p[2])
+        else:
+            d[p[1]] = p[2]
+    return a_mano
 
 
 def lista_juegos(nombre):
@@ -464,6 +494,9 @@ def captura(i):
     if i.startswith('itch:'):  # de datos_itch.py: «itch:<miniatura>|<grande>», rutas de img.itch.zone
         mini, _, grande = i[5:].partition('|')
         return 'https://img.itch.zone/' + mini, 'https://img.itch.zone/' + grande
+    if i.startswith('libretro:'):  # de web/datos_a_mano.tsv: «libretro:<sistema>/<tipo>/<nombre>.png»
+        u = 'https://thumbnails.libretro.com/' + '/'.join(encode(x) for x in i[9:].split('/'))
+        return u, u
     return IMG_LB + i, IMG_LB + i
 
 
@@ -543,7 +576,9 @@ def seccion_juego(gr, nombre_sis):
     sp = d.get('sp', '')
     version = f', de su versión de {PLATAFORMA_CAPTURAS.get(sp, sp)}' if sp else ''
     # Las de itch.io (datos_itch.py) son de la página del juego o de la de la traducción, que puede enseñarlo traducido.
-    pie_capturas = (f'Capturas del juego original, sin traducir{version} (de {"su página de Steam" if de_steam else "LaunchBox"}).'
+    # Las de libretro-thumbnails solo vienen de web/datos_a_mano.tsv; el resto, de LaunchBox.
+    origen = 'su página de Steam' if de_steam else ' y '.join(dict.fromkeys('libretro-thumbnails' if i.startswith('libretro:') else 'LaunchBox' for i in imgs))
+    pie_capturas = (f'Capturas del juego original, sin traducir{version} (de {origen}).'
                     if d.get('si') not in ('juego', 'traduccion') else
                     'Capturas de la página del juego en itch.io.' if d['si'] == 'juego' else
                     'Capturas de la página de la traducción en itch.io.')

@@ -1,0 +1,9 @@
+# Vídeo y capturas puestos a mano para los juegos a los que LaunchBox no se los da (los lee tools/web.py, datos_a_mano()).
+# Cada línea: sistema|título tal como está en el catálogo <TAB> campo <TAB> valor <TAB> nota
+#   v: vídeo de YouTube (su código de 11 caracteres)
+#   t: pantalla de título; s: una captura (una por línea, en el orden en que salen)
+# Una imagen de LaunchBox es su nombre de fichero; una de libretro-thumbnails, «libretro:<sistema>/<tipo>/<nombre>.png».
+# Si un juego tiene aquí «t» o «s», sus capturas son estas y no las de LaunchBox, Steam o itch.io.
+psx|Iwatobi Penguin Rocky x Hopper 2: Tantei Monogatari	t	libretro:Sony - PlayStation/Named_Titles/Iwatobi Penguin Rocky x Hopper 2 - Tantei Monogatari (Japan).png	17-11-2026: LaunchBox no tiene capturas de juego ni vídeo
+psx|Iwatobi Penguin Rocky x Hopper 2: Tantei Monogatari	s	libretro:Sony - PlayStation/Named_Snaps/Iwatobi Penguin Rocky x Hopper 2 - Tantei Monogatari (Japan).png
+psx|Iwatobi Penguin Rocky x Hopper 2: Tantei Monogatari	v	38b1W4oXWxY	The Video Game Museum en YouTube (5:24)
