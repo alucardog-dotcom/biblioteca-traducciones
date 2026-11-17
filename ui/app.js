@@ -788,13 +788,15 @@ function abrirFicha(r, p) {
     } else if (MODERNAS.has(r.s)) {
       html += '<p class="muted">No lo encuentro en tus carpetas de juegos.</p>';
     }
-    // Los que están en Steam: si no lo tienes, su página de la tienda (no es un enlace de afiliado).
-    const enSteam = (r.gr ? r.gr.filas : [r]).find(f => f.x.steam);
+    // Los que están en Steam: si no lo tienes, su página de la tienda (no es un enlace de afiliado). Si la traducción es
+    // para la versión de GOG (la ficha tiene AppID y aun así una página, "pj", de gog.com), se enseña la de GOG en su lugar.
+    const enGog = (r.gr ? r.gr.filas : [r]).find(f => f.x.steam && webSegura(f.x.pj) && /\.gog\.com\//i.test(f.x.pj));
+    const enSteam = enGog ? null : (r.gr ? r.gr.filas : [r]).find(f => f.x.steam);
     if (enSteam && !opciones.length) {
       html += `<div class="f-compra"><a class="btn" href="https://store.steampowered.com/app/${encodeURIComponent(enSteam.x.steam)}/" target="_blank" rel="noopener">¿No lo tienes? Página del juego en Steam</a></div>`;
     }
     // Los que no están en Steam: la página oficial del juego, si la conocemos.
-    const conPagina = (r.gr ? r.gr.filas : [r]).find(f => webSegura(f.x.pj));
+    const conPagina = enGog || (r.gr ? r.gr.filas : [r]).find(f => webSegura(f.x.pj));
     if (conPagina && !enSteam && !opciones.length) {
       html += `<div class="f-compra"><a class="btn" href="${esc(conPagina.x.pj)}" target="_blank" rel="noopener">¿No lo tienes? Página del juego en ${esc(sitioPagina(conPagina.x.pj))}${conPagina.x.pj18 ? ' (18+)' : ''}</a></div>`;
     }

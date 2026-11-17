@@ -1196,15 +1196,19 @@ def pagina_juego(gr, sysn, libretro, base, ctx):
     imagen = absolutas[0] if absolutas and not juego_adulto(gr) else 'img/vista-previa.png'
     quien = ', '.join(grupos[:3]) + (' y otros' if len(grupos) > 3 else '')
     orig = titulo_original(gr)
-    # Los que están en Steam (tienen AppID): enlace a su página de la tienda, sin afiliado.
-    en_steam = next((f for f in gr['filas'] if f['x'].get('steam')), None)
+    # Los que están en Steam (tienen AppID): enlace a su página de la tienda, sin afiliado. Si la traducción es para la
+    # versión de GOG (la ficha tiene AppID y aun así un "pj" de gog.com: tipo «gog_version» en paginas_juego.tsv), manda
+    # la de GOG (17-11-2026, Dragon Star Varnir de Lemulte).
+    en_gog = next((f for f in gr['filas'] if f['x'].get('steam') and web_segura(f['x'].get('pj', ''))
+                   and '.gog.com/' in f['x']['pj']), None)
+    en_steam = None if en_gog else next((f for f in gr['filas'] if f['x'].get('steam')), None)
     compra = ''
     if en_steam:
         compra = f"""<div class="compra">
         <a class="btn tienda" href="https://store.steampowered.com/app/{e(str(en_steam['x']['steam']))}/" target="_blank" rel="noopener">¿No lo tienes? Página del juego en Steam</a>
       </div>"""
     # Los que no están en Steam: la página oficial del juego ("pj", itch.io o la web de su autor), si se conoce.
-    con_pagina = next((f for f in gr['filas'] if web_segura(f['x'].get('pj', ''))), None)
+    con_pagina = en_gog or next((f for f in gr['filas'] if web_segura(f['x'].get('pj', ''))), None)
     if con_pagina and not en_steam:
         pj = con_pagina['x']['pj']
         sitio = ('itch.io' if '.itch.io/' in pj else 'Game Jolt' if 'gamejolt.com/' in pj else 'Steam' if 'store.steampowered.com/' in pj
