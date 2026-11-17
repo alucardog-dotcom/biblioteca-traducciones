@@ -356,7 +356,7 @@ button.video img { width: 100%; height: 100%; object-fit: cover; opacity: .75; }
 button.video span { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); padding: 12px 20px 12px 44px; border-radius: 999px; background: var(--rojo); color: #fff; font: 700 1rem var(--sans); white-space: nowrap; }
 button.video span::before { content: ""; position: absolute; left: 20px; top: 50%; transform: translateY(-50%); border: 8px solid transparent; border-left: 13px solid #fff; border-right: 0; }
 button.video:hover img { opacity: .9; }
-iframe.video { display: block; width: 100%; max-width: 640px; aspect-ratio: 16 / 9; border: 0; border-radius: 12px; }
+iframe.video, video.video { display: block; width: 100%; max-width: 640px; aspect-ratio: 16 / 9; border: 0; border-radius: 12px; }
 
 /* Selecciones, grupos y traducciones en camino */
 .sels { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 12px; }

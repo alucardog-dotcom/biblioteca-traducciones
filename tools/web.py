@@ -505,6 +505,14 @@ PLATAFORMA_CAPTURAS = {'Windows': 'PC', 'Windows 3.X': 'Windows 3.1', 'Nintendo 
                        'Sony Playstation 4': 'PS4', 'Sony Playstation 5': 'PS5', 'Sony Playstation Vita': 'PS Vita',
                        'Nintendo Wii U': 'Wii U', 'Microsoft Xbox 360': 'Xbox 360', 'Microsoft Xbox One': 'Xbox One'}
 IMG_STEAM = 'https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/'
+# El tráiler de Steam en un <video>, al pulsar su botón: Safari lee la lista HLS solo; los demás, con hls.js (cdn.jsdelivr,
+# versión fija), que se carga entonces y una sola vez.
+STV = ('<script>function stv(b){var u=b.dataset.hls,v=document.createElement("video");v.controls=true;v.autoplay=true;'
+       'v.playsInline=true;v.className="video";v.title=b.title;b.replaceWith(v);'
+       'if(v.canPlayType("application/vnd.apple.mpegurl")){v.src=u;return}'
+       'function ir(){var h=new Hls();h.loadSource(u);h.attachMedia(v)}'
+       'if(window.Hls)return ir();var s=document.createElement("script");'
+       's.src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js";s.onload=ir;document.head.appendChild(s)}</script>')
 
 
 def captura(i):
@@ -607,6 +615,15 @@ def seccion_juego(gr, nombre_sis):
     video = (f'<button type="button" class="video" data-v="{e(v)}" title="Vídeo de {e(titulo)}" onclick="yt(this)">'
              f'<img loading="lazy" src="https://i.ytimg.com/vi/{e(v)}/hqdefault.jpg" alt="" referrerpolicy="no-referrer"><span>Ver un vídeo del juego</span></button>'
              if re.fullmatch(r'[A-Za-z0-9_-]{11}', v) else '')
+    # Sin vídeo de YouTube, el tráiler de su página de Steam («vs» de datos_steam.py: lista HLS y miniatura). Al pulsarlo,
+    # stv() lo pone en un <video>: Safari lee HLS solo y los demás, con hls.js, que solo se carga entonces.
+    vs = d.get('vs', '')
+    if not video and re.fullmatch(r'[\w/.-]+\.m3u8\|[\w/.-]+\.jpg', vs):
+        lista, mini = vs.split('|')
+        video = (f'<button type="button" class="video" data-hls="https://video.akamai.steamstatic.com/store_trailers/{e(lista)}" '
+                 f'title="Tráiler de {e(titulo)}" onclick="stv(this)"><img loading="lazy" src="{IMG_STEAM}{e(mini)}" alt="" '
+                 f'referrerpolicy="no-referrer"><span>Ver el tráiler</span></button>' + STV)
+        v = 'steam'
     w = web_segura(d.get('w', ''))
     wiki = (f'<a href="{e(w)}" target="_blank" rel="noopener">Más sobre el juego en la Wikipedia{" (en inglés)" if "en.wikipedia" in w else ""}</a>' if w else '')
     return f'''<section class="bloque el-juego">
@@ -615,7 +632,7 @@ def seccion_juego(gr, nombre_sis):
     {f'<dl class="datos">{dl}</dl>' if dl else ''}
     {f'<div class="capturas{" anchas" if de_steam else ""}">{capturas}</div><p class="suave">{pie_capturas}</p>' if capturas else ''}
     {video}
-    {f'<p class="suave">{wiki}{" · " if wiki and video else ""}{"El vídeo es de YouTube y no se carga hasta que lo pulsas." if video else ""}</p>' if wiki or video else ''}
+    {f'<p class="suave">{wiki}{" · " if wiki and video else ""}{("El tráiler es de su página de Steam" if v == "steam" else "El vídeo es de YouTube") + " y no se carga hasta que lo pulsas." if video else ""}</p>' if wiki or video else ''}
   </section>'''
 
 
