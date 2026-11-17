@@ -461,6 +461,9 @@ def captura(i):
     de fichero; las de Steam (de datos_steam.py), «steam:<AppID>/<nombre>», y la tienda las sirve en dos tamaños."""
     if i.startswith('steam:'):
         return IMG_STEAM + i[6:] + '.600x338.jpg', IMG_STEAM + i[6:] + '.1920x1080.jpg'
+    if i.startswith('itch:'):  # de datos_itch.py: «itch:<miniatura>|<grande>», rutas de img.itch.zone
+        mini, _, grande = i[5:].partition('|')
+        return 'https://img.itch.zone/' + mini, 'https://img.itch.zone/' + grande
     return IMG_LB + i, IMG_LB + i
 
 
@@ -539,6 +542,11 @@ def seccion_juego(gr, nombre_sis):
     # datos_steam.py): la de PC de una consola de hoy, o la de MS-DOS o de otra consola de un juego de PC.
     sp = d.get('sp', '')
     version = f', de su versión de {PLATAFORMA_CAPTURAS.get(sp, sp)}' if sp else ''
+    # Las de itch.io (datos_itch.py) son de la página del juego o de la de la traducción, que puede enseñarlo traducido.
+    pie_capturas = (f'Capturas del juego original, sin traducir{version} (de {"su página de Steam" if de_steam else "LaunchBox"}).'
+                    if d.get('si') not in ('juego', 'traduccion') else
+                    'Capturas de la página del juego en itch.io.' if d['si'] == 'juego' else
+                    'Capturas de la página de la traducción en itch.io.')
     v = d.get('v', '')
     video = (f'<button type="button" class="video" data-v="{e(v)}" title="Vídeo de {e(titulo)}" onclick="yt(this)">'
              f'<img loading="lazy" src="https://i.ytimg.com/vi/{e(v)}/hqdefault.jpg" alt="" referrerpolicy="no-referrer"><span>Ver un vídeo del juego</span></button>'
@@ -549,7 +557,7 @@ def seccion_juego(gr, nombre_sis):
     <h2>El juego</h2>
     <p class="texto">{e(descripcion_juego(gr, nombre_sis))}</p>
     {f'<dl class="datos">{dl}</dl>' if dl else ''}
-    {f'<div class="capturas{" anchas" if de_steam else ""}">{capturas}</div><p class="suave">Capturas del juego original, sin traducir{version} (de {"su página de Steam" if de_steam else "LaunchBox"}).</p>' if capturas else ''}
+    {f'<div class="capturas{" anchas" if de_steam else ""}">{capturas}</div><p class="suave">{pie_capturas}</p>' if capturas else ''}
     {video}
     {f'<p class="suave">{wiki}{" · " if wiki and video else ""}{"El vídeo es de YouTube y no se carga hasta que lo pulsas." if video else ""}</p>' if wiki or video else ''}
   </section>'''
