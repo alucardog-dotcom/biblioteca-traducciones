@@ -5,6 +5,8 @@
 psx|Athena: Awakening from the Ordinary Life
 # Desde el 17-11-2026: Boundary Gate: Daughter of Kingdom, la segunda traducción propia (en el sitio de Fakin' It XL, a petición del usuario).
 psx|Boundary Gate: Daughter of Kingdom
+# Desde el 18-11-2026: Castlevania: Rondo of Blood, la tercera traducción propia (a petición del usuario).
+pcenginecd|Castlevania: Rondo of Blood
 # Desde el 13-11-2026: Drakengard 3 de Traducciones Vacuno, que vuelve al catálogo con su permiso (como se les ofreció).
 ps3|Drakengard 3
 # Desde el 16-11-2026, elegidos por el usuario (el mosaico solo con lo que más tira le parecía demasiado genérico):
@@ -14,7 +16,7 @@ pc|GNOSIA
 # y tres del mismo estilo, para completar los nueve:
 pc|The Hundred Line -Last Defense Academy-
 dreamcast|Grandia II
-pc|Little Goody Two Shoes
+# Little Goody Two Shoes dejó su sitio a Rondo of Blood el 18-11-2026 (el mosaico tiene nueve).
 # Desde el 12-11-2026: Super Mario 64 fuera.
 -n64|Super Mario 64
 # 16-11-2026: el usuario pidió rehacer el mosaico con juegos completamente distintos de los que había. Los que estaban
