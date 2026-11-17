@@ -137,7 +137,7 @@ def cargar():
     # y, para los juegos de Steam que LaunchBox no tiene o tiene sin capturas, de datos_steam.py.
     ruta_dj = os.path.join(WEB, 'datos_juegos.json')
     dj = json.load(open(ruta_dj, encoding='utf-8')) if os.path.isfile(ruta_dj) else {}
-    a_mano = datos_a_mano()
+    a_mano, de_libretro = datos_a_mano(), capturas_libretro()
     for f in filas:
         clave = f"{f['sistema']}|{f['juego']}|{f['grupo']}"
         f['x'] = centro['filas'].get(clave, {})
@@ -150,7 +150,28 @@ def cargar():
                     d.pop(k, None)
             d.update(extra)
             f['dj'] = d
+        if not (f['dj'].get('s') or f['dj'].get('t')) and clave in de_libretro:
+            f['dj'] = {**f['dj'], **de_libretro[clave]}
     return filas, centro['sistemas']
+
+
+def capturas_libretro():
+    """Capturas de libretro-thumbnails (pantalla de título y captura de juego) para las fichas de consola que se quedan
+    sin ninguna de LaunchBox, Steam ni itch.io: web/capturas_libretro.tsv, de herramientas\\mantenimiento\\capturas_libretro.py
+    (17-11-2026). Clave de la ficha -> {'t': …, 's': [...]}, con las imágenes como «libretro:<sistema>/<tipo>/<nombre>.png»."""
+    ruta, caps = os.path.join(WEB, 'capturas_libretro.tsv'), {}
+    if not os.path.isfile(ruta):
+        return caps
+    for l in open(ruta, encoding='utf-8'):
+        p = l.rstrip('\n').split('\t')
+        if l.startswith('#') or len(p) < 3 or p[1] not in ('t', 's') or not p[2].startswith('libretro:'):
+            continue
+        d = caps.setdefault(p[0], {})
+        if p[1] == 's':
+            d.setdefault('s', []).append(p[2])
+        else:
+            d['t'] = p[2]
+    return caps
 
 
 def datos_a_mano():
@@ -494,7 +515,7 @@ def captura(i):
     if i.startswith('itch:'):  # de datos_itch.py: «itch:<miniatura>|<grande>», rutas de img.itch.zone
         mini, _, grande = i[5:].partition('|')
         return 'https://img.itch.zone/' + mini, 'https://img.itch.zone/' + grande
-    if i.startswith('libretro:'):  # de web/datos_a_mano.tsv: «libretro:<sistema>/<tipo>/<nombre>.png»
+    if i.startswith('libretro:'):  # de web/datos_a_mano.tsv o web/capturas_libretro.tsv: «libretro:<sistema>/<tipo>/<nombre>.png»
         u = 'https://thumbnails.libretro.com/' + '/'.join(encode(x) for x in i[9:].split('/'))
         return u, u
     return IMG_LB + i, IMG_LB + i
@@ -576,7 +597,7 @@ def seccion_juego(gr, nombre_sis):
     sp = d.get('sp', '')
     version = f', de su versión de {PLATAFORMA_CAPTURAS.get(sp, sp)}' if sp else ''
     # Las de itch.io (datos_itch.py) son de la página del juego o de la de la traducción, que puede enseñarlo traducido.
-    # Las de libretro-thumbnails solo vienen de web/datos_a_mano.tsv; el resto, de LaunchBox.
+    # Las de libretro-thumbnails vienen de web/datos_a_mano.tsv y de web/capturas_libretro.tsv; el resto, de LaunchBox.
     origen = 'su página de Steam' if de_steam else ' y '.join(dict.fromkeys('libretro-thumbnails' if i.startswith('libretro:') else 'LaunchBox' for i in imgs))
     pie_capturas = (f'Capturas del juego original, sin traducir{version} (de {origen}).'
                     if d.get('si') not in ('juego', 'traduccion') else
