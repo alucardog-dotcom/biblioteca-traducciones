@@ -19,6 +19,7 @@ pub const JUEGO: usize = 1;
 pub const GRUPO: usize = 3;
 pub const VERSION: usize = 4;
 pub const CRC: usize = 9;
+pub const SHA1: usize = 10;
 
 #[derive(Default)]
 pub struct Datos {

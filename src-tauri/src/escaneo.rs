@@ -173,27 +173,42 @@ fn crcs_7z(p: &Path, siete_z: &Path) -> Vec<String> {
 
 /// Las pistas que nombra un .cue o un .gdi.
 pub(crate) fn pistas(hoja: &Path) -> Vec<PathBuf> {
+    pistas_tipo(hoja).into_iter().map(|(p, _)| p).collect()
+}
+
+/// Las mismas pistas, y de cada una si lleva datos (el juego) o solo audio: en un .cue, las que no son
+/// `TRACK nn AUDIO` (MODE1/2352, MODE2/2352…); en un .gdi, las de tipo 4. Un .bin con el disco entero
+/// (un solo FILE con todas las pistas) lleva datos.
+pub(crate) fn pistas_tipo(hoja: &Path) -> Vec<(PathBuf, bool)> {
     let Ok(t) = fs::read_to_string(hoja) else { return vec![] };
     let dir = hoja.parent().unwrap_or(Path::new(""));
     let gdi = ext_de(hoja) == "gdi";
-    t.lines()
-        .filter_map(|l| {
-            let l = l.trim();
-            if gdi {
-                // "1 0 4 2352 track01.bin 0" (el nombre puede ir entre comillas).
-                if let (Some(a), Some(b)) = (l.find('"'), l.rfind('"')) {
-                    return (b > a).then(|| l[a + 1..b].to_string());
-                }
-                l.split_whitespace().nth(4).map(str::to_string)
-            } else if l.to_uppercase().starts_with("FILE") {
-                let (a, b) = (l.find('"')?, l.rfind('"')?);
-                (b > a).then(|| l[a + 1..b].to_string())
-            } else {
-                None
+    let entre_comillas = |l: &str| match (l.find('"'), l.rfind('"')) {
+        (Some(a), Some(b)) if b > a => Some(l[a + 1..b].to_string()),
+        _ => None,
+    };
+    let mut out: Vec<(PathBuf, bool)> = vec![];
+    for l in t.lines() {
+        let l = l.trim();
+        let mayus = l.to_uppercase();
+        if gdi {
+            // "1 0 4 2352 track01.bin 0" (el nombre puede ir entre comillas). El tercer número es el tipo.
+            let nombre = if l.contains('"') { entre_comillas(l) } else { l.split_whitespace().nth(4).map(str::to_string) };
+            if let Some(n) = nombre {
+                out.push((dir.join(n), l.split_whitespace().nth(2) == Some("4")));
             }
-        })
-        .map(|n| dir.join(n))
-        .collect()
+        } else if mayus.starts_with("FILE") {
+            if let Some(n) = entre_comillas(l) {
+                out.push((dir.join(n), false));
+            }
+        } else if mayus.starts_with("TRACK") {
+            // "TRACK 02 MODE1/2352": es del último FILE.
+            if let (Some(tipo), Some(ultima)) = (mayus.split_whitespace().nth(2), out.last_mut()) {
+                ultima.1 |= tipo != "AUDIO";
+            }
+        }
+    }
+    out
 }
 
 impl<'a> Escaner<'a> {
@@ -391,4 +406,30 @@ pub fn tiendas(juegos: &mut Vec<Value>) {
         gog(juegos);
     }
     epic(juegos);
+}
+
+#[cfg(test)]
+mod pruebas {
+    use super::*;
+
+    #[test]
+    fn pistas_de_datos_y_de_audio() {
+        let d = crate::motor::pruebas::carpeta("escaneo-pistas");
+        let tipos = |nombre: &str, texto: &str| -> Vec<(String, bool)> {
+            let hoja = d.join(nombre);
+            fs::write(&hoja, texto).unwrap();
+            assert_eq!(pistas(&hoja), pistas_tipo(&hoja).into_iter().map(|(p, _)| p).collect::<Vec<_>>());
+            pistas_tipo(&hoja).into_iter().map(|(p, datos)| (p.strip_prefix(&d).unwrap().display().to_string(), datos)).collect()
+        };
+        let de = |v: &[(&str, bool)]| v.iter().map(|(n, datos)| (n.to_string(), *datos)).collect::<Vec<_>>();
+        // PC Engine CD: la primera pista es de audio y el juego va en la segunda.
+        let cue = "FILE \"J (Track 01).bin\" BINARY\r\n  TRACK 01 AUDIO\r\n    INDEX 01 00:00:00\r\nFILE \"J (Track 02).bin\" BINARY\r\n  TRACK 02 MODE1/2352\r\n    INDEX 00 00:00:00\r\n    INDEX 01 00:03:00\r\nfile \"J (Track 03).bin\" binary\r\n  track 03 audio\r\n";
+        assert_eq!(tipos("pce.cue", cue), de(&[("J (Track 01).bin", false), ("J (Track 02).bin", true), ("J (Track 03).bin", false)]));
+        // El disco entero en un solo .bin: lleva datos.
+        let cue = "FILE \"J.bin\" BINARY\n  TRACK 01 AUDIO\n    INDEX 01 00:00:00\n  TRACK 02 MODE2/2352\n    INDEX 01 00:02:50\n";
+        assert_eq!(tipos("imagen.cue", cue), de(&[("J.bin", true)]));
+        // Dreamcast: el tercer número es el tipo (4, datos; 0, audio).
+        let gdi = "3\n1 0 4 2352 track01.bin 0\n2 756 0 2352 \"track 02.raw\" 0\n3 45000 4 2352 track03.bin 0\n";
+        assert_eq!(tipos("dc.gdi", gdi), de(&[("track01.bin", true), ("track 02.raw", false), ("track03.bin", true)]));
+    }
 }

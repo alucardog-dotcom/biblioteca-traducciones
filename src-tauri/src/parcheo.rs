@@ -5,7 +5,7 @@
 //! pide la traducción (por CRC32), se aplica con el motor (motor.rs) o con xdelta3.exe y el traducido se
 //! deja con la etiqueta [T-Es] junto al original o en tu carpeta de traducidos. El original nunca se toca.
 
-use crate::escaneo::{ext_de, pistas, ETIQUETA, NO_JUEGO};
+use crate::escaneo::{ext_de, pistas, pistas_tipo, ETIQUETA, NO_JUEGO};
 use crate::motor::{self, Comprobacion, Formato};
 use std::collections::HashMap;
 use std::ffi::OsStr;
@@ -346,13 +346,41 @@ enum Emparejado {
     No(String),
 }
 
-/// ¿Es tu juego la versión que pide la traducción? Por el CRC32 que lleva el parche (BPS y UPS) y los
-/// de la ficha del catálogo. Si no se puede saber (un CHD o un juego muy grande), se intenta y el propio
-/// parche lo comprueba al aplicarse.
+/// Las sumas de `lista` con `cifras` cifras hexadecimales, en mayúsculas: 8 son de un CRC32 y 40 de un SHA-1.
+fn sumas(lista: &[String], cifras: usize) -> Vec<String> {
+    lista.iter().map(|x| x.trim().to_uppercase()).filter(|x| x.len() == cifras && x.chars().all(|c| c.is_ascii_hexdigit())).collect()
+}
+
+/// El fichero de tu juego, o la pista de tu disco, que tiene uno de esos SHA-1: (salto, pista, SHA-1). De
+/// un comprimido o de un CHD no se puede sin sacarlos enteros.
+fn por_sha1(c: &Candidato, sis: &str, buscados: &[String]) -> Option<(u64, Option<String>, String)> {
+    let abarcable = |p: &Path| fs::metadata(p).is_ok_and(|m| m.len() <= MAX_CRC);
+    let suma = |p: &Path, salto: u64| motor::sha1_fichero(p, salto).ok().map(|s| s.to_uppercase()).filter(|s| buscados.contains(s));
+    match c.tipo {
+        Tipo::Fichero if abarcable(&c.ruta) => {
+            let cab = cabecera(&c.ruta, sis);
+            let saltos = if cab > 0 { vec![0, cab] } else { vec![0] };
+            saltos.into_iter().find_map(|salto| suma(&c.ruta, salto).map(|s| (salto, None, s)))
+        }
+        Tipo::Hoja => {
+            // Primero las pistas de datos: el juego está en una de ellas.
+            let mut ps = pistas_tipo(&c.ruta);
+            ps.sort_by_key(|(_, datos)| !datos);
+            ps.iter().filter(|(t, _)| abarcable(t)).find_map(|(t, _)| suma(t, 0).map(|s| (0, Some(t.to_string_lossy().into_owned()), s)))
+        }
+        _ => None,
+    }
+}
+
+/// ¿Es tu juego la versión que pide la traducción? Por el CRC32 que lleva el parche (BPS y UPS) y por los
+/// CRC32 y los SHA-1 de la ficha del catálogo (`crc_base` trae los dos, cada uno con sus cifras). En un
+/// disco se mira pista a pista, y la que coincide es la que se parchea. Si no se puede saber (un CHD o un
+/// juego muy grande), se intenta y el propio parche lo comprueba al aplicarse.
 fn emparejar(e: &Entorno, p: &Parche, c: &mut Candidato, sis: &str, crc_base: &[String], trabajo: &Path) -> Emparejado {
     let info = motor::inspeccionar(&p.fichero).unwrap_or_default();
     let mut buscados: Vec<String> = info.crc_origen.map(motor::hex).into_iter().collect();
-    buscados.extend(crc_base.iter().map(|x| x.trim().to_uppercase()).filter(|x| x.len() == 8 && x.chars().all(|c| c.is_ascii_hexdigit())));
+    buscados.extend(sumas(crc_base, 8));
+    let mut otra_version = None;
     if !buscados.is_empty() {
         let destino = info.crc_destino.map(motor::hex);
         let crcs = crcs_juego(e, c, sis, trabajo);
@@ -367,10 +395,21 @@ fn emparejar(e: &Entorno, p: &Parche, c: &mut Candidato, sis: &str, crc_base: &[
         // Sin ningún CRC calculable (un CHD, un juego de más de 128 MB) se sigue adelante: BPS y UPS
         // comprueban el origen al aplicarse, y un IPS sin CRC es lo mismo que elegirlo a mano.
         if !crcs.is_empty() {
-            return Emparejado::No(format!("Tu copia no es la versión que pide la traducción (CRC32 {}).", buscados[0]));
+            otra_version = Some(format!("Tu copia no es la versión que pide la traducción (CRC32 {}).", buscados[0]));
         }
     }
-    Emparejado::Si { salto: 0, entrada: None, como: "elegido por ti".into() }
+    // Algunas fichas solo traen el SHA-1: también sirve para reconocer tu copia (y, en un disco, la pista).
+    // Que no coincida no la descarta: eso solo lo hace el CRC32, como hasta ahora.
+    let sha = sumas(crc_base, 40);
+    if !sha.is_empty() {
+        if let Some((salto, entrada, s)) = por_sha1(c, sis, &sha) {
+            return Emparejado::Si { salto, entrada, como: format!("SHA-1 {s}") };
+        }
+    }
+    match otra_version {
+        Some(m) => Emparejado::No(m),
+        None => Emparejado::Si { salto: 0, entrada: None, como: "elegido por ti".into() },
+    }
 }
 
 // ---------------------------------------------------------------- preparar el original
@@ -380,6 +419,28 @@ enum Origen {
     Disco { hoja: PathBuf, pistas: Vec<PathBuf> },
     /// Un DVD (PS2, PSP) sacado de un CHD.
     Dvd { iso: PathBuf },
+}
+
+/// Tu juego ya listo para parchear (sacado del comprimido o del CHD, si hacía falta). Se guarda para no
+/// repetirlo con cada parche cuando el comprimido de la traducción trae varios que probar.
+struct Preparado {
+    salto: u64,
+    entrada: Option<String>,
+    origen: Origen,
+    /// Donde está lo que se ha sacado: se borra al soltarlo.
+    _carpeta: Temporal,
+}
+
+/// El juego listo para aplicarle un parche: el que ya estaba preparado, si era para lo mismo, o uno nuevo.
+fn preparado<'a>(e: &Entorno, c: &mut Candidato, salto: u64, entrada: Option<&str>, trabajo: &Path, listo: &'a mut Option<Preparado>) -> Result<&'a Origen, String> {
+    if !listo.as_ref().is_some_and(|x| x.salto == salto && x.entrada.as_deref() == entrada) {
+        // Primero se suelta el anterior, para no tener dos copias del juego en el disco a la vez.
+        *listo = None;
+        let carpeta = Temporal::nueva(trabajo)?;
+        let origen = preparar(e, c, salto, entrada, &carpeta.0)?;
+        *listo = Some(Preparado { salto, entrada: entrada.map(str::to_string), origen, _carpeta: carpeta });
+    }
+    listo.as_ref().map(|x| &x.origen).ok_or_else(|| "No se pudo preparar el juego.".to_string())
 }
 
 fn preparar(e: &Entorno, c: &mut Candidato, salto: u64, entrada: Option<&str>, trabajo: &Path) -> Result<Origen, String> {
@@ -626,22 +687,58 @@ fn montar_disco(e: &Entorno, hoja: &Path, ps: &[PathBuf], parcheada: &Path, orig
     Err("chdman no pudo crear el CHD del juego traducido.".into())
 }
 
-fn aplicar_uno(e: &Entorno, p: &Parche, c: &mut Candidato, sis: &str, salto: u64, entrada: Option<&str>, trabajo: &Path) -> Result<(PathBuf, String), String> {
-    let origen = preparar(e, c, salto, entrada, trabajo)?;
+/// Las pistas de un disco con las que probar el parche, por orden. El juego no siempre va en la primera ni
+/// en la más grande: en PC Engine CD la primera es de audio y los datos van en la segunda.
+///  1. La que ya se reconoció por el CRC32 o el SHA-1 de la ficha (`entrada`).
+///  2. Las que el propio parche reconoce (BPS y UPS por su CRC32, PPF por su bloque).
+///  3. Las de datos según el .cue o el .gdi; si la hoja no lo dice, la primera y la más grande.
+///  4. Con un xdelta, todas las demás: xdelta3 comprueba el resultado, así que probar no estropea nada.
+/// Las que el parche descarta no se prueban. Y con un parche que no comprueba nada (un IPS, un PPF sin
+/// bloque) no se pasa de las de datos: se dejaría aplicar a una pista de audio y la estropearía.
+fn orden_pistas<'a>(p: &Parche, hoja: &Path, ps: &'a [PathBuf], entrada: Option<&str>) -> Vec<&'a PathBuf> {
+    let info = motor::inspeccionar(&p.fichero).unwrap_or_default();
+    let estado: Vec<Comprobacion> = ps.iter().map(|t| motor::comprobar(&info, t, 0)).collect();
+    let tipos = pistas_tipo(hoja);
+    let de_datos = |t: &PathBuf| tipos.iter().any(|(x, datos)| *datos && x == t);
+    let es_entrada = |t: &PathBuf| entrada.is_some_and(|en| t.as_path() == Path::new(en) || nombre_de(t) == nombre_de(Path::new(en)));
+    let todas = 0..ps.len();
+    let mut orden: Vec<usize> = todas.clone().filter(|&i| es_entrada(&ps[i])).collect();
+    orden.extend(todas.clone().filter(|&i| estado[i] == Comprobacion::Vale));
+    orden.extend(todas.clone().filter(|&i| estado[i] == Comprobacion::YaParcheado));
+    let datos: Vec<usize> = todas.clone().filter(|&i| de_datos(&ps[i])).collect();
+    if datos.is_empty() {
+        orden.extend(todas.clone().next());
+        orden.extend(todas.clone().max_by_key(|&i| fs::metadata(&ps[i]).map(|m| m.len()).unwrap_or(0)));
+    } else {
+        orden.extend(datos);
+    }
+    if p.formato == Formato::Xdelta {
+        orden.extend(todas);
+    }
+    let mut vistas = vec![];
+    orden.retain(|&i| {
+        let nueva = estado[i] != Comprobacion::NoCoincide && !vistas.contains(&i);
+        vistas.push(i);
+        nueva
+    });
+    orden.into_iter().map(|i| &ps[i]).collect()
+}
+
+fn aplicar_uno(e: &Entorno, p: &Parche, c: &Candidato, sis: &str, origen: &Origen, entrada: Option<&str>, trabajo: &Path) -> Result<(PathBuf, String), String> {
     let dest = carpeta_destino(e, sis, &c.ruta);
     fs::create_dir_all(&dest).map_err(|x| format!("No se pudo crear {}: {x}", dest.display()))?;
     let base = nombre_salida(&c.nombre, &dest);
     match origen {
         Origen::Rom { fichero, salto, ext } => {
             let tmp = trabajo.join(format!("salida{ext}"));
-            let msg = aplicar_rom(e, p, &fichero, &tmp, salto, sis)?;
-            let fin = dest.join(format!("{base}{}", ext_final(sis, &ext)));
+            let msg = aplicar_rom(e, p, fichero, &tmp, *salto, sis)?;
+            let fin = dest.join(format!("{base}{}", ext_final(sis, ext)));
             mover(&tmp, &fin)?;
             Ok((fin, msg))
         }
         Origen::Dvd { iso } => {
             let tmp = trabajo.join("salida.iso");
-            let msg = aplicar_formato(e, p, &iso, &tmp, 0)?;
+            let msg = aplicar_formato(e, p, iso, &tmp, 0)?;
             let fin = dest.join(format!("{base}.chd"));
             if !herramienta(e.chdman, [OsStr::new("createdvd"), "-i".as_ref(), tmp.as_os_str(), "-o".as_ref(), fin.as_os_str(), "-f".as_ref()])?.0 {
                 let _ = fs::remove_file(&fin);
@@ -650,28 +747,24 @@ fn aplicar_uno(e: &Entorno, p: &Parche, c: &mut Candidato, sis: &str, salto: u64
             Ok((fin, msg))
         }
         Origen::Disco { hoja, pistas: ps } => {
-            // Primero la pista que el parche reconoce; si no lo dice, la primera y la más grande.
-            let info = motor::inspeccionar(&p.fichero).unwrap_or_default();
-            let mut orden: Vec<&PathBuf> = ps.iter().filter(|t| motor::comprobar(&info, t, 0) == Comprobacion::Vale).collect();
-            orden.extend(ps.first());
-            orden.extend(ps.iter().max_by_key(|t| fs::metadata(t).map(|m| m.len()).unwrap_or(0)));
-            let mut vistos = vec![];
-            let mut error = "El disco no tiene pistas.".to_string();
-            for t in orden {
-                if vistos.contains(&t) {
-                    continue;
-                }
-                vistos.push(t);
+            // Se queda con el motivo de la primera pista que falla, que es la que más papeletas tenía.
+            let mut error: Option<String> = None;
+            for t in orden_pistas(p, hoja, ps, entrada) {
                 let tmp = trabajo.join(format!("pista_parcheada.{}", ext_de(t)));
-                match aplicar_formato(e, p, t, &tmp, 0).and_then(|m| montar_disco(e, &hoja, &ps, &tmp, t, trabajo, &dest, &base).map(|f| (f, m))) {
-                    Ok((f, m)) => return Ok((f, format!("{m} (pista {})", nombre_de(t)))),
+                match aplicar_formato(e, p, t, &tmp, 0) {
+                    // Con la pista ya parcheada, si el disco no se puede montar no hay otra que probar.
+                    Ok(m) => return montar_disco(e, hoja, ps, &tmp, t, trabajo, &dest, &base).map(|f| (f, format!("{m} (pista {})", nombre_de(t)))),
                     Err(m) => {
-                        error = m;
                         let _ = fs::remove_file(&tmp);
+                        // Esa era la pista, y ya está traducida.
+                        if m.contains("ya tiene aplicado") {
+                            return Err(m);
+                        }
+                        error.get_or_insert(m);
                     }
                 }
             }
-            Err(error)
+            Err(error.unwrap_or_else(|| if ps.is_empty() { "El disco no tiene pistas." } else { "El disco no es la versión que pide el parche: no coincide ninguna de sus pistas." }.to_string()))
         }
     }
 }
@@ -722,8 +815,17 @@ pub fn traducir(e: &Entorno, sis: &str, archivo: &Path, juego: &Path, crc_base: 
         }
     }
     let mut motivo = String::from("No se pudo aplicar la traducción.");
+    // Un comprimido puede traer varios parches: uno por versión del juego, o uno por cada forma de volcar
+    // el mismo disco (pistas sueltas, imagen en un solo fichero, ISO + WAV…). Se prueban todos, por orden,
+    // hasta dar con el que vale para tu copia, sin sacar el juego del comprimido o del CHD más de una vez.
+    let mut listo: Option<Preparado> = None;
+    let dentro = trabajo.0.join("parches");
     for p in &parches {
-        let nombre = nombre_de(&p.fichero);
+        // Con su carpeta, que si no los cinco «Juego_ES.xdelta» de un mismo comprimido no se distinguen.
+        let nombre = match p.fichero.strip_prefix(&dentro) {
+            Ok(r) if parches.len() > 1 => r.display().to_string(),
+            _ => nombre_de(&p.fichero),
+        };
         match emparejar(e, p, &mut c, sis, &crc_base, &trabajo.0) {
             Emparejado::YaTraducido => {
                 log.push(format!("= {nombre}: tu juego ya tiene aplicada esta traducción."));
@@ -751,7 +853,8 @@ pub fn traducir(e: &Entorno, sis: &str, archivo: &Path, juego: &Path, crc_base: 
                     log.push("  Aviso: ni la ficha ni el léame dicen qué versión pide, así que no se ha podido comprobar tu copia. Si el juego no arranca, es otra versión.".into());
                 }
                 let paso = Temporal::nueva(&trabajo.0)?;
-                match aplicar_uno(e, p, &mut c, sis, salto, entrada.as_deref(), &paso.0) {
+                let hecho = preparado(e, &mut c, salto, entrada.as_deref(), &trabajo.0, &mut listo).and_then(|origen| aplicar_uno(e, p, &c, sis, origen, entrada.as_deref(), &paso.0));
+                match hecho {
                     Ok((fin, m)) => {
                         log.push(format!("OK {m}"));
                         log.push(format!("-> {}", fin.display()));
@@ -982,6 +1085,278 @@ mod pruebas {
         let otro = t.fichero("otro/Otro.cue", b"FILE \"Otro (Track 1).bin\" BINARY\r\n  TRACK 01 MODE2/2352\r\n    INDEX 01 00:00:00\r\n");
         let (r, _) = t.traducir("psx", &xd, &otro, &[]);
         assert!(r.unwrap_err().contains("no es la versión"));
+    }
+
+    // ---- discos con el juego en otra pista que la primera (PC Engine CD) y comprimidos con varios parches
+
+    const SECTOR: usize = 2352;
+    /// Como los de PC Engine CD: la pista 1 es de audio, el juego va en la 2 (con su pregap) y la 3, de
+    /// audio, es la más grande.
+    const CUE_PISTAS: &str = "FILE \"Juego (Track 1).bin\" BINARY\r\n  TRACK 01 AUDIO\r\n    INDEX 01 00:00:00\r\nFILE \"Juego (Track 2).bin\" BINARY\r\n  TRACK 02 MODE1/2352\r\n    INDEX 00 00:00:00\r\n    INDEX 01 00:03:00\r\nFILE \"Juego (Track 3).bin\" BINARY\r\n  TRACK 03 AUDIO\r\n    INDEX 00 00:00:00\r\n    INDEX 01 00:02:00\r\n";
+    /// El mismo disco en un solo .bin: 200 sectores de la pista 1, 400 de la 2 y 600 de la 3.
+    const CUE_IMAGEN: &str = "FILE \"Juego.bin\" BINARY\r\n  TRACK 01 AUDIO\r\n    INDEX 01 00:00:00\r\n  TRACK 02 MODE1/2352\r\n    INDEX 00 00:02:50\r\n    INDEX 01 00:05:50\r\n  TRACK 03 AUDIO\r\n    INDEX 00 00:08:00\r\n    INDEX 01 00:10:00\r\n";
+
+    /// Y en «ISO + WAV», como los volcados antiguos.
+    const CUE_ISO_WAV: &str = "FILE \"Juego 01.wav\" WAVE\r\n  TRACK 01 AUDIO\r\n    INDEX 01 00:00:00\r\nFILE \"Juego 02.iso\" BINARY\r\n  TRACK 02 MODE1/2048\r\n    INDEX 01 00:00:00\r\nFILE \"Juego 03.wav\" WAVE\r\n  TRACK 03 AUDIO\r\n    INDEX 01 00:00:00\r\n";
+
+    /// Un .wav de CD (44,1 kHz, 16 bits, estéreo) con ese sonido.
+    fn wav_de(pcm: &[u8]) -> Vec<u8> {
+        let mut w = b"RIFF".to_vec();
+        w.extend_from_slice(&(36 + pcm.len() as u32).to_le_bytes());
+        w.extend_from_slice(b"WAVEfmt ");
+        // Tamaño del bloque, PCM, canales, muestras por segundo, bytes por segundo, bytes por muestra y bits.
+        for (n, bytes) in [(16u32, 4), (1, 2), (2, 2), (44100, 4), (176400, 4), (4, 2), (16, 2)] {
+            w.extend_from_slice(&n.to_le_bytes()[..bytes]);
+        }
+        w.extend_from_slice(b"data");
+        w.extend_from_slice(&(pcm.len() as u32).to_le_bytes());
+        w.extend_from_slice(pcm);
+        w
+    }
+
+    fn pistas_inventadas(semilla: u32) -> [Vec<u8>; 3] {
+        [ruido(SECTOR * 200, semilla), ruido(SECTOR * 400, semilla + 1), ruido(SECTOR * 600, semilla + 2)]
+    }
+
+    /// Escribe el disco de pistas sueltas en `dir` y devuelve su .cue.
+    fn disco_de_pistas(t: &Prueba, dir: &str, ps: &[Vec<u8>]) -> PathBuf {
+        for (i, p) in ps.iter().enumerate() {
+            t.fichero(&format!("{dir}/Juego (Track {}).bin", i + 1), p);
+        }
+        t.fichero(&format!("{dir}/Juego.cue"), CUE_PISTAS.as_bytes())
+    }
+
+    /// La «traducción» de una pista: un texto en un sector, sin cambiarle el tamaño.
+    fn con_texto(p: &[u8], sector: usize) -> Vec<u8> {
+        let mut n = p.to_vec();
+        n[SECTOR * sector..SECTOR * sector + 10].copy_from_slice(b"HOLA MUNDO");
+        n
+    }
+
+    /// Un xdelta que lleva de `de` a `a`, hecho con el xdelta3 del programa.
+    fn xdelta_de(t: &Prueba, ruta: &str, de: &[u8], a: &[u8]) -> PathBuf {
+        let (o, d) = (t.fichero("tmp/xdelta-origen.bin", de), t.fichero("tmp/xdelta-destino.bin", a));
+        let xd = t.fichero(ruta, b"");
+        let (ok, txt) = herramienta(&t.her.join("xdelta3.exe"), [OsStr::new("-e"), "-f".as_ref(), "-s".as_ref(), o.as_os_str(), d.as_os_str(), xd.as_os_str()]).unwrap();
+        assert!(ok, "{txt}");
+        xd
+    }
+
+    fn chd_de(t: &Prueba, cue: &Path, ruta: &str) -> PathBuf {
+        let chd = t.fichero(ruta, b"");
+        let (ok, txt) = herramienta(&t.her.join("chdman.exe"), [OsStr::new("createcd"), "-i".as_ref(), cue.as_os_str(), "-o".as_ref(), chd.as_os_str(), "-f".as_ref()]).unwrap();
+        assert!(ok, "{txt}");
+        chd
+    }
+
+    /// Lo que lleva un .chd: sus pistas, una por fichero (como las saca el programa), o el disco entero.
+    fn contenido_chd(t: &Prueba, chd: &Path, por_pistas: bool) -> Vec<Vec<u8>> {
+        let d = t.dir.join("comprobar");
+        let _ = fs::remove_dir_all(&d);
+        fs::create_dir_all(&d).unwrap();
+        let (c, bin) = (d.join("x.cue"), d.join(if por_pistas { "x (Track %t).bin" } else { "x.bin" }));
+        let mut args = vec![OsStr::new("extractcd"), "-i".as_ref(), chd.as_os_str(), "-o".as_ref(), c.as_os_str(), "-ob".as_ref(), bin.as_os_str(), "-f".as_ref()];
+        if por_pistas {
+            args.push("-sb".as_ref());
+        }
+        let (ok, txt) = herramienta(&t.her.join("chdman.exe"), args).unwrap();
+        assert!(ok, "{txt}");
+        pistas(&c).iter().map(|p| fs::read(p).unwrap()).collect()
+    }
+
+    /// Compara lo que lleva un disco con lo esperado. Si falla dice dónde, sin volcar megas de bytes.
+    #[track_caller]
+    fn iguales(hay: &[Vec<u8>], esperado: &[Vec<u8>]) {
+        assert_eq!(hay.iter().map(Vec::len).collect::<Vec<_>>(), esperado.iter().map(Vec::len).collect::<Vec<_>>(), "pistas de otro tamaño");
+        for (i, (a, b)) in hay.iter().zip(esperado).enumerate() {
+            if let Some(en) = a.iter().zip(b).position(|(x, y)| x != y) {
+                panic!("la pista {} cambia en el byte {en} (sector {})", i + 1, en / SECTOR);
+            }
+        }
+    }
+
+    /// El fallo de Rondo of Blood: el xdelta es para la pista 2, que no es ni la primera ni la más grande.
+    #[test]
+    fn disco_con_el_juego_en_la_pista_2() {
+        let t = Prueba::nueva("parcheo-pista2");
+        let ps = pistas_inventadas(20);
+        let nueva = con_texto(&ps[1], 250);
+        let xd = xdelta_de(&t, "parche.xdelta", &ps[1], &nueva);
+        let crc = motor::hex(crc32fast::hash(&ps[1]));
+        let esperado = [ps[0].clone(), nueva.clone(), ps[2].clone()];
+
+        // La ficha trae dos CRC32 (dos volcados del mismo juego): vale el segundo igual que el primero.
+        let cue = disco_de_pistas(&t, "a", &ps);
+        let (r, log) = t.traducir("pcenginecd", &xd, &cue, &["0BADC0DE", &crc]);
+        let fin = r.unwrap_or_else(|e| panic!("{e}\n{log:?}"));
+        assert_eq!(nombre_de(&fin), "Juego [T-Es].chd");
+        iguales(&contenido_chd(&t, &fin, true), &esperado);
+        assert!(log.iter().any(|l| l.contains(&format!("CRC32 {crc}"))), "{log:?}");
+        assert!(log.iter().any(|l| l.contains("(pista Juego (Track 2).bin)")), "{log:?}");
+        let cue = disco_de_pistas(&t, "b", &ps);
+        let (r, log) = t.traducir("pcenginecd", &xd, &cue, &[&crc.to_lowercase(), "0BADC0DE"]);
+        iguales(&contenido_chd(&t, &r.unwrap_or_else(|e| panic!("{e}\n{log:?}")), true), &esperado);
+
+        // Sin CRC32 en la ficha: se prueban las pistas, la de datos primero.
+        let cue = disco_de_pistas(&t, "c", &ps);
+        let (r, log) = t.traducir("pcenginecd", &xd, &cue, &[]);
+        iguales(&contenido_chd(&t, &r.unwrap_or_else(|e| panic!("{e}\n{log:?}")), true), &esperado);
+
+        // Aunque el .cue no diga cuál es la de datos (aquí, todas de audio): se prueban todas.
+        let cue = disco_de_pistas(&t, "d", &ps);
+        fs::write(&cue, CUE_PISTAS.replace("MODE1/2352", "AUDIO")).unwrap();
+        let (r, log) = t.traducir("pcenginecd", &xd, &cue, &[]);
+        let fin = r.unwrap_or_else(|e| panic!("{e}\n{log:?}"));
+        assert!(log.iter().any(|l| l.contains("(pista Juego (Track 2).bin)")), "{log:?}");
+        assert!(fin.is_file());
+
+        // El mismo disco en .chd: de ahí no sale ningún CRC32, se saca y se prueba.
+        let chd = chd_de(&t, &disco_de_pistas(&t, "e", &ps), "chd/Juego.chd");
+        let (r, log) = t.traducir("pcenginecd", &xd, &chd, &["0BADC0DE", &crc]);
+        let fin = r.unwrap_or_else(|e| panic!("{e}\n{log:?}"));
+        assert_eq!(fin, t.dir.join("chd").join("Juego [T-Es].chd"));
+        iguales(&contenido_chd(&t, &fin, true), &esperado);
+
+        // Otro volcado, que no está entre los de la ficha: se rechaza sin hacer nada.
+        let cue = disco_de_pistas(&t, "f", &pistas_inventadas(30));
+        let (r, _) = t.traducir("pcenginecd", &xd, &cue, &["0BADC0DE", &crc]);
+        assert!(r.unwrap_err().contains("no es la versión que pide la traducción"));
+        assert!(!t.dir.join("f").join("Juego [T-Es].chd").exists());
+        // Y sin CRC32 con el que rechazarlo antes, lo rechaza xdelta3 en todas las pistas.
+        let (r, _) = t.traducir("pcenginecd", &xd, &cue, &[]);
+        assert!(r.unwrap_err().contains("no es la versión"));
+        assert!(!t.dir.join("f").join("Juego [T-Es].chd").exists());
+    }
+
+    /// Un IPS no comprueba nada: va a la pista de datos, nunca a una de audio.
+    #[test]
+    fn ips_en_un_disco_no_toca_el_audio() {
+        let t = Prueba::nueva("parcheo-ips-disco");
+        let ps = pistas_inventadas(40);
+        let nueva = con_texto(&ps[1], 250);
+        let ips = t.fichero("parche.ips", &ips_de(&ps[1], &nueva));
+        let cue = disco_de_pistas(&t, "a", &ps);
+        let (r, log) = t.traducir("pcenginecd", &ips, &cue, &[]);
+        let fin = r.unwrap_or_else(|e| panic!("{e}\n{log:?}"));
+        iguales(&contenido_chd(&t, &fin, true), &[ps[0].clone(), nueva, ps[2].clone()]);
+    }
+
+    /// Con dos pistas de datos y un parche que no comprueba nada, la ficha dice cuál: por su CRC32 o,
+    /// si solo trae el SHA-1, por él.
+    #[test]
+    fn la_ficha_dice_la_pista() {
+        let t = Prueba::nueva("parcheo-sha1");
+        let ps = pistas_inventadas(50);
+        let nueva = con_texto(&ps[2], 300);
+        let ips = t.fichero("parche.ips", &ips_de(&ps[2], &nueva));
+        let dos_de_datos = CUE_PISTAS.replace("TRACK 03 AUDIO", "TRACK 03 MODE1/2352");
+        let esperado = [ps[0].clone(), ps[1].clone(), nueva.clone()];
+        let sha = |b: &[u8]| sha1_smol::Sha1::from(b).digest().to_string();
+        let otro = "0123456789abcdef0123456789abcdef01234567";
+
+        let cue = disco_de_pistas(&t, "a", &ps);
+        fs::write(&cue, &dos_de_datos).unwrap();
+        let (r, log) = t.traducir("pcenginecd", &ips, &cue, &[otro, &sha(&ps[2]).to_uppercase()]);
+        let fin = r.unwrap_or_else(|e| panic!("{e}\n{log:?}"));
+        iguales(&contenido_chd(&t, &fin, true), &esperado);
+        assert!(log.iter().any(|l| l.contains("(SHA-1 ")), "{log:?}");
+
+        let cue = disco_de_pistas(&t, "b", &ps);
+        fs::write(&cue, &dos_de_datos).unwrap();
+        let (r, log) = t.traducir("pcenginecd", &ips, &cue, &[&motor::hex(crc32fast::hash(&ps[2]))]);
+        iguales(&contenido_chd(&t, &r.unwrap_or_else(|e| panic!("{e}\n{log:?}")), true), &esperado);
+
+        // Un SHA-1 que no coincide no rechaza la copia (eso solo lo hace el CRC32): va a la primera de datos.
+        let cue = disco_de_pistas(&t, "c", &ps);
+        fs::write(&cue, &dos_de_datos).unwrap();
+        let (r, log) = t.traducir("pcenginecd", &ips, &cue, &[otro]);
+        assert!(r.is_ok() && log.iter().any(|l| l.contains("elegido por ti")), "{log:?}");
+
+        // También con una ROM suelta: el SHA-1 de la ficha (aquí, el de la ROM sin su cabecera) la reconoce.
+        let rom = ruido(40960, 7);
+        let mut con = b"NES\x1a\x02\x01".to_vec();
+        con.resize(16, 0);
+        con.extend_from_slice(&rom);
+        let juego = t.fichero("nes/Juego.nes", &con);
+        let ips = t.fichero("rom.ips", &ips_de(&con, &traducido(&con)));
+        let (r, log) = t.traducir("nes", &ips, &juego, &[&sha(&rom)]);
+        assert!(fs::read(r.unwrap_or_else(|e| panic!("{e}\n{log:?}"))).unwrap() == traducido(&con));
+        assert!(log.iter().any(|l| l.contains("(SHA-1 ")) && !log.iter().any(|l| l.contains("Aviso")), "{log:?}");
+    }
+
+    /// Como el zip de Rondo of Blood: el mismo parche en varias carpetas, una por cada forma de volcar el
+    /// disco. Se queda con el que vale para tu copia, sea cual sea.
+    #[test]
+    fn varios_parches_en_el_comprimido() {
+        let t = Prueba::nueva("parcheo-varios");
+        // Dos volcados del mismo disco: en el B, el pregap de la pista 2 va a cero.
+        let a = pistas_inventadas(60);
+        let mut b = a.clone();
+        b[1][..SECTOR * 75].fill(0);
+        let (nueva_a, nueva_b) = (con_texto(&a[1], 250), con_texto(&b[1], 250));
+        let imagen = a.concat();
+        let imagen_nueva = [a[0].clone(), nueva_a.clone(), a[2].clone()].concat();
+        let (crc_a, crc_b) = (motor::hex(crc32fast::hash(&a[1])), motor::hex(crc32fast::hash(&b[1])));
+
+        xdelta_de(&t, "paquete/imagen_unica/Juego_ES.xdelta", &imagen, &imagen_nueva);
+        // El .iso de un «ISO + WAV»: los 2048 bytes de datos de cada sector de la pista 2.
+        let iso: Vec<u8> = a[1].chunks(SECTOR).flat_map(|s| s[16..16 + 2048].to_vec()).collect();
+        let mut iso_nuevo = iso.clone();
+        iso_nuevo[2048 * 250..2048 * 250 + 10].copy_from_slice(b"HOLA MUNDO");
+        xdelta_de(&t, "paquete/iso/Juego_ES.xdelta", &iso, &iso_nuevo);
+        xdelta_de(&t, "paquete/por_pistas_a/Juego_ES.xdelta", &a[1], &nueva_a);
+        xdelta_de(&t, "paquete/por_pistas_b/Juego_ES.xdelta", &b[1], &nueva_b);
+        // El léame dice el CRC32 de la imagen en un solo fichero y el del .iso, que la ficha no trae.
+        let leeme = format!("imagen_unica    Fichero: la imagen entera.  CRC32 {}\r\niso    Fichero: el .iso.  CRC32 {}\r\n", motor::hex(crc32fast::hash(&imagen)), motor::hex(crc32fast::hash(&iso)));
+        t.fichero("paquete/LEEME.txt", leeme.as_bytes());
+        let zip = t.dir.join("Juego_ES.zip");
+        let (ok, txt) = herramienta(&t.her.join("7z.exe"), [OsStr::new("a"), zip.as_os_str(), t.dir.join("paquete").join("*").as_os_str()]).unwrap();
+        assert!(ok, "{txt}");
+        let ficha = [crc_a.as_str(), crc_b.as_str()];
+
+        // Pistas sueltas del volcado B: el cuarto parche del zip.
+        let cue = disco_de_pistas(&t, "b", &b);
+        let (r, log) = t.traducir("pcenginecd", &zip, &cue, &ficha);
+        let fin = r.unwrap_or_else(|e| panic!("{e}\n{log:?}"));
+        iguales(&contenido_chd(&t, &fin, true), &[b[0].clone(), nueva_b, b[2].clone()]);
+        let i = log.iter().position(|l| l.starts_with("OK ")).unwrap();
+        assert!(log[i - 1].starts_with("+ por_pistas_b\\Juego_ES.xdelta [xdelta]"), "{log:?}");
+
+        // Pistas sueltas del volcado A, y el mismo disco en .chd.
+        let traducido_a = [a[0].clone(), nueva_a, a[2].clone()];
+        let cue = disco_de_pistas(&t, "a", &a);
+        let (r, log) = t.traducir("pcenginecd", &zip, &cue, &ficha);
+        iguales(&contenido_chd(&t, &r.unwrap_or_else(|e| panic!("{e}\n{log:?}")), true), &traducido_a);
+        let chd = chd_de(&t, &disco_de_pistas(&t, "c", &a), "chd/Juego.chd");
+        let (r, log) = t.traducir("pcenginecd", &zip, &chd, &ficha);
+        iguales(&contenido_chd(&t, &r.unwrap_or_else(|e| panic!("{e}\n{log:?}")), true), &traducido_a);
+
+        // El disco entero en un solo .bin: el primer parche del zip.
+        t.fichero("imagen/Juego.bin", &imagen);
+        let cue = t.fichero("imagen/Juego.cue", CUE_IMAGEN.as_bytes());
+        let (r, log) = t.traducir("pcenginecd", &zip, &cue, &ficha);
+        let fin = r.unwrap_or_else(|e| panic!("{e}\n{log:?}"));
+        iguales(&contenido_chd(&t, &fin, false), &[imagen_nueva]);
+        let i = log.iter().position(|l| l.starts_with("OK ")).unwrap();
+        assert!(log[i - 1].starts_with("+ imagen_unica\\Juego_ES.xdelta [xdelta]"), "{log:?}");
+
+        // «ISO + WAV»: la pista de datos es un .iso de 2048 bytes por sector y las de audio, .wav.
+        t.fichero("iso/Juego 01.wav", &wav_de(&a[0]));
+        t.fichero("iso/Juego 02.iso", &iso);
+        t.fichero("iso/Juego 03.wav", &wav_de(&a[2]));
+        let cue = t.fichero("iso/Juego.cue", CUE_ISO_WAV.as_bytes());
+        let (r, log) = t.traducir("pcenginecd", &zip, &cue, &ficha);
+        let fin = r.unwrap_or_else(|e| panic!("{e}\n{log:?}"));
+        iguales(&contenido_chd(&t, &fin, true), &[a[0].clone(), iso_nuevo, a[2].clone()]);
+        assert!(log.iter().any(|l| l.starts_with("+ iso\\Juego_ES.xdelta [xdelta]")), "{log:?}");
+
+        // Otro disco, en .chd (de ahí no sale ningún CRC32 con el que rechazarlo antes): se prueban los
+        // cuatro parches, ninguno vale y no se crea nada.
+        let chd = chd_de(&t, &disco_de_pistas(&t, "otro", &pistas_inventadas(80)), "otro_chd/Juego.chd");
+        let (r, log) = t.traducir("pcenginecd", &zip, &chd, &ficha);
+        assert!(r.unwrap_err().contains("no es la versión"), "{log:?}");
+        assert_eq!(log.iter().filter(|l| l.starts_with("ERROR ")).count(), 4, "{log:?}");
+        assert!(!t.dir.join("otro_chd").join("Juego [T-Es].chd").exists());
     }
 
     #[test]

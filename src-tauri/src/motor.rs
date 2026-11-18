@@ -158,6 +158,22 @@ pub fn crc_fichero(p: &Path, salto: u64) -> io::Result<u32> {
     }
 }
 
+/// SHA-1 de un fichero (en minúsculas) saltando `salto` bytes del principio: algunas fichas del catálogo
+/// solo traen esa suma.
+pub fn sha1_fichero(p: &Path, salto: u64) -> io::Result<String> {
+    let mut f = File::open(p)?;
+    f.seek(SeekFrom::Start(salto))?;
+    let mut h = sha1_smol::Sha1::new();
+    let mut buf = vec![0u8; 1 << 20];
+    loop {
+        let n = f.read(&mut buf)?;
+        if n == 0 {
+            return Ok(h.digest().to_string());
+        }
+        h.update(&buf[..n]);
+    }
+}
+
 pub fn comprobar(info: &Info, origen: &Path, salto: u64) -> Comprobacion {
     if let (Some(o), Some(d)) = (info.crc_origen, info.crc_destino) {
         return match crc_fichero(origen, salto) {

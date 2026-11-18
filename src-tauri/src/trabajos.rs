@@ -100,12 +100,13 @@ impl Trabajo<'_> {
     }
 }
 
-/// Los CRC32 de la versión que pide la traducción: los de la descarga (la de RetroAchievements a veces
-/// es otra revisión) y los de la ficha.
-fn crc_base(d: Option<&Value>, ficha: &str) -> Vec<String> {
+/// Las sumas de la versión que pide la traducción: los CRC32 de la descarga (la de RetroAchievements a
+/// veces es otra revisión) y los CRC32 y los SHA-1 de la ficha. En la ficha puede haber varios de cada,
+/// separados por «|»: uno por cada volcado del juego que vale (el de Redump y el de TOSEC, por ejemplo).
+fn crc_base(d: Option<&Value>, ficha: &str, sha1: &str) -> Vec<String> {
     let mut out: Vec<String> = vec![];
     let de_descarga = d.and_then(|d| d["c"].as_array()).into_iter().flatten().filter_map(Value::as_str);
-    for c in de_descarga.chain(ficha.split('|')).map(|c| c.trim().to_uppercase()).filter(|c| !c.is_empty()) {
+    for c in de_descarga.chain(ficha.split('|')).chain(sha1.split('|')).map(|c| c.trim().to_uppercase()).filter(|c| !c.is_empty()) {
         if !out.contains(&c) {
             out.push(c);
         }
@@ -171,7 +172,7 @@ fn traducir(r: &Rutas, a: &Ajustes, spec: &Value, t: &mut Trabajo) -> Result<Pat
         }
         descargado = true;
         t.estado("parcheando", "Aplicando la traducción a tu juego…", "");
-        let crc = crc_base(d, spec["crc"].as_str().unwrap_or(""));
+        let crc = crc_base(d, spec["crc"].as_str().unwrap_or(""), spec["sha1"].as_str().unwrap_or(""));
         for arch in archivos {
             match parcheo::traducir(&entorno, sis, &arch, &juego, &crc, &mut t.log) {
                 Ok(fin) => return Ok(fin),
@@ -199,7 +200,7 @@ pub fn nuevo(r: &Rutas, d: &Datos, cola: &Cola, clave: &str, juego: &Path, local
     let extra = d.extra(clave);
     let descargas = extra.and_then(|x| x.get("d")).cloned().unwrap_or_else(|| json!([]));
     let spec = json!({
-        "id": id, "clave": clave, "sistema": fila[datos::SISTEMA], "juego": juego, "crc": fila[datos::CRC],
+        "id": id, "clave": clave, "sistema": fila[datos::SISTEMA], "juego": juego, "crc": fila[datos::CRC], "sha1": fila[datos::SHA1],
         "titulo": fila[datos::JUEGO], "grupo": fila[datos::GRUPO], "version": fila[datos::VERSION],
         "descargas": descargas, "portada": Value::Null, "local": local,
     });
@@ -367,5 +368,23 @@ pub fn estado_espera(cola: &Cola) -> Value {
     match &g.espera {
         Some(e) => json!({"clave": e.clave, "dir": e.dir}),
         None => Value::Null,
+    }
+}
+
+#[cfg(test)]
+mod pruebas {
+    use super::*;
+
+    /// La ficha puede traer varios CRC32 y varios SHA-1 separados por «|» (con espacios o sin ellos), uno
+    /// por cada volcado del juego que vale: llegan todos al parcheo, sin repetir.
+    #[test]
+    fn sumas_de_la_ficha() {
+        let (a, b) = ("c9b092fb15af2a7436f425bf29ed5d948f9c9640", "6e3321232589262bae55700f42b7b8337d4c3b78");
+        assert_eq!(crc_base(None, "c681f9da|42a597b1", &format!("{a}|{b}")), ["C681F9DA", "42A597B1", &a.to_uppercase(), &b.to_uppercase()]);
+        assert_eq!(crc_base(None, " c681f9da | 42A597B1 |c681f9da", ""), ["C681F9DA", "42A597B1"]);
+        assert_eq!(crc_base(None, "", ""), Vec::<String>::new());
+        // Los de la descarga van delante.
+        let d = json!({"t": "ra", "c": ["0badc0de", "42a597b1"]});
+        assert_eq!(crc_base(Some(&d), "c681f9da|42a597b1", ""), ["0BADC0DE", "42A597B1", "C681F9DA"]);
     }
 }
