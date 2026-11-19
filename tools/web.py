@@ -405,6 +405,17 @@ def voces(f):
     return '' if not m else ('latino' if m.group(1).endswith('latino') else 'espana')
 
 
+# Otras lenguas de aquí (catalán, gallego, euskera): lo dice una frase fija al principio de las notas, «Traducción al
+# catalán.» si solo está en esa lengua o «También en catalán.» si el parche trae el español y el catalán (ver
+# catalogo\LEEME_catalogo.txt). Devuelve (lengua, solo) o ('', False).
+RE_LENGUA = re.compile(r'(Traducción al|También en) (catalán|gallego|euskera)\.')
+
+
+def lengua(f):
+    m = RE_LENGUA.search(f['notas'])
+    return ('', False) if not m else (m.group(2), m.group(1) == 'Traducción al')
+
+
 def tiene_logros(f):
     """La versión de esta traducción que guarda RetroAchievements en GitHub (RAPatches): con ella, el juego traducido tiene logros."""
     return 'RAPatches' in json.dumps(f['x'].get('d', '')) + f['url'] + f['fuente']
@@ -648,14 +659,16 @@ def juego_adulto(g):
 
 def banderas(g):
     """Lo que filtra el buscador (catalogo.js): 1 alguna completa, 2 alguna sin IA, 4 se vende en Steam, 8 para adultos,
-    16 alguna en español latino o neutro, 32 alguna con doblaje, 64 alguna con logros de RetroAchievements."""
+    16 alguna en español latino o neutro, 32 alguna con doblaje, 64 alguna con logros de RetroAchievements,
+    128 alguna también (o solo) en catalán."""
     return ((1 if any(f['estado'].strip().lower().startswith('complet') for f in g['filas']) else 0)
             | (2 if any(not es_ia(f) for f in g['filas']) else 0)
             | (4 if any(f['x'].get('steam') for f in g['filas']) else 0)
             | (8 if juego_adulto(g) else 0)
             | (16 if any(variante(f) in ('latino', 'neutro') for f in g['filas']) else 0)
             | (32 if any(doblaje(f) for f in g['filas']) else 0)
-            | (64 if any(tiene_logros(f) for f in g['filas']) else 0))
+            | (64 if any(tiene_logros(f) for f in g['filas']) else 0)
+            | (128 if any(lengua(f)[0] == 'catalán' for f in g['filas']) else 0))
 
 
 def directa(f):
@@ -755,6 +768,9 @@ def resumen_juego(gr, nombre_sis):
     orig, n = titulo_original(gr), len(fs)
     vars_ = sorted({VARIANTES[v] for v in (variante(f) for f in fs) if v})
     esp = 'al español' + (f' ({" y ".join(vars_)})' if vars_ else '')
+    otras = sorted({lengua(f)[0] for f in fs if lengua(f)[0]})
+    if otras:
+        esp += ''.join(f' y al {l}' for l in otras)
     tipos = [doblaje(f) for f in fs]
     k = sum(1 for t in tipos if t)
     if n == 1:
@@ -1169,6 +1185,10 @@ def chips_trad(f):
         out.append('<span class="chip ia" title="Hecha con IA o con traducción automática">IA</span>')
     if variante(f):
         out.append(f'<span class="chip var" title="La variante del español, según sus autores">Español {VARIANTES[variante(f)]}</span>')
+    if lengua(f)[0]:
+        l, solo = lengua(f)
+        out.append(f'<span class="chip var" title="{"Traducción" if solo else "El parche trae también la traducción"} al {l}">'
+                   f'{"En" if solo else "También en"} {l}</span>')
     if doblaje(f):
         parcial = bool(RE_DOBLAJE.search(f['notas']).group(2))
         out.append(f'<span class="chip dob" title="Lleva voces en español{" en una parte del juego" if parcial else ""}">'
@@ -1543,6 +1563,7 @@ def pagina_catalogo(por_sis, sysn, base, n_trad, n_juegos, filas):
     <button type="button" class="chip" data-f="sinia" aria-pressed="false" title="Sin traducciones hechas con IA">Sin IA</button>
     <button type="button" class="chip" data-f="steam" aria-pressed="false" title="Solo los juegos que se venden en Steam">En Steam</button>
     <button type="button" class="chip" data-f="latino" aria-pressed="false" title="Traducciones en español latino o neutro, según sus autores">Español latino</button>
+    <button type="button" class="chip" data-f="catalan" aria-pressed="false" title="Traducciones al catalán, solas o junto al español">Catalán</button>
     <button type="button" class="chip" data-f="doblaje" aria-pressed="false" title="Juegos con voces en español hechas por aficionados">Doblajes</button>
     <button type="button" class="chip" data-f="logros" aria-pressed="false" title="Traducciones con las que RetroAchievements tiene logros">Con logros</button>
     <label class="chip-l"><input type="checkbox" id="adultos"> Mostrar juegos para adultos (+18)</label>
