@@ -535,7 +535,8 @@ def captura(i):
         mini, _, grande = i[5:].partition('|')
         return 'https://img.itch.zone/' + mini, 'https://img.itch.zone/' + grande
     if i.startswith('libretro:'):  # de web/datos_a_mano.tsv o web/capturas_libretro.tsv: «libretro:<sistema>/<tipo>/<nombre>.png»
-        u = 'https://thumbnails.libretro.com/' + '/'.join(encode(x) for x in i[9:].split('/'))
+        sis, tipo, nombre = i[9:].split('/', 2)
+        u = libretro_url(sis, tipo, nombre[:-4] if nombre.endswith('.png') else nombre)
         return u, u
     return IMG_LB + i, IMG_LB + i
 
@@ -686,6 +687,13 @@ def encode(s):
     return quote(s, safe="-_.!~*'()")
 
 
+def libretro_url(sistema, tipo, nombre):
+    """Una imagen de libretro-thumbnails. Desde el 20-11-2026, de su repositorio de GitHub: thumbnails.libretro.com
+    se quedó vacío (404 en todo) y, además, iba por detrás del repositorio. Lo mismo en web/catalogo.js y web/parchear.js."""
+    return (f'https://raw.githubusercontent.com/libretro-thumbnails/{encode(sistema.replace(" ", "_"))}/HEAD/'
+            f'{encode(tipo)}/{encode(nombre)}.png')
+
+
 def portadas(gr, libretro, raiz):
     """Las direcciones de la portada, en el orden en que las prueba el programa."""
     x, s = gr['cover']['x'], gr['cover']['sistema']
@@ -695,7 +703,7 @@ def portadas(gr, libretro, raiz):
 
     def thumb(t):
         nombre = re.sub(r'[&*/:`<>?\\|"]', '_', x['p'])
-        return f'https://thumbnails.libretro.com/{encode(sis)}/{t}/{encode(nombre)}.png'
+        return libretro_url(sis, t, nombre)
 
     # La puesta a mano ya viene como «portadas/<fichero>», igual que en ui/.
     urls = [raiz + x['pm']] if x.get('pm') else []

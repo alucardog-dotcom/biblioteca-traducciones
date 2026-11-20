@@ -29,7 +29,8 @@
     }
     const [sis, t, nombre, pu] = resto;
     const alt = t === 'Named_Boxarts' ? 'Named_Titles' : 'Named_Snaps';
-    const thumb = tt => 'https://thumbnails.libretro.com/' + encodeURIComponent(sis) + '/' + tt + '/' + encodeURIComponent(nombre.replace(/[&*/:`<>?\\|"]/g, '_')) + '.png';
+    // De GitHub: thumbnails.libretro.com se quedó vacío el 20-11-2026 (ver libretro_url() en tools/web.py).
+    const thumb = tt => 'https://raw.githubusercontent.com/libretro-thumbnails/' + encodeURIComponent(sis.replace(/ /g, '_')) + '/HEAD/' + tt + '/' + encodeURIComponent(nombre.replace(/[&*/:`<>?\\|"]/g, '_')) + '.png';
     return [thumb(t), pu, thumb(alt)].filter(Boolean);
   }
 
