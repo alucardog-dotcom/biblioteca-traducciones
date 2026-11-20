@@ -325,7 +325,8 @@ async function accionLista(que) {
 }
 
 // ---------------------------------------------------------------- portadas
-const thumb = (sys, name, tipo) => 'https://thumbnails.libretro.com/' + encodeURIComponent(sys) + '/' + tipo + '/' +
+// De los repositorios de libretro-thumbnails en GitHub: thumbnails.libretro.com se quedó vacío el 20-11-2026 (404 en todo).
+const thumb = (sys, name, tipo) => 'https://raw.githubusercontent.com/libretro-thumbnails/' + encodeURIComponent(sys.replace(/ /g, '_')) + '/HEAD/' + tipo + '/' +
   encodeURIComponent(name.replace(/[&*\/:`<>?\\|"]/g, '_')) + '.png';
 // Juegos de PC: la carátula vertical de Steam y, si no la tiene, su cabecera.
 const steamImg = (id, f) => `https://cdn.cloudflare.steamstatic.com/steam/apps/${encodeURIComponent(id)}/${f}`;
