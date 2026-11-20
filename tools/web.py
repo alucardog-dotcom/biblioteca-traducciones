@@ -1020,7 +1020,8 @@ def novedades(filas, sin_adultos=False):
     la fecha de la traducción, para que la portada luzca."""
     dias = {}
     for f in filas:
-        if f.get('alta') and not (sin_adultos and juego_adulto(f['gr'])):
+        # Las que solo están en catalán (u otra lengua de España) entran en el catálogo pero no son novedad (20-11-2026).
+        if f.get('alta') and not (sin_adultos and juego_adulto(f['gr'])) and not lengua(f)[1]:
             dias.setdefault(f['alta'], []).append(f)
     for fs in dias.values():
         fs.sort(key=fecha_iso, reverse=True)
