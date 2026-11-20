@@ -1,3 +1,29 @@
 # Traducciones perdidas, o que nadie tenía a mano, que han vuelto a aparecer: salen arriba en «Traducciones perdidas».
 # Una por línea: sistema|juego|grupo|AAAA-MM-DD (el día en que apareció)|de dónde salió, con juego y grupo tal como están en el catálogo.
 psx|Castlevania: Symphony of the Night|BiT ARS0NiST / YuPiKaIe|2026-11-14|en un adjunto que su autor subió a El Otro Lado en 2006
+gba|The King of Fighters EX: Neo Blood|Emu4ever / Kobra|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+mastersystem|Golden Axe|PaladinKnights / El Pilsen|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+mastersystem|Marble Madness|Sinister / ATOJ|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+megadrive|World of Illusion Starring Mickey Mouse and Donald Duck|Windfish|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+psx|Blade|BnD Translations / Gusp|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+psx|Castlevania: Symphony of the Night|Asc / Chita|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+psx|Command & Conquer|BnD Translations / a4tech|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+psx|Dragon Ball: Final Bout|BnD Translations / Clark|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+psx|Final Fantasy Tactics|BnD Translations / Scorpio|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+psx|Kula World|BnD Translations / Zeisler|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+psx|Mort the Chicken|BnD Translations / Scorpio|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+psx|Penny Racers|BnD Translations / Estratega|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+psx|Ridge Racer|BnD Translations / leviathan|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+psx|RPG Maker|BnD Translations / Lobap|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+psx|Rugrats: Totally Angelica|BnD Translations / Scorpio|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+psx|South Park Rally|BnD Translations / Gusp|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+psx|Street Fighter EX2 Plus|BnD Translations / Er_Sevi|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+psx|Super Pang Collection|BnD Translations / Stoker|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+psx|The Simpsons Wrestling|BnD Translations / Scorpio|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+psx|Wipeout 2097|BnD Translations / DarkWater|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+snes|Goof Troop|Roms / Hitokiri|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+snes|Kouryuu Densetsu Villgust: Kieta Shoujo|PaladinKnights / El Pilsen|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+snes|The Legend of Zelda: A Link to the Past|Emunixs / gi0|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+mastersystem|Final Bubble Bobble|PaladinKnights|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+mastersystem|Sega Chess|PaladinKnights|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+megadrive|Castlevania: Bloodlines|PaladinKnights|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
