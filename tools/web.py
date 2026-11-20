@@ -2037,7 +2037,7 @@ SAGAS = [
     ('star-wars', 'Star Wars', r'\bStar Wars\b'),
     ('phantasy-star', 'Phantasy Star', r'\bPhantasy Star\b'),
 ]
-MAS_VISTOS_DIAS = 30
+MAS_VISTOS_DIAS = 7  # una semana: con 30 días la lista apenas se movía (20-11-2026)
 # Favoritos: al guardar un juego en Favoritos, web/listas.js manda un evento anónimo de GoatCounter, una sola vez por
 # navegador y juego; quitarlo no manda nada. La ficha dice cuántas veces se ha guardado a partir de FAVORITOS_MIN (desde
 # el 13-11-2026, en cuanto hay uno): la cifra de partida de cada juego (web/favoritos_base.json, hasta FAVORITOS_DESDE)
