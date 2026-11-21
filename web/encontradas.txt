@@ -27,3 +27,28 @@ snes|The Legend of Zelda: A Link to the Past|Emunixs / gi0|2026-11-21|en TodoTra
 mastersystem|Final Bubble Bobble|PaladinKnights|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
 mastersystem|Sega Chess|PaladinKnights|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
 megadrive|Castlevania: Bloodlines|PaladinKnights|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+psx|Cool Boarders 4|BnD Translations / DarkWater|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+psx|Frogger 2: Swampy's Revenge|BnD Translations / Scorpio|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+psx|Grand Theft Auto 2|BnD Translations / Zeisler|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+psx|International Superstar Soccer 2|BnD Translations / Gusp|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+psx|Jackie Chan Stuntmaster|BnD Translations / DarkWater|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+psx|The Mummy|BnD Translations / Stoker|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+psx|Medal of Honor|BnD Translations / Wataro|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+psx|Medal of Honor: Underground|BnD Translations / Wataro|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+psx|Super Puzzle Fighter II Turbo|BnD Translations / Stoker|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+psx|Ready 2 Rumble Boxing: Round 2|BnD Translations / Gusp|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+psx|Rival Schools: United by Fate (CD2)|BnD Translations / Gusp|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+psx|Tekken 3|BnD Translations / DarkWater|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+psx|Tony Hawk's Skateboarding|BnD Translations / Tubular|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+psx|Battle Arena Toshinden|BnD Translations / Gusp|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+psx|RC de Go!|BnD Translations / Gusp|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+psx|Fear Effect 2: Retro Helix|BnD Translations / Scorpio|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+snes|Demon's Crest|Sinister / Clackar|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+snes|Return of Double Dragon|Toper|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+snes|X-Men: Mutant Apocalypse|Tanero / Nanoboy|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+snes|Donkey Kong Country 2: Diddy's Kong Quest|PaladinKnights / Dark Fantasy|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+nes|Tiny Toon Adventures|Chilensis / Kito|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+nes|Dragon Warrior|PaladinKnights|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+nes|Ice Climber|PaladinKnights|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+nes|Kirby's Adventure|PaladinKnights|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+nes|Metroid|PaladinKnights|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
