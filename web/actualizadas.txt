@@ -31,3 +31,5 @@ ps2|Shadow Hearts: Covenant - Director's Cut (UnDub)|Lemulte|2026-11-16
 pcenginecd|Castlevania: Rondo of Blood|Biblioteca de traducciones|2026-11-18
 nes|Captain Tsubasa Vol. II: Super Striker PLUS|vhernandezm|2026-11-19
 ps2|Rurouni Kenshin: Enjou! Kyoto Rinne|alexen64bits|2026-11-19
+3ds|Phoenix Wright: Ace Attorney Trilogy|alexen64bits|2026-11-21
+psx|Devilman|alexen64bits|2026-11-21
