@@ -1,22 +1,17 @@
 # Juegos que van siempre en el mosaico de la portada de la web (si tienen portada), uno por línea: sistema|título tal como está en el catálogo.
 # El resto del mosaico lo eligen las novedades con tirón y los juegos de más tirón del catálogo (web/popularidad.tsv).
 # Con «-» delante del sistema, el juego no sale en el mosaico. Con «|hasta AAAA-MM-DD» al final, la línea vale hasta ese día incluido.
-# Desde el 16-11-2026: Athena: Awakening from the Ordinary Life, la primera traducción propia de la Biblioteca.
-psx|Athena: Awakening from the Ordinary Life
-# Desde el 17-11-2026: Boundary Gate: Daughter of Kingdom, la segunda traducción propia (en el sitio de Fakin' It XL, a petición del usuario).
-psx|Boundary Gate: Daughter of Kingdom
-# Desde el 18-11-2026: Castlevania: Rondo of Blood, la tercera traducción propia (a petición del usuario).
-pcenginecd|Castlevania: Rondo of Blood
-# Desde el 13-11-2026: Drakengard 3 de Traducciones Vacuno, que vuelve al catálogo con su permiso (como se les ofreció).
-ps3|Drakengard 3
-# Desde el 16-11-2026, elegidos por el usuario (el mosaico solo con lo que más tira le parecía demasiado genérico):
-psvita|Ray Gigant
-psx|Echo Night 2: El Señor de las Pesadillas
-pc|GNOSIA
-# y tres del mismo estilo, para completar los nueve:
-pc|The Hundred Line -Last Defense Academy-
-dreamcast|Grandia II
-# Little Goody Two Shoes dejó su sitio a Rondo of Blood el 18-11-2026 (el mosaico tiene nueve).
+# 21-11-2026: el usuario pidió rotar el mosaico: sus dos traducciones que aún no estaban y siete juegos nuevos, del mismo
+# estilo que la tanda anterior (conocidos, nunca publicados en español y de sistemas distintos).
+psx|Legend of Kartia
+pc|Wizardry: Labyrinth of Lost Souls
+psx|Valkyrie Profile
+gba|Mother 3
+snes|Seiken Densetsu 3
+snes|Bahamut Lagoon
+saturn|Radiant Silvergun
+nes|Sweet Home
+psp|Persona 2: Innocent Sin
 # Desde el 12-11-2026: Super Mario 64 fuera.
 -n64|Super Mario 64
 # 16-11-2026: el usuario pidió rehacer el mosaico con juegos completamente distintos de los que había. Los que estaban
@@ -32,3 +27,13 @@ dreamcast|Grandia II
 -ps2|Shadow Hearts: Covenant - Director's Cut (UnDub)|hasta 2026-11-23
 # 17-11-2026: el usuario pidió quitar Fakin' It XL del mosaico; tampoco sale solo durante una semana.
 -pc|Fakin' It XL|hasta 2026-11-24
+# 21-11-2026: los nueve de la tanda anterior no vuelven a salir solos durante una semana.
+-psx|Athena: Awakening from the Ordinary Life|hasta 2026-11-28
+-psx|Boundary Gate: Daughter of Kingdom|hasta 2026-11-28
+-pcenginecd|Castlevania: Rondo of Blood|hasta 2026-11-28
+-ps3|Drakengard 3|hasta 2026-11-28
+-psvita|Ray Gigant|hasta 2026-11-28
+-psx|Echo Night 2: El Señor de las Pesadillas|hasta 2026-11-28
+-pc|GNOSIA|hasta 2026-11-28
+-pc|The Hundred Line -Last Defense Academy-|hasta 2026-11-28
+-dreamcast|Grandia II|hasta 2026-11-28
