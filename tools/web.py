@@ -1434,6 +1434,13 @@ def pagina_juego(gr, sysn, libretro, base, ctx):
         donde = 'en la carpeta del juego' if s in PC else 'como mod en el emulador o en la consola'
         botones = ir_a_la_traduccion(una) + ('' if abandonadas else
                                              f'<p class="suave aviso-j">Se instala{"n" if n > 1 else ""} a mano, {donde}, como explica su autor.</p>')
+    # «Avisar de un problema» (22-11-2026, sugerencia de un lector): el correo de contacto con el juego, el sistema y la
+    # dirección de la ficha ya escritos, para saber de qué juego habla quien escribe.
+    cuerpo_aviso = (f'Ficha: {base}{gr["ruta"]}\n'
+                    f'Traducción (si hay varias, de qué grupo): \n\n'
+                    f'Qué pasa (si es con tu copia del juego, di qué ficheros tienes: .bin/.cue, .chd, .iso…): \n')
+    avisar = (f'<a class="btn" href="{e(mailto(f"Problema con {titulo} ({nombre_sis})", cuerpo_aviso))}"'
+              f'{" data-goatcounter-click=" + chr(34) + "avisar-" + e(gr["ruta"].removeprefix("juego/").strip("/")) + chr(34) if GOATCOUNTER else ""}>Avisar de un problema</a>')
     # Cuántas veces se ha guardado en Favoritos (favoritos_fichas()), solo a partir de FAVORITOS_MIN.
     n_fav = ctx.get('favs', {}).get(gr['ruta'], 0)
     veces_fav = (f'<span class="suave n-fav">Guardado {n_fav:,} {"vez" if n_fav == 1 else "veces"} en Favoritos</span>'.replace(',', '.')
@@ -1449,7 +1456,7 @@ def pagina_juego(gr, sysn, libretro, base, ctx):
       <p class="lede">{hay}{f": {e(quien)}" if quien else ''}.</p>
       {botones}
       {compra}
-      <div class="juego-acciones" data-ruta="{e(gr["ruta"])}" data-sis="{e(s)}" data-sisn="{e(nombre_sis)}" data-titulo="{e(titulo)}" data-port="{e(" ".join(absolutas[:3]))}"><button type="button" class="fav" aria-pressed="false" aria-label="Añadir a Favoritos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7.5-4.6-9.3-9.2C1.4 7.4 3.6 4 7 4c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.4 0 5.6 3.4 4.3 6.8C19.5 15.4 12 20 12 20z"/></svg><span class="fav-no">Guardar en Favoritos</span><span class="fav-si">En tus Favoritos</span></button><button type="button" class="btn" id="guardar-lista">Guardar en una lista</button>{veces_fav}</div>
+      <div class="juego-acciones" data-ruta="{e(gr["ruta"])}" data-sis="{e(s)}" data-sisn="{e(nombre_sis)}" data-titulo="{e(titulo)}" data-port="{e(" ".join(absolutas[:3]))}"><button type="button" class="fav" aria-pressed="false" aria-label="Añadir a Favoritos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7.5-4.6-9.3-9.2C1.4 7.4 3.6 4 7 4c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.4 0 5.6 3.4 4.3 6.8C19.5 15.4 12 20 12 20z"/></svg><span class="fav-no">Guardar en Favoritos</span><span class="fav-si">En tus Favoritos</span></button><button type="button" class="btn" id="guardar-lista">Guardar en una lista</button>{avisar}{veces_fav}</div>
     </div>
   </div>
   <section class="bloque" id="traducciones">
