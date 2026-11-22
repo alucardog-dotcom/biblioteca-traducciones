@@ -1906,6 +1906,23 @@ def webs_grupo(filas):
     return [h for h, n in hosts.most_common(3) if n >= 2 or n * 3 >= len(filas)]
 
 
+def webs_a_mano():
+    """Las webs que un grupo nos pidió enseñar en su página (web/webs_grupos.tsv): grupo -> [dirección]."""
+    webs = {}
+    try:
+        with io.open(os.path.join(WEB, 'webs_grupos.tsv'), encoding='utf-8') as fh:
+            for linea in fh:
+                c = linea.rstrip('\r\n').split('\t')
+                if len(c) >= 2 and not c[0].startswith('#') and c[1].startswith('https://'):
+                    webs.setdefault(c[0], []).append(c[1])
+    except FileNotFoundError:
+        pass
+    return webs
+
+
+WEBS_A_MANO = webs_a_mano()
+
+
 def pagina_grupo(nombre, items, sysn, base):
     """Las traducciones de un grupo, por sistema; en cada sistema, primero las de los juegos con más tirón."""
     raiz = '../../'
@@ -1922,6 +1939,7 @@ def pagina_grupo(nombre, items, sysn, base):
         + ''.join(tarjeta_juego(g, raiz, sysn, False, fila=f) for g, f in sorted(por_sis[s].values(), key=lambda gf: -gf[1]['pop'])) + '</ul></section>'
         for s in orden_sis)
     webs = webs_grupo([f for _, f in items])
+    propias = [u for u in WEBS_A_MANO.get(nombre, []) if re.match(r'https://([^/?#]+)', u).group(1).lower() not in webs]
     sistemas = [sysn.get(s, s) for s in orden_sis]
     ia = sum(1 for _, f in items if es_ia(f))
     dob = sum(1 for _, f in items if doblaje(f))
@@ -1931,7 +1949,7 @@ def pagina_grupo(nombre, items, sysn, base):
   <p class="migas"><a href="{raiz}">Inicio</a> › <a href="{raiz}grupos/">Grupos de traducción</a> › {e(nombre)}</p>
   <h1>{e(titulo)}</h1>
   <p class="lede">{len(items)} {"traducción" if len(items) == 1 else "traducciones"} al español de {n_juegos} {"juego" if n_juegos == 1 else "juegos"} en el catálogo, para {e(enumera(sistemas) if len(sistemas) <= 6 else ", ".join(sistemas[:6]) + " y otros")}{(" (" + ", ".join(extra) + ")") if extra else ""}.</p>
-  {f'<p class="texto">Publica en {enumera([f"""<a href="https://{e(h)}/" target="_blank" rel="noopener">{e(h)}</a>""" for h in webs])}.</p>' if webs else ''}
+  {f'<p class="texto">Publica en {enumera([f"""<a href="{e(u)}" target="_blank" rel="noopener">{e(re.sub(r"^https://|/$", "", u))}</a>""" for u in propias] + [f"""<a href="https://{e(h)}/" target="_blank" rel="noopener">{e(h)}</a>""" for h in webs])}.</p>' if webs or propias else ''}
   <p class="suave">Cada ficha lleva a la página de su traducción. ¿Eres de {e(nombre)} y algo está mal o falta? Escríbeme a {contacto(f'Grupo: {nombre}')}.</p>
   {bloques}
 </main>'''
