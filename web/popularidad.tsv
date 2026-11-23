@@ -3599,6 +3599,7 @@ pc|Trails through Daybreak|locoroco96	51	st:1186
 ps2|Dawn of Mana|Skybladecloud	51	lb:46
 ps2|Legaia 2: Duel Saga|JinK	51	lb:48
 ps2|Mega Man X: Command Mission|JinK	51	lb:47
+ps2|Wild Arms 4|JinK	51	lb:46
 psp|Def Jam: Fight for NY - The Takeover|ZARF (MODZARF)	51	lb:48
 psx|Monster Rancher|RetroKodes	51	lb:48
 psx|OverBlood|Mr.Nobody	51	lb:49
@@ -3761,6 +3762,8 @@ pc|Banquet for Fools|shadowman1	50	st:976
 pc|Blue Reflection: Second Light|Black99	50	lb:2 st:950
 pc|Death end re;Quest|hesama / PeronchoCraft	50	lb:8 st:1038
 pc|Kingdoms of the Dump|shadowman1	50	lb:1 st:1042
+pc|Mary Skelter: Nightmares|CepitaUva	50	lb:4 st:545 +2trad
+pc|Mary Skelter: Nightmares|hesama	50	lb:4 st:545 +2trad
 pc|Miasmata|David Talavera e Ian Munsie	50	lb:6 st:1066
 pc|Old Skies|shadowman1	50	lb:4 st:989
 pc|Paradigm|pakolmo	50	lb:15 st:984
@@ -4397,7 +4400,6 @@ pc|Goetia|walas74	46	lb:6 st:592
 pc|Heaven Dust|locoroco96	46	lb:8 st:602
 pc|LUNAR Remastered Collection|Cronos.Morfeo	46	lb:9 st:594
 pc|Making History: The Calm & The Storm|janitoalevic	46	lb:2 st:557
-pc|Mary Skelter: Nightmares|CepitaUva	46	lb:4 st:545
 pc|Monolith|Abandonsocios	46	lb:12 st:326 +2trad
 pc|Monolith|walas74	46	lb:12 st:326 +2trad
 pc|Never Grave: The Witch and The Curse|shadowman1	46	st:559
@@ -5201,6 +5203,8 @@ pc|Shrine's Legacy|shadowman1	37	st:158
 pc|The Chronicles of Riddick: Escape from Butcher Bay|darkpadawan (Clan DLAN)	37	lb:16
 pc|The Elder Scrolls: Arena|SkaZZ	37	lb:16
 pc|The Legend of Nayuta: Boundless Trails|locoroco96	37	lb:5 st:167
+pc|Tsukihime|Her-Saki	37	lb:11 +2trad
+pc|Tsukihime|Tohno-kun / MCAnime	37	lb:11 +2trad
 pc|Wander Stars|locoroco96	37	st:155
 scummvm|Gold Rush!|mondarina	37	lb:16
 scummvm|Manhunter 2: San Francisco|Maquiante2491	37	lb:16
@@ -5429,8 +5433,6 @@ nes|SD Gundam: Gachapon Senshi 3 - Eiyuu Senki|Max1323	33	lb:11
 nes|Silver Eagle|Traducciones Wave	33	lb:11
 nes|Super Fighter III|Traducciones Wave	33	lb:11
 nes|Super Robin Hood|Traducciones Wave	33	lb:11
-switch|Tsukihime -A piece of blue glass moon-|Taikutsu Translations (TaikutsuTL)	33	lb:11
-pc|Tsukihime|Tohno-kun / MCAnime	33	lb:11
 ps4|Yakuza Kiwami 2|Farolito (port)	33	lb:11
 psp|Zettai Zetsumei Toshi 3: Kowareyuku Machi to Kanojo no Uta|johanderohan (Parches en Castellano)	33	lb:11
 psx|Bealphareth|JinK	33	lb:11
@@ -5488,6 +5490,8 @@ gb|Sonic 6|Tanero	31	lb:7 +2trad
 pc|Hytale|ghost_112_	31	lb:7 +2trad
 pc|Hytale|trom3r	31	lb:7 +2trad
 pc|Lobotomy Corporation (retraducción al castellano)|CintaVHS	31	lb:7 +2trad
+psp|Tales of the World: Radiant Mythology 3 (versión para consola)|PeronchoCraft	31	lb:7 +2trad
+psp|Tales of the World: Radiant Mythology 3|PeronchoCraft	31	lb:7 +2trad
 arcade|Quiz Daisousa Sen: The Last Count Down|PepAlacant	30	lb:9
 colecovision|Escape From The Mind Master|Traducciones Wave	30	lb:9
 fds|Märchen Veil|Jackic	30	lb:9
@@ -5618,12 +5622,12 @@ pc|The Lost Crown: A Ghost-Hunting Adventure|Tradupixel	27	lb:7
 ps2|Rurouni Kenshin: Enjou! Kyoto Rinne|alexen64bits	27	lb:7
 ps2|Shinseiki Evangelion: Ayanami Ikusei Keikaku with Asuka Hokan Keikaku|alexen64bits	27	lb:7
 psp|Ore no Imouto ga Konna ni Kawaii Wake ga Nai Portable ga Tsuzuku Wake ga Nai|christ-gm	27	lb:7
-psp|Tales of the World: Radiant Mythology 3|PeronchoCraft	27	lb:7
 psvita|Catherine: Full Body|froid_san	27	lb:7
 psx|Boundary Gate: Daughter of Kingdom|Biblioteca de traducciones	27	lb:7
 psx|Densha de Go! Professional Shiyou|johanderohan (Parches en Castellano)	27	lb:7
 psx|Twilight Syndrome: Tansaku-hen|ramiro634	27	lb:7
 snes|Mega Man 4 (Port a SNES)|Traducciones Crackowia (Rod Mérida)	27	lb:7
+switch|Tsukihime -A piece of blue glass moon-|Taikutsu Translations (TaikutsuTL)	27	lb:7
 zxspectrum|Dark Fusion|Traducciones Wave	27	lb:7
 zxspectrum|Joe Blade|Traducciones Wave	27	lb:7
 zxspectrum|Netherworld|Traducciones Wave	27	lb:7
