@@ -52,3 +52,4 @@ nes|Dragon Warrior|PaladinKnights|2026-11-21|en TodoTradus México (todotradus.c
 nes|Ice Climber|PaladinKnights|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
 nes|Kirby's Adventure|PaladinKnights|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
 nes|Metroid|PaladinKnights|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
+ps2|Kingdom Hearts Re:Chain of Memories|Skybladecloud (con Joseas, Lureas, Axxel, Eliseo)|2026-11-23|en el blog de JaviMetal (javimetalrpg.blogspot.com), que guarda una copia del parche
