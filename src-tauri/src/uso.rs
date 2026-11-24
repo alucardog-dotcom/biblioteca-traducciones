@@ -7,14 +7,16 @@
 use crate::rutas::Rutas;
 use std::fs;
 use std::path::Path;
-use std::sync::Arc;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 const DESTINO: &str = "https://stats.bibliotecadetraducciones.com/count";
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 /// Con un espacio y una barra: GoatCounter toma por robots, y no los cuenta, los User-Agent sin ellos (el
 /// «Biblioteca-de-traducciones/<versión>» de las descargas, por ejemplo).
+#[cfg(windows)]
 const AGENTE: &str = concat!("Biblioteca-de-traducciones/", env!("CARGO_PKG_VERSION"), " (Windows)");
+#[cfg(not(windows))]
+const AGENTE: &str = concat!("Biblioteca-de-traducciones/", env!("CARGO_PKG_VERSION"), " (Linux)");
 const FICHERO: &str = "uso.txt";
 
 /// El día de hoy (en días desde 1970, hora universal).
@@ -39,13 +41,10 @@ pub fn avisar(r: &Rutas) {
     if avisado(&f, dia) {
         return;
     }
-    let Ok(tls) = native_tls::TlsConnector::new() else { return };
-    let agente = ureq::AgentBuilder::new()
-        .redirects(0)
-        .timeout(Duration::from_secs(20))
-        .user_agent(AGENTE)
-        .tls_connector(Arc::new(tls))
-        .build();
+    let Ok(agente) = crate::descarga::con_tls(ureq::AgentBuilder::new().redirects(0).timeout(Duration::from_secs(20)).user_agent(AGENTE)) else {
+        return;
+    };
+    let agente = agente.build();
     if agente.get(&direccion()).call().is_ok_and(|res| (200..300).contains(&res.status())) {
         let _ = fs::write(&f, dia.to_string());
     }

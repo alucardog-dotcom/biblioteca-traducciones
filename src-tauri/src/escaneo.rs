@@ -336,15 +336,41 @@ fn pc(n: &str, f: &Path, k: &str, id: &str) -> Value {
     v
 }
 
+/// Las carpetas de Steam: en Windows, la que dice el registro.
 #[cfg(windows)]
-fn steam(juegos: &mut Vec<Value>) {
+fn raices_steam() -> Vec<PathBuf> {
     use winreg::{enums::HKEY_CURRENT_USER, RegKey};
-    let Ok(k) = RegKey::predef(HKEY_CURRENT_USER).open_subkey(r"Software\Valve\Steam") else { return };
-    let Ok(raiz) = k.get_value::<String, _>("SteamPath") else { return };
-    let raiz = PathBuf::from(raiz.replace('/', "\\"));
-    let mut libs = vec![raiz.clone()];
-    if let Ok(t) = fs::read_to_string(raiz.join("steamapps").join("libraryfolders.vdf")) {
-        libs.extend(valor_vdf(&t, "path").into_iter().map(PathBuf::from));
+    let Ok(k) = RegKey::predef(HKEY_CURRENT_USER).open_subkey(r"Software\Valve\Steam") else { return vec![] };
+    let Ok(raiz) = k.get_value::<String, _>("SteamPath") else { return vec![] };
+    vec![PathBuf::from(raiz.replace('/', "\\"))]
+}
+
+/// Las carpetas de Steam en Linux: la normal, los enlaces de ~/.steam y la del Flatpak. Suelen ser la
+/// misma carpeta con varios nombres: se quitan las repetidas.
+#[cfg(not(windows))]
+fn raices_steam() -> Vec<PathBuf> {
+    let Some(casa) = dirs::home_dir() else { return vec![] };
+    let candidatas = [
+        casa.join(".local/share/Steam"),
+        casa.join(".steam/steam"),
+        casa.join(".steam/root"),
+        casa.join(".var/app/com.valvesoftware.Steam/.local/share/Steam"),
+    ];
+    let mut vistas = HashSet::new();
+    candidatas
+        .into_iter()
+        .filter(|r| r.join("steamapps").is_dir())
+        .filter(|r| vistas.insert(fs::canonicalize(r).unwrap_or_else(|_| r.clone())))
+        .collect()
+}
+
+fn steam(juegos: &mut Vec<Value>) {
+    let mut libs = vec![];
+    for raiz in raices_steam() {
+        libs.push(raiz.clone());
+        if let Ok(t) = fs::read_to_string(raiz.join("steamapps").join("libraryfolders.vdf")) {
+            libs.extend(valor_vdf(&t, "path").into_iter().map(PathBuf::from));
+        }
     }
     let mut vistos = HashSet::new();
     for lib in libs {
@@ -400,9 +426,9 @@ fn epic(juegos: &mut Vec<Value>) {
 
 /// Juegos de PC instalados con Steam, GOG y Epic.
 pub fn tiendas(juegos: &mut Vec<Value>) {
+    steam(juegos);
     #[cfg(windows)]
     {
-        steam(juegos);
         gog(juegos);
     }
     epic(juegos);

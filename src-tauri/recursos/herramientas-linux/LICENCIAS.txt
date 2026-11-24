@@ -1,0 +1,21 @@
+Herramientas de terceros que lleva la Biblioteca de traducciones para Linux
+============================================================================
+
+tools/compilar-linux-contenedor.sh las copia aquí, sin cambios, antes de crear el AppImage. No se guardan
+en git. Si el AppImage no trae alguna, el programa usa la del sistema (la que esté en el PATH). Cada una
+tiene su propia licencia.
+
+7zz - 7-Zip, de Igor Pavlov (https://www.7-zip.org), el binario estático oficial (7zzs).
+  Licencia GNU LGPL 2.1 o posterior; algunas partes, BSD-3-Clause. El código de descompresión de RAR
+  tiene además la restricción de unRAR: no se puede usar para crear un compresor de RAR.
+  Código fuente: https://www.7-zip.org/download.html
+
+xdelta3 - xdelta 3, de Joshua MacDonald (https://github.com/jmacd/xdelta), el del paquete de Ubuntu 22.04.
+  Es la versión 3.0.11: licencia GNU GPL 2.0 o posterior (desde la 3.1, Apache 2.0).
+  Código fuente: https://github.com/jmacd/xdelta y el paquete fuente xdelta3 de Ubuntu 22.04.
+
+chdman - de MAME (https://www.mamedev.org), versión 0.289, compilado desde su código sin cambios
+  (tools/linux/Containerfile). Las cuatro funciones de portapapeles de SDL2 que enlaza y no usa las
+  sustituye tools/linux/sin_sdl.c.
+  Licencia GNU GPL 2.0 o posterior (el conjunto de MAME); algunas partes, BSD-3-Clause.
+  Código fuente: https://github.com/mamedev/mame/tree/mame0289

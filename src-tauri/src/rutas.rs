@@ -6,7 +6,45 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
 
-pub const CARPETA_POR_DEFECTO: &str = r"C:\Juegos";
+/// La carpeta de juegos que se propone si no dices otra: C:\Juegos en Windows, ~/Games en Linux.
+#[cfg(windows)]
+pub fn carpeta_por_defecto() -> PathBuf {
+    PathBuf::from(r"C:\Juegos")
+}
+#[cfg(not(windows))]
+pub fn carpeta_por_defecto() -> PathBuf {
+    dirs::home_dir().unwrap_or_default().join("Games")
+}
+
+/// Los nombres de 7z, chdman y xdelta3 en cada sistema (en Linux, del primero al último que se pruebe).
+#[cfg(windows)]
+const HERRAMIENTAS: [&[&str]; 3] = [&["7z.exe"], &["chdman.exe"], &["xdelta3.exe"]];
+#[cfg(not(windows))]
+const HERRAMIENTAS: [&[&str]; 3] = [&["7zz", "7z"], &["chdman"], &["xdelta3"]];
+
+/// Dónde está una herramienta. En Windows, siempre la que lleva el programa. En Linux, la que lleva el
+/// programa si la trae y, si no, la del sistema (en el PATH); si no hay ninguna, la ruta de la primera,
+/// para que el error diga cuál falta.
+pub fn herramienta_en(her: &Path, nombres: &[&str]) -> PathBuf {
+    #[cfg(not(windows))]
+    {
+        if let Some(p) = nombres.iter().map(|n| her.join(n)).find(|p| p.is_file()) {
+            return p;
+        }
+        let path = std::env::var_os("PATH").unwrap_or_default();
+        for n in nombres {
+            if let Some(p) = std::env::split_paths(&path).map(|d| d.join(n)).find(|p| p.is_file()) {
+                return p;
+            }
+        }
+    }
+    her.join(nombres[0])
+}
+
+/// 7z, chdman y xdelta3, por ese orden, para la carpeta de herramientas `her`.
+pub fn herramientas_en(her: &Path) -> [PathBuf; 3] {
+    HERRAMIENTAS.map(|n| herramienta_en(her, n))
+}
 
 #[derive(Debug, Clone)]
 pub struct Rutas {
@@ -42,13 +80,13 @@ impl Rutas {
         let (recursos, datos) = (normal(recursos), normal(datos));
         let (recursos, datos) = (recursos.as_path(), datos.as_path());
         let cat = recursos.join("catalogo");
-        let her = recursos.join("herramientas");
+        let [siete_z, chdman, xdelta] = herramientas_en(&recursos.join("herramientas"));
         Rutas {
             csv: cat.join("traducciones_fan.csv"),
             centro: cat.join("centro_datos.json"),
-            siete_z: her.join("7z.exe"),
-            chdman: her.join("chdman.exe"),
-            xdelta: her.join("xdelta3.exe"),
+            siete_z,
+            chdman,
+            xdelta,
             trabajos: datos.join("trabajos"),
             parches: datos.join("parches"),
             mis_juegos: datos.join("mis_juegos.json"),
@@ -108,7 +146,7 @@ pub struct Ajustes {
 }
 
 fn carpetas_por_defecto() -> Vec<PathBuf> {
-    vec![PathBuf::from(CARPETA_POR_DEFECTO)]
+    vec![carpeta_por_defecto()]
 }
 fn junto() -> String {
     "junto".into()
@@ -142,7 +180,7 @@ impl Ajustes {
     /// Carpetas que propone la bienvenida: la de ROMs de RetroBat si lo tienes, y C:\Juegos.
     pub fn sugeridas(&self) -> Vec<PathBuf> {
         let mut s: Vec<PathBuf> = self.retrobat.iter().map(|r| r.join("roms")).filter(|r| r.is_dir()).collect();
-        s.push(PathBuf::from(CARPETA_POR_DEFECTO));
+        s.push(carpeta_por_defecto());
         s
     }
 

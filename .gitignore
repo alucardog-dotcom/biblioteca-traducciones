@@ -2,3 +2,6 @@ node_modules/
 src-tauri/target/
 src-tauri/gen/
 _web/
+# Las herramientas de Linux las copia tools/compilar-linux.sh al compilar en el contenedor: no van en git.
+src-tauri/recursos/herramientas-linux/*
+!src-tauri/recursos/herramientas-linux/LICENCIAS.txt

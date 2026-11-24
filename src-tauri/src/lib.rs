@@ -179,6 +179,8 @@ fn ajustes(app: Estado) -> Value {
         "carpetas": a.carpetas, "salida": a.salida, "retrobat": a.retrobat, "tiendas": a.tiendas, "estadisticas": a.estadisticas,
         "descargas": trabajos::carpeta_descargas(), "datos": app.rutas.datos,
         "version": env!("CARGO_PKG_VERSION"), "nuevo": app.nuevo.load(Ordering::Relaxed),
+        // La ventana adapta sus textos: en Linux no hay RetroBat, GOG ni Epic.
+        "so": std::env::consts::OS,
         "sugeridas": a.sugeridas().into_iter().map(|p| json!({"ruta": p, "existe": p.is_dir()})).collect::<Vec<_>>(),
     })
 }

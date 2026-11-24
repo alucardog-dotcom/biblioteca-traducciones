@@ -6,6 +6,12 @@ use std::fs;
 use std::path::Path;
 use std::process::{Child, Command};
 
+/// Sin RetroBat: con qué se abre el juego y qué decir si el sistema no sabe con qué abrirlo.
+#[cfg(windows)]
+const SIN_PROGRAMA: (&str, &str) = ("Windows", "Windows no sabe con qué abrir este juego. Indica tu carpeta de RetroBat en Ajustes o asocia un emulador a ese tipo de fichero.");
+#[cfg(not(windows))]
+const SIN_PROGRAMA: (&str, &str) = ("el programa asociado", "El sistema no sabe con qué abrir este juego. Asocia un emulador a ese tipo de fichero.");
+
 fn valor(t: &str, nombre: &str) -> String {
     let aguja = format!("<string name=\"{nombre}\" value=\"");
     match t.find(&aguja) {
@@ -65,8 +71,8 @@ pub fn abrir(retrobat: Option<&Path>, ruta: &Path, sis: &str, partida: &mut Opti
     let lanzador = retrobat.map(|r| r.join("emulationstation").join("emulatorLauncher.exe")).filter(|l| l.is_file());
     let Some(lanzador) = lanzador.filter(|_| !sis.is_empty() && sis != "pc") else {
         tauri_plugin_opener::open_path(ruta, None::<&str>)
-            .map_err(|_| "Windows no sabe con qué abrir este juego. Indica tu carpeta de RetroBat en Ajustes o asocia un emulador a ese tipo de fichero.".to_string())?;
-        return Ok("Windows".into());
+            .map_err(|_| SIN_PROGRAMA.1.to_string())?;
+        return Ok(SIN_PROGRAMA.0.into());
     };
     if let Some(c) = partida.as_mut() {
         if matches!(c.try_wait(), Ok(None)) {

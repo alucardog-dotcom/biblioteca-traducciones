@@ -1,0 +1,65 @@
+# Entorno para compilar el AppImage de la Biblioteca de traducciones con la máxima compatibilidad.
+#
+# Ubuntu 22.04 (glibc 2.35) es la distribución más antigua con webkit2gtk-4.1, la que pide Tauri 2: el
+# AppImage compilado aquí abre en esa glibc y en cualquiera más nueva (Debian 12, Ubuntu 22.04 y 24.04,
+# Fedora, Arch, SteamOS...). Lo usa tools/compilar-linux-contenedor.sh; no hace falta construirlo a mano.
+
+# ---------------------------------------------------------------- chdman
+# El de Ubuntu 22.04 (0.242) no tiene `extractcd --splitbin`, y arrastra SDL2, PulseAudio y X11. Se compila
+# solo chdman desde el código de MAME, con libstdc++ dentro: queda un binario que solo pide la glibc.
+FROM docker.io/library/ubuntu:22.04 AS chdman
+ARG MAME_VERSION=0289
+ARG MAME_SHA256=0929cc749afabcef892900e10dd90bd8b05f94a7dde8f367ac6a5d2082589f84
+RUN apt-get update && apt-get install -y --no-install-recommends build-essential ca-certificates curl python3 libsdl2-dev \
+    && rm -rf /var/lib/apt/lists/*
+RUN curl -fsSLo /tmp/mame.tar.gz "https://github.com/mamedev/mame/archive/refs/tags/mame${MAME_VERSION}.tar.gz" \
+    && echo "${MAME_SHA256}  /tmp/mame.tar.gz" | sha256sum -c - \
+    && mkdir /mame && tar -xzf /tmp/mame.tar.gz -C /mame --strip-components=1 && rm /tmp/mame.tar.gz
+# chdman solo enlaza SDL2 por cuatro funciones del portapapeles que no usa: sin_sdl.c las sustituye, y
+# -L/sin_sdl hace que el enlazador coja esa libSDL2.a en lugar de la de verdad.
+COPY sin_sdl.c /sin_sdl/
+RUN gcc -O2 -c /sin_sdl/sin_sdl.c -o /sin_sdl/sin_sdl.o && ar rcs /sin_sdl/libSDL2.a /sin_sdl/sin_sdl.o
+WORKDIR /mame
+RUN opciones='TOOLS=1 EMULATOR=0 NOWERROR=1 USE_QTDEBUG=0 NO_USE_MIDI=1 NO_USE_PORTAUDIO=1 NO_USE_PULSEAUDIO=1' \
+    && make -j"$(nproc)" $opciones LDOPTS='-L/sin_sdl -static-libstdc++ -static-libgcc' generate build/projects/sdl/mame/gmake-linux/Makefile \
+    && make -j"$(nproc)" -C build/projects/sdl/mame/gmake-linux config=release64 precompile \
+    && make -j"$(nproc)" -C build/projects/sdl/mame/gmake-linux config=release64 chdman \
+    && strip chdman \
+    && ! readelf -d chdman | grep -q SDL \
+    && ./chdman help extractcd | grep -q -- --splitbin
+
+# ---------------------------------------------------------------- el entorno de compilación
+FROM docker.io/library/ubuntu:22.04
+
+ARG NODE_VERSION=22.23.5
+ARG NODE_SHA256=cdeb8670a0c81f51b4dc4ac61919f9b1ad917b304bf8221eb939570663d240f8
+ARG RUST_VERSION=1.99.0
+# 7-Zip oficial (de Igor Pavlov, https://github.com/ip7z/7zip). Su 7zzs es estático: abre en cualquier
+# distribución y lee RAR. Ubuntu 22.04 solo tiene el antiguo p7zip.
+ARG SIETEZ_VERSION=26.06
+ARG SIETEZ_SHA256=2b539cf067b2ad48e1baa5093dbaa8818b73542d1222a0ffde9dc5f2922ea62e
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential ca-certificates curl file pkg-config xz-utils \
+        libwebkit2gtk-4.1-dev libsoup-3.0-dev libgtk-3-dev librsvg2-dev libayatana-appindicator3-dev \
+        libssl-dev xdelta3 \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN curl -fsSLo /tmp/node.tar.xz "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" \
+    && echo "${NODE_SHA256}  /tmp/node.tar.xz" | sha256sum -c - \
+    && tar -xJf /tmp/node.tar.xz -C /usr/local --strip-components=1 \
+    && rm /tmp/node.tar.xz
+
+RUN curl -fsSLo /tmp/7z.tar.xz "https://github.com/ip7z/7zip/releases/download/${SIETEZ_VERSION}/7z${SIETEZ_VERSION%.*}${SIETEZ_VERSION#*.}-linux-x64.tar.xz" \
+    && echo "${SIETEZ_SHA256}  /tmp/7z.tar.xz" | sha256sum -c - \
+    && tar -xJf /tmp/7z.tar.xz -C /tmp 7zzs \
+    && install -m 755 /tmp/7zzs /usr/local/bin/7zz \
+    && rm /tmp/7z.tar.xz /tmp/7zzs
+
+COPY --from=chdman /mame/chdman /usr/local/bin/chdman
+
+ENV RUSTUP_HOME=/usr/local/rustup CARGO_HOME=/usr/local/cargo PATH=/usr/local/cargo/bin:$PATH
+RUN curl -fsSL https://sh.rustup.rs | sh -s -- -y --no-modify-path --profile minimal --default-toolchain "${RUST_VERSION}"
+
+WORKDIR /proyecto

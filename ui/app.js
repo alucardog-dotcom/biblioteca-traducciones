@@ -20,6 +20,9 @@ let juegos = [], pares = [], paresPorFila = new Map();
 let vista = 'inicio', limit = 60, lista = [];
 let filtro = {sys: '', directa: false, completa: false, sinia: false, steam: false};
 let escaneando = false, trabajos = [], espera = null, ajustes = {}, propias = {};
+// En Linux no hay RetroBat y de los juegos de PC solo se buscan los de Steam.
+const enWindows = () => !ajustes.so || ajustes.so === 'windows';
+const tiendasTxt = (y = 'y') => enWindows() ? `Steam, GOG ${y} Epic` : 'Steam';
 let misListas = [{id: 'fav', nombre: 'Favoritos', juegos: []}];
 const ICONO_FAV = '<svg viewBox="0 0 24 24" class="i-fav"><path d="M12 20s-7.5-4.6-9.3-9.2C1.4 7.4 3.6 4 7 4c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.4 0 5.6 3.4 4.3 6.8C19.5 15.4 12 20 12 20z"/></svg>';
 const ICONO_LISTA = '<svg viewBox="0 0 24 24"><path d="M4 6h2v2H4zm4 0h12v2H8zM4 11h2v2H4zm4 0h12v2H8zM4 16h2v2H4zm4 0h12v2H8z"/></svg>';
@@ -519,7 +522,7 @@ function pintarInicio() {
   main.innerHTML = `
     <section class="hero">
       <h1>Tus juegos, en español</h1>
-      <p>La biblioteca busca tus ROMs en tus carpetas de juegos y tus juegos de PC en Steam, GOG y Epic, te dice cuáles tienen traducción y aplica el parche. Nunca descarga juegos: solo parches para tu propia copia.</p>
+      <p>La biblioteca busca tus ROMs en tus carpetas de juegos y tus juegos de PC en ${tiendasTxt()}, te dice cuáles tienen traducción y aplica el parche. Nunca descarga juegos: solo parches para tu propia copia.</p>
       <div class="stats">
         <div class="stat" data-go="mios"><b>${mios}</b><span>de tus juegos tienen traducción</span></div>
         <div class="stat" data-go="hechas"><b>${hechas.length}</b><span>ya traducidos</span></div>
@@ -635,13 +638,13 @@ function pintarAjustes() {
       <section><h2>Dónde dejar los juegos traducidos</h2>
         <label class="opt"><input type="radio" name="salida" value="junto" ${aparte ? '' : 'checked'}> Junto al juego original, con la etiqueta [T-Es] en el nombre</label>
         <label class="opt"><input type="radio" name="salida" value="aparte" ${aparte ? 'checked' : ''}> En una carpeta aparte, en una subcarpeta por sistema</label>
-        <div class="line" ${aparte ? '' : 'hidden'}><input type="text" id="salida" aria-label="Carpeta de los traducidos" value="${esc(aparte ? b.salida : '')}" placeholder="C:\\Juegos\\Traducidos"><button class="btn" id="elegir-salida">Elegir…</button></div>
+        <div class="line" ${aparte ? '' : 'hidden'}><input type="text" id="salida" aria-label="Carpeta de los traducidos" value="${esc(aparte ? b.salida : '')}" placeholder="${enWindows() ? 'C:\\Juegos\\Traducidos' : '~/Games/Traducidos'}"><button class="btn" id="elegir-salida">Elegir…</button></div>
       </section>
       <section><h2>Juegos de PC</h2>
-        <label class="opt"><input type="checkbox" id="tiendas" ${b.tiendas ? 'checked' : ''}> Buscar los juegos instalados con Steam, GOG y Epic</label>
+        <label class="opt"><input type="checkbox" id="tiendas" ${b.tiendas ? 'checked' : ''}> Buscar los juegos instalados con ${tiendasTxt()}</label>
         <p>Las traducciones de PC se instalan a mano sobre la carpeta del juego; la biblioteca te dice cuáles tienes y te lleva a su página y a la carpeta del juego.</p>
       </section>
-      <section><h2>RetroBat (opcional)</h2>
+      <section ${enWindows() ? '' : 'hidden'}><h2>RetroBat (opcional)</h2>
         <p>Si usas RetroBat, el botón <b>Jugar</b> abre el juego con su lanzador y el emulador que tengas elegido. Si no, se abre con el programa que Windows tenga asociado.</p>
         <div class="line"><input type="text" id="retrobat" aria-label="Carpeta de RetroBat" value="${esc(b.retrobat)}" placeholder="Sin RetroBat"><button class="btn" id="elegir-rb">Elegir…</button></div>
       </section>
@@ -710,7 +713,7 @@ function bienvenida() {
       <div class="line">${sug.map(s => `<button type="button" class="btn" data-b-usar="${esc(s.ruta)}">Usar ${esc(s.ruta)}${s.existe ? '' : ' (se creará)'}</button>`).join('')}
         <button type="button" class="btn" id="b-elegir">Elegir otra carpeta…</button></div>
       <h3>Juegos de PC</h3>
-      <label class="opt"><input type="checkbox" id="b-tiendas" ${tiendas ? 'checked' : ''}> Buscar también los juegos que tengo instalados con Steam, GOG y Epic</label>
+      <label class="opt"><input type="checkbox" id="b-tiendas" ${tiendas ? 'checked' : ''}> Buscar también los juegos que tengo instalados con ${tiendasTxt()}</label>
       ${ajustes.retrobat ? `<p>Tienes RetroBat en <code>${esc(ajustes.retrobat)}</code>: el botón Jugar abrirá tus juegos con él.</p>` : ''}
       <div class="f-actions"><button type="button" class="btn primary" id="b-empezar" ${elegidas.length ? '' : 'disabled'}>Empezar</button>
         <button type="button" class="btn ghost" id="b-luego">Ahora no</button></div>
@@ -785,7 +788,7 @@ function abrirFicha(r, p) {
       html += '<div class="f-games">' + opciones.map(o => `<div class="f-pc"><span>${esc(o.g.n)} ${o.g.k && TIENDA[o.g.k] ? `<span class="badge">${TIENDA[o.g.k]}</span>` : ''} <span class="badge ${o.tipo === 'exacto' ? 'ok' : 'warn'}">${o.tipo === 'exacto' ? 'es este juego' : 'por el nombre'}</span></span>
         <button class="btn" data-carpeta-juego="${esc(o.g.f)}">Abrir la carpeta del juego</button></div>`).join('') + '</div>';
     } else if (r.s === 'pc') {
-      html += '<p class="muted">No lo encuentro entre tus juegos de Steam, GOG o Epic.</p>';
+      html += `<p class="muted">No lo encuentro entre tus juegos de ${tiendasTxt('o')}.</p>`;
     } else if (MODERNAS.has(r.s)) {
       html += '<p class="muted">No lo encuentro en tus carpetas de juegos.</p>';
     }

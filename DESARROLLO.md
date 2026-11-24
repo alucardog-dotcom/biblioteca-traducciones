@@ -17,7 +17,7 @@ Está hecha con [Tauri 2](https://tauri.app): el motor en Rust (`src-tauri/`) y 
 | Trabajos | `trabajos.rs`. Una cola: buscar juegos y traducir, de uno en uno. Vigila la carpeta Descargas cuando una traducción no tiene descarga directa |
 | Portadas propias | `portadas.rs`. Las imágenes se copian a `portadas\` en tus datos y se apuntan en `portadas_propias.json`; la ventana las ve con el protocolo `asset` de Tauri |
 | Favoritos y listas | `listas.rs`. Se guardan en `listas.json` en tus datos: cada juego con su clave de juego (la misma con la que la ventana junta sus traducciones) y la traducción que tenías elegida. La ventana manda siempre todas las listas juntas y aquí se limpian (Favoritos siempre existe y va la primera) |
-| Estadísticas de uso | `uso.rs`. Al minuto de abrir y luego cada seis horas (`uso_al_dia` en `lib.rs`), como mucho una vez al día y solo después de la bienvenida, pide `https://stats.bibliotecadetraducciones.com/count?p=app/<versión>&e=true`: en GoatCounter sale como el evento `app/<versión>`, y sus visitantes de cada día son las personas que lo han abierto. El día del último aviso queda en `uso.txt` en tus datos. El User-Agent lleva un espacio (`Biblioteca-de-traducciones/<versión> (Windows)`) porque GoatCounter toma por robots, y no cuenta, los que no lo tienen. Se quita con la casilla de Ajustes (`estadisticas` en `ajustes.json`) |
+| Estadísticas de uso | `uso.rs`. Al minuto de abrir y luego cada seis horas (`uso_al_dia` en `lib.rs`), como mucho una vez al día y solo después de la bienvenida, pide `https://stats.bibliotecadetraducciones.com/count?p=app/<versión>&e=true`: en GoatCounter sale como el evento `app/<versión>`, y sus visitantes de cada día son las personas que lo han abierto. El día del último aviso queda en `uso.txt` en tus datos. El User-Agent lleva un espacio (`Biblioteca-de-traducciones/<versión> (Windows)`, o `(Linux)`) porque GoatCounter toma por robots, y no cuenta, los que no lo tienen. Se quita con la casilla de Ajustes (`estadisticas` en `ajustes.json`) |
 | Tus datos | `%LOCALAPPDATA%\es.traducciones.biblioteca`: trabajos y su registro, parches descargados, la lista de tus juegos, tus portadas y tus listas |
 | Ajustes | `%APPDATA%\es.traducciones.biblioteca\ajustes.json`. Si no existe, la ventana da la bienvenida y pregunta dónde están los juegos |
 
@@ -36,6 +36,18 @@ npm run build                         # instalador: src-tauri\target\release\bun
 Compila siempre con `npm run build`, que llama a `tools\compilar.ps1`, y no con `npx tauri build` directamente. Ese script le dice al compilador que cambie por nombres genéricos las rutas de tu máquina (tu carpeta de usuario, la de Rust y la del proyecto). Si no, el `.exe` las lleva dentro.
 
 Al publicar una etiqueta `v*` en GitHub, GitHub Actions compila el instalador, lo firma (ver abajo) y lo sube a la versión (`.github/workflows/publicar.yml`).
+
+### Linux (AppImage, experimental)
+
+Lo propio de Linux va con `cfg(windows)` / `cfg(not(windows))`, así que la versión de Windows no cambia. En Linux: la carpeta de juegos por defecto es `~/Games`; de los juegos de PC solo se buscan los de Steam (también el Flatpak); no hay RetroBat (Jugar usa `xdg-open`); las descargas usan rustls; y 7-Zip, xdelta3 y chdman se toman del AppImage o, si no los trae, del `PATH`. Tus datos van a `~/.local/share/es.traducciones.biblioteca` y los ajustes a `~/.config/es.traducciones.biblioteca`.
+
+```bash
+tools/compilar-linux-contenedor.sh    # el AppImage para repartir (Podman o Docker): src-tauri/target/contenedor/
+npm run build:linux                   # el AppImage con tu sistema, sin herramientas dentro
+npm run build:linux:prueba            # prueba rápida: src-tauri/target/debug/biblioteca-traducciones
+```
+
+Al publicar una etiqueta `v*`, `.github/workflows/linux.yml` (aparte del de Windows, para que un fallo en uno no frene el otro) pasa las pruebas y crea el AppImage con `tools/compilar-linux-contenedor.sh --pruebas`, y lo sube a la versión como `Biblioteca-de-traducciones-x86_64.AppImage`. El del contenedor se compila en Ubuntu 22.04 (`tools/linux/Containerfile`), así que abre en cualquier distribución con glibc 2.35 o más nueva, y lleva dentro el 7-Zip estático oficial, el xdelta3 de Ubuntu y un chdman de MAME 0.289 compilado en el propio contenedor (el de Ubuntu 22.04 es el 0.242, sin `extractcd --splitbin`, y arrastra SDL2, PulseAudio y X11). Fuera del AppImage, el chdman del sistema tiene que tener `extractcd --splitbin`. Para compilar fuera del contenedor hacen falta Rust, Node.js y WebKitGTK 4.1 (`tools/compilar-linux.sh` dice qué paquetes faltan). `cargo test` usa las herramientas del sistema y salta con un aviso las pruebas que necesitan una que no esté.
 
 ## Firma del instalador
 
