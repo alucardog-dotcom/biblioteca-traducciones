@@ -46,7 +46,7 @@ MODERNAS = {'switch', 'ps3', 'ps4', 'ps5', 'wiiu', 'xbox360', 'xboxone'}
 # Salen en «Traducciones perdidas», que pide copias a quien las conserve. Las fichas sin enlace se quedan fuera: su
 # fichero pesaba como la ROM entera y pudo ser la ROM ya parcheada, que no se pide.
 PERDIDA = re.compile(r'no está en archive\.org|archive\.org no (?:lo )?guarda', re.I)
-FICHERO_PERDIDO = re.compile(r'\(([\w.\-]+\.(?:zip|rar|7z|exe|lzh|arj|ips|ups|bps|ppf|xdelta))(?:, ([\d.,]+ ?[KM]B))?', re.I)
+FICHERO_PERDIDO = re.compile(r'\(([\w.\-]+\.(?:zip|rar|7z|exe|lzh|arj|ips|ups|bps|ppf|xdelta3?))(?:, ([\d.,]+ ?[KM]B))?', re.I)
 
 
 def perdida(f):
