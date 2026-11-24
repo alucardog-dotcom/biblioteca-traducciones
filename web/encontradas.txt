@@ -53,3 +53,7 @@ nes|Ice Climber|PaladinKnights|2026-11-21|en TodoTradus México (todotradus.com.
 nes|Kirby's Adventure|PaladinKnights|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
 nes|Metroid|PaladinKnights|2026-11-21|en TodoTradus México (todotradus.com.mx), copia de TodoTradus que conserva sus ficheros
 ps2|Kingdom Hearts Re:Chain of Memories|Skybladecloud (con Joseas, Lureas, Axxel, Eliseo)|2026-11-23|en el blog de JaviMetal (javimetalrpg.blogspot.com), que guarda una copia del parche
+dreamcast|Fatal Fury|BnD Translations / Makinator|2026-11-24|en un recopilatorio de parches de Dreamcast enlazado en el hilo «Lista de juegos de Dreamcast en español» de El Otro Lado
+dreamcast|Mr. Driller|BnD Translations / Locobos|2026-11-24|en un recopilatorio de parches de Dreamcast enlazado en el hilo «Lista de juegos de Dreamcast en español» de El Otro Lado
+dreamcast|Neo Golden Logres|BnD Translations / tiu|2026-11-24|en un recopilatorio de parches de Dreamcast enlazado en el hilo «Lista de juegos de Dreamcast en español» de El Otro Lado
+dreamcast|Tony Hawk's Pro Skater 2|BnD Translations / a4tech|2026-11-24|en un recopilatorio de parches de Dreamcast enlazado en el hilo «Lista de juegos de Dreamcast en español» de El Otro Lado
