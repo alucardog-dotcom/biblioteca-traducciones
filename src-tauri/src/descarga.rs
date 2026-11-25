@@ -9,7 +9,6 @@ use serde_json::Value;
 use std::fs;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
 use std::time::Duration;
 use url::Url;
 
@@ -18,15 +17,25 @@ const PERMITIDOS: [&str; 4] = ["traduccioneswave.top", "archive.org", "github.co
 const MAX_BYTES: u64 = 2 * 1024 * 1024 * 1024;
 const AGENTE: &str = concat!("Biblioteca-de-traducciones/", env!("CARGO_PKG_VERSION"));
 
-fn agente() -> Result<ureq::Agent, String> {
+/// La conexión segura: en Windows, la del propio Windows (schannel, con sus certificados); en Linux, rustls
+/// con los certificados raíz que lleva dentro, para no depender de la versión de OpenSSL de cada distribución.
+#[cfg(windows)]
+pub fn con_tls(b: ureq::AgentBuilder) -> Result<ureq::AgentBuilder, String> {
     let tls = native_tls::TlsConnector::new().map_err(|e| format!("No se pudo preparar la conexión segura: {e}"))?;
-    Ok(ureq::AgentBuilder::new()
+    Ok(b.tls_connector(std::sync::Arc::new(tls)))
+}
+#[cfg(not(windows))]
+pub fn con_tls(b: ureq::AgentBuilder) -> Result<ureq::AgentBuilder, String> {
+    Ok(b)
+}
+
+fn agente() -> Result<ureq::Agent, String> {
+    let b = ureq::AgentBuilder::new()
         .redirects(0)
         .timeout_connect(Duration::from_secs(60))
         .timeout_read(Duration::from_secs(300))
-        .user_agent(AGENTE)
-        .tls_connector(Arc::new(tls))
-        .build())
+        .user_agent(AGENTE);
+    Ok(con_tls(b)?.build())
 }
 
 fn permitido(u: &Url) -> bool {

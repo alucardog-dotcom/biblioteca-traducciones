@@ -47,7 +47,7 @@ where
     S: AsRef<OsStr>,
 {
     if !exe.is_file() {
-        return Err(format!("Falta {} en las herramientas del programa.", exe.file_name().unwrap_or_default().to_string_lossy()));
+        return Err(falta(&exe.file_name().unwrap_or_default().to_string_lossy()));
     }
     let mut c = Command::new(exe);
     c.args(args);
@@ -57,6 +57,21 @@ where
     let mut texto = String::from_utf8_lossy(&o.stdout).into_owned();
     texto.push_str(&String::from_utf8_lossy(&o.stderr));
     Ok((o.status.success(), texto))
+}
+
+#[cfg(windows)]
+fn falta(nombre: &str) -> String {
+    format!("Falta {nombre} en las herramientas del programa.")
+}
+/// En Linux el AppImage puede no traer alguna herramienta: entonces se usa la del sistema, si está.
+#[cfg(not(windows))]
+fn falta(nombre: &str) -> String {
+    let paquete = match nombre {
+        "chdman" => "mame-tools o mame",
+        "xdelta3" => "xdelta3",
+        _ => "7zip o p7zip",
+    };
+    format!("Falta {nombre}: instálalo en el sistema (paquete {paquete}).")
 }
 
 static CONTADOR: AtomicU32 = AtomicU32::new(0);
@@ -881,18 +896,49 @@ mod pruebas {
         Path::new(env!("CARGO_MANIFEST_DIR")).join("recursos").join("herramientas")
     }
 
+    /// Una ruta del registro con el separador del sistema (`\` en Windows, `/` en Linux).
+    fn sep(s: &str) -> String {
+        s.replace('\\', std::path::MAIN_SEPARATOR_STR)
+    }
+
     struct Prueba {
         dir: PathBuf,
-        her: PathBuf,
         rutas: [PathBuf; 5],
         salida: String,
     }
 
+    /// Las herramientas, por su sitio en `Prueba::rutas`.
+    const SIETE_Z: usize = 0;
+    const CHDMAN: usize = 1;
+    const XDELTA: usize = 2;
+    const TODAS: &[usize] = &[SIETE_Z, CHDMAN, XDELTA];
+
     impl Prueba {
         fn nueva(nombre: &str) -> Prueba {
-            let (dir, her) = (carpeta(nombre), herramientas());
-            let rutas = [her.join("7z.exe"), her.join("chdman.exe"), her.join("xdelta3.exe"), dir.join("_temp"), dir.join("hechos.tsv")];
-            Prueba { dir, her, rutas, salida: "junto".into() }
+            let dir = carpeta(nombre);
+            // Las mismas que usa el programa: en Windows, las .exe de recursos/herramientas; en Linux, las de
+            // recursos/herramientas-linux (si se han preparado) o las del sistema.
+            #[cfg(windows)]
+            let her = herramientas();
+            #[cfg(not(windows))]
+            let her = herramientas().with_file_name("herramientas-linux");
+            let [siete_z, chdman, xdelta] = crate::rutas::herramientas_en(&her);
+            let rutas = [siete_z, chdman, xdelta, dir.join("_temp"), dir.join("hechos.tsv")];
+            Prueba { dir, rutas, salida: "junto".into() }
+        }
+        /// La prueba, si están las herramientas que necesita. En Linux, si falta alguna (chdman suele faltar),
+        /// se salta con un aviso en lugar de fallar; en Windows las lleva el programa y falla como siempre.
+        fn con(nombre: &str, necesita: &[usize]) -> Option<Prueba> {
+            let t = Prueba::nueva(nombre);
+            let faltan: Vec<String> = necesita.iter().map(|&i| &t.rutas[i]).filter(|p| !p.is_file()).map(|p| p.display().to_string()).collect();
+            if faltan.is_empty() || cfg!(windows) {
+                return Some(t);
+            }
+            eprintln!("AVISO: se salta la prueba {nombre}: falta {}", faltan.join(", "));
+            None
+        }
+        fn her(&self, i: usize) -> &Path {
+            &self.rutas[i]
         }
         fn entorno(&self) -> Entorno<'_> {
             let [siete_z, chdman, xdelta, temp, hechos] = &self.rutas;
@@ -949,14 +995,14 @@ mod pruebas {
 
     #[test]
     fn ips_con_leeme_comprueba_la_version() {
-        let t = Prueba::nueva("parcheo-leeme");
+        let Some(t) = Prueba::con("parcheo-leeme", &[SIETE_Z]) else { return };
         let src = ruido(65536, 5);
         let tgt = traducido(&src);
         let crc = motor::hex(crc32fast::hash(&src));
         let ips = t.fichero("tmp/juego.ips", &ips_de(&src, &tgt));
         let leeme = t.fichero("tmp/juego_readme.txt", format!("Instrucciones de Parcheo\r\nCRC32: {}\r\n", crc.to_lowercase()).as_bytes());
         let zip = t.dir.join("juego.zip");
-        assert!(herramienta(&t.her.join("7z.exe"), [OsStr::new("a"), zip.as_os_str(), ips.as_os_str(), leeme.as_os_str()]).unwrap().0);
+        assert!(herramienta(t.her(SIETE_Z), [OsStr::new("a"), zip.as_os_str(), ips.as_os_str(), leeme.as_os_str()]).unwrap().0);
         // Otra versión del juego: el IPS no lo sabría, pero el léame sí.
         let otra = t.fichero("juegos/Juego (Europe).nes", &ruido(65536, 6));
         let (r, log) = t.traducir("nes", &zip, &otra, &[]);
@@ -993,7 +1039,7 @@ mod pruebas {
 
     #[test]
     fn snes_con_cabecera_y_comprimidos() {
-        let mut t = Prueba::nueva("parcheo-snes");
+        let Some(mut t) = Prueba::con("parcheo-snes", &[SIETE_Z]) else { return };
         let src = ruido(131072, 3);
         let tgt = traducido(&src);
         let mut con = vec![0u8; 512];
@@ -1002,10 +1048,10 @@ mod pruebas {
         let rom = t.fichero("tmp/Mi Juego (Spain).smc", &con);
         let zip = t.dir.join("juegos").join("Mi Juego (Spain).zip");
         fs::create_dir_all(zip.parent().unwrap()).unwrap();
-        assert!(herramienta(&t.her.join("7z.exe"), [OsStr::new("a"), zip.as_os_str(), rom.as_os_str()]).unwrap().0);
+        assert!(herramienta(t.her(SIETE_Z), [OsStr::new("a"), zip.as_os_str(), rom.as_os_str()]).unwrap().0);
         let ips = t.fichero("tmp/Mi Juego (Traducción).ips", &ips_de(&src, &tgt));
         let siete = t.dir.join("Mi Juego.7z");
-        assert!(herramienta(&t.her.join("7z.exe"), [OsStr::new("a"), siete.as_os_str(), ips.as_os_str()]).unwrap().0);
+        assert!(herramienta(t.her(SIETE_Z), [OsStr::new("a"), siete.as_os_str(), ips.as_os_str()]).unwrap().0);
         let crc = motor::hex(crc32fast::hash(&src));
         t.salida = t.dir.join("Traducidos").to_string_lossy().into_owned();
         let (r, log) = t.traducir("snes", &siete, &zip, &[&crc]);
@@ -1037,7 +1083,7 @@ mod pruebas {
     /// Un disco de dos pistas (datos y audio) con un xdelta para la primera: de .cue/.bin y de .chd.
     #[test]
     fn disco_xdelta_y_chd() {
-        let t = Prueba::nueva("parcheo-disco");
+        let Some(t) = Prueba::con("parcheo-disco", TODAS) else { return };
         let e = t.entorno();
         let p1 = ruido(2352 * 300, 5);
         let p2 = ruido(2352 * 100, 6);
@@ -1137,14 +1183,14 @@ mod pruebas {
     fn xdelta_de(t: &Prueba, ruta: &str, de: &[u8], a: &[u8]) -> PathBuf {
         let (o, d) = (t.fichero("tmp/xdelta-origen.bin", de), t.fichero("tmp/xdelta-destino.bin", a));
         let xd = t.fichero(ruta, b"");
-        let (ok, txt) = herramienta(&t.her.join("xdelta3.exe"), [OsStr::new("-e"), "-f".as_ref(), "-s".as_ref(), o.as_os_str(), d.as_os_str(), xd.as_os_str()]).unwrap();
+        let (ok, txt) = herramienta(t.her(XDELTA), [OsStr::new("-e"), "-f".as_ref(), "-s".as_ref(), o.as_os_str(), d.as_os_str(), xd.as_os_str()]).unwrap();
         assert!(ok, "{txt}");
         xd
     }
 
     fn chd_de(t: &Prueba, cue: &Path, ruta: &str) -> PathBuf {
         let chd = t.fichero(ruta, b"");
-        let (ok, txt) = herramienta(&t.her.join("chdman.exe"), [OsStr::new("createcd"), "-i".as_ref(), cue.as_os_str(), "-o".as_ref(), chd.as_os_str(), "-f".as_ref()]).unwrap();
+        let (ok, txt) = herramienta(t.her(CHDMAN), [OsStr::new("createcd"), "-i".as_ref(), cue.as_os_str(), "-o".as_ref(), chd.as_os_str(), "-f".as_ref()]).unwrap();
         assert!(ok, "{txt}");
         chd
     }
@@ -1159,7 +1205,7 @@ mod pruebas {
         if por_pistas {
             args.push("-sb".as_ref());
         }
-        let (ok, txt) = herramienta(&t.her.join("chdman.exe"), args).unwrap();
+        let (ok, txt) = herramienta(t.her(CHDMAN), args).unwrap();
         assert!(ok, "{txt}");
         pistas(&c).iter().map(|p| fs::read(p).unwrap()).collect()
     }
@@ -1178,7 +1224,7 @@ mod pruebas {
     /// El fallo de Rondo of Blood: el xdelta es para la pista 2, que no es ni la primera ni la más grande.
     #[test]
     fn disco_con_el_juego_en_la_pista_2() {
-        let t = Prueba::nueva("parcheo-pista2");
+        let Some(t) = Prueba::con("parcheo-pista2", TODAS) else { return };
         let ps = pistas_inventadas(20);
         let nueva = con_texto(&ps[1], 250);
         let xd = xdelta_de(&t, "parche.xdelta", &ps[1], &nueva);
@@ -1231,7 +1277,7 @@ mod pruebas {
     /// Un IPS no comprueba nada: va a la pista de datos, nunca a una de audio.
     #[test]
     fn ips_en_un_disco_no_toca_el_audio() {
-        let t = Prueba::nueva("parcheo-ips-disco");
+        let Some(t) = Prueba::con("parcheo-ips-disco", TODAS) else { return };
         let ps = pistas_inventadas(40);
         let nueva = con_texto(&ps[1], 250);
         let ips = t.fichero("parche.ips", &ips_de(&ps[1], &nueva));
@@ -1245,7 +1291,7 @@ mod pruebas {
     /// si solo trae el SHA-1, por él.
     #[test]
     fn la_ficha_dice_la_pista() {
-        let t = Prueba::nueva("parcheo-sha1");
+        let Some(t) = Prueba::con("parcheo-sha1", TODAS) else { return };
         let ps = pistas_inventadas(50);
         let nueva = con_texto(&ps[2], 300);
         let ips = t.fichero("parche.ips", &ips_de(&ps[2], &nueva));
@@ -1288,7 +1334,7 @@ mod pruebas {
     /// disco. Se queda con el que vale para tu copia, sea cual sea.
     #[test]
     fn varios_parches_en_el_comprimido() {
-        let t = Prueba::nueva("parcheo-varios");
+        let Some(t) = Prueba::con("parcheo-varios", TODAS) else { return };
         // Dos volcados del mismo disco: en el B, el pregap de la pista 2 va a cero.
         let a = pistas_inventadas(60);
         let mut b = a.clone();
@@ -1310,7 +1356,7 @@ mod pruebas {
         let leeme = format!("imagen_unica    Fichero: la imagen entera.  CRC32 {}\r\niso    Fichero: el .iso.  CRC32 {}\r\n", motor::hex(crc32fast::hash(&imagen)), motor::hex(crc32fast::hash(&iso)));
         t.fichero("paquete/LEEME.txt", leeme.as_bytes());
         let zip = t.dir.join("Juego_ES.zip");
-        let (ok, txt) = herramienta(&t.her.join("7z.exe"), [OsStr::new("a"), zip.as_os_str(), t.dir.join("paquete").join("*").as_os_str()]).unwrap();
+        let (ok, txt) = herramienta(t.her(SIETE_Z), [OsStr::new("a"), zip.as_os_str(), t.dir.join("paquete").join("*").as_os_str()]).unwrap();
         assert!(ok, "{txt}");
         let ficha = [crc_a.as_str(), crc_b.as_str()];
 
@@ -1320,7 +1366,7 @@ mod pruebas {
         let fin = r.unwrap_or_else(|e| panic!("{e}\n{log:?}"));
         iguales(&contenido_chd(&t, &fin, true), &[b[0].clone(), nueva_b, b[2].clone()]);
         let i = log.iter().position(|l| l.starts_with("OK ")).unwrap();
-        assert!(log[i - 1].starts_with("+ por_pistas_b\\Juego_ES.xdelta [xdelta]"), "{log:?}");
+        assert!(log[i - 1].starts_with(&sep("+ por_pistas_b\\Juego_ES.xdelta [xdelta]")), "{log:?}");
 
         // Pistas sueltas del volcado A, y el mismo disco en .chd.
         let traducido_a = [a[0].clone(), nueva_a, a[2].clone()];
@@ -1338,7 +1384,7 @@ mod pruebas {
         let fin = r.unwrap_or_else(|e| panic!("{e}\n{log:?}"));
         iguales(&contenido_chd(&t, &fin, false), &[imagen_nueva]);
         let i = log.iter().position(|l| l.starts_with("OK ")).unwrap();
-        assert!(log[i - 1].starts_with("+ imagen_unica\\Juego_ES.xdelta [xdelta]"), "{log:?}");
+        assert!(log[i - 1].starts_with(&sep("+ imagen_unica\\Juego_ES.xdelta [xdelta]")), "{log:?}");
 
         // «ISO + WAV»: la pista de datos es un .iso de 2048 bytes por sector y las de audio, .wav.
         t.fichero("iso/Juego 01.wav", &wav_de(&a[0]));
@@ -1348,7 +1394,7 @@ mod pruebas {
         let (r, log) = t.traducir("pcenginecd", &zip, &cue, &ficha);
         let fin = r.unwrap_or_else(|e| panic!("{e}\n{log:?}"));
         iguales(&contenido_chd(&t, &fin, true), &[a[0].clone(), iso_nuevo, a[2].clone()]);
-        assert!(log.iter().any(|l| l.starts_with("+ iso\\Juego_ES.xdelta [xdelta]")), "{log:?}");
+        assert!(log.iter().any(|l| l.starts_with(&sep("+ iso\\Juego_ES.xdelta [xdelta]"))), "{log:?}");
 
         // Otro disco, en .chd (de ahí no sale ningún CRC32 con el que rechazarlo antes): se prueban los
         // cuatro parches, ninguno vale y no se crea nada.

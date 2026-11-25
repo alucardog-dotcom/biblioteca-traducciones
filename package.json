@@ -8,7 +8,9 @@
     "tauri": "tauri",
     "dev": "tauri dev",
     "build": "powershell -NoProfile -File tools/compilar.ps1",
-    "build:prueba": "powershell -NoProfile -File tools/compilar.ps1 -Prueba"
+    "build:prueba": "powershell -NoProfile -File tools/compilar.ps1 -Prueba",
+    "build:linux": "bash tools/compilar-linux.sh",
+    "build:linux:prueba": "bash tools/compilar-linux.sh --prueba"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2"

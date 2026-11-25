@@ -1,0 +1,41 @@
+# La versión para Linux, aparte de la de Windows (publicar.yml) para que un fallo en una no frene la otra.
+# Al publicar una etiqueta v*: pasa las pruebas y compila el AppImage en el contenedor de Ubuntu 22.04
+# (tools/compilar-linux-contenedor.sh, ver DESARROLLO.md) y lo sube a la versión de GitHub con ese nombre
+# (la crea si no existe). Lanzado a mano, solo lo deja como artefacto del flujo.
+name: Linux
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  appimage:
+    runs-on: ubuntu-latest
+    # Compila chdman de MAME y el programa desde cero: bastante más que el de Windows, pero nunca horas.
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v5
+      - name: Pruebas y AppImage (en el contenedor)
+        run: tools/compilar-linux-contenedor.sh --pruebas
+      # Nombre fijo, como el instalador de Windows: releases/latest/download/… siempre funciona.
+      - name: Nombre fijo
+        run: cp src-tauri/target/contenedor/*.AppImage Biblioteca-de-traducciones-x86_64.AppImage
+      - uses: actions/upload-artifact@v7
+        with:
+          path: Biblioteca-de-traducciones-x86_64.AppImage
+          archive: false
+          if-no-files-found: error
+      - name: Subir el AppImage a la versión
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # publicar.yml puede estar creándola a la vez: si la creación falla, se comprueba que ya existe.
+          gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1 \
+            || gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --generate-notes \
+            || gh release view "$GITHUB_REF_NAME" > /dev/null
+          gh release upload "$GITHUB_REF_NAME" Biblioteca-de-traducciones-x86_64.AppImage --clobber

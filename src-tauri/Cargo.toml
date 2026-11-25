@@ -26,16 +26,21 @@ roxmltree = "0.20"
 dirs = "5"
 crc32fast = "1"
 zip = { version = "2", default-features = false }
-# Descargas de los parches, con el TLS de Windows (schannel).
-ureq = { version = "2", default-features = false, features = ["native-tls", "json"] }
-native-tls = "0.2"
 url = "2"
 percent-encoding = "2"
 # El sha de git de los ficheros del catálogo, para saber si el de GitHub es otro.
 sha1_smol = "1"
 
+# Descargas de los parches. En Windows, con su propio TLS (schannel) y sus certificados.
 [target.'cfg(windows)'.dependencies]
 winreg = "0.52"
+ureq = { version = "2", default-features = false, features = ["native-tls", "json"] }
+native-tls = "0.2"
+
+# En Linux, con rustls y los certificados raíz de Mozilla que lleva dentro (webpki-roots): no depende de la
+# versión de OpenSSL de cada distribución, y el AppImage funciona igual en todas.
+[target.'cfg(not(windows))'.dependencies]
+ureq = { version = "2", default-features = false, features = ["tls", "json"] }
 
 [profile.release]
 codegen-units = 1
