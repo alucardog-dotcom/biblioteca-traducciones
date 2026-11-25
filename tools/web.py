@@ -15,6 +15,8 @@ DESCARGA = REPO + '/releases/latest'
 # El instalador de la última versión con nombre fijo: publicar.yml sube cada instalador también con ese nombre
 # y GitHub resuelve «latest» a la última versión publicada, así que el botón descarga el .exe directamente.
 INSTALADOR = REPO + '/releases/latest/download/Biblioteca-de-traducciones-setup.exe'
+# La versión para Linux, igual: linux.yml sube el AppImage a cada versión con ese nombre fijo.
+APPIMAGE = REPO + '/releases/latest/download/Biblioteca-de-traducciones-x86_64.AppImage'
 # Estadísticas anónimas y sin cookies con GoatCounter: el código del sitio (lo que va antes de .goatcounter.com).
 # Vacío, la web no carga ningún script de estadísticas.
 GOATCOUNTER = 'bibliotecadetraducciones'
@@ -1724,7 +1726,7 @@ def pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version, dias, filas, p
 
   <section class="bloque programa" id="programa">
     <div>
-      <p class="eti">El programa para Windows</p>
+      <p class="eti">El programa para Windows y Linux</p>
       <h2>Si prefieres que lo haga todo él</h2>
       <p class="texto">Dile dónde están tus juegos: ROMs sueltas o en .zip, .7z y .rar, discos .cue/.bin, .gdi y .chd, y los de PC que tienes en Steam, GOG y Epic. Te dice cuáles tienen traducción comprobando el CRC32 de tu copia, descarga el parche de su sitio original y lo aplica. El traducido queda junto al original con la etiqueta [T-Es]; tu copia no se toca.</p>
       <ul class="lista-puntos">
@@ -1734,9 +1736,11 @@ def pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version, dias, filas, p
       </ul>
       <div class="acciones">
         <a class="btn primario grande" href="{INSTALADOR}" data-goatcounter-click="descarga-programa">Descargar para Windows</a>
+        <a class="btn grande" href="{APPIMAGE}" data-goatcounter-click="descarga-programa-linux">Descargar para Linux</a>
         <a class="btn grande" href="{DESCARGA}">Todas las versiones</a>
       </div>
-      <p class="suave">Gratis y de código libre · Windows 10 y 11 · versión {e(version)}</p>
+      <p class="suave">Gratis y de código libre · Windows 10 y 11 · Linux de 64 bits · versión {e(version)}</p>
+      <p class="suave">La versión para Linux es una AppImage, todavía experimental: dale permiso de ejecución y ábrela. De los juegos de PC encuentra los de Steam; GOG, Epic y RetroBat son solo de Windows.</p>
     </div>
   </section>
 
@@ -1765,6 +1769,7 @@ def pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version, dias, filas, p
     <div class="acciones">
       <a class="btn primario grande" href="catalogo/">Buscar mi juego</a>
       <a class="btn grande" href="{INSTALADOR}" data-goatcounter-click="descarga-final">Descargar para Windows</a>
+      <a class="btn grande" href="{APPIMAGE}" data-goatcounter-click="descarga-final-linux">Descargar para Linux</a>
     </div>
   </section>
 </main>'''
@@ -1778,7 +1783,7 @@ def pagina_inicio(por_sis, sysn, base, n_trad, n_juegos, version, dias, filas, p
          'potentialAction': {'@type': 'SearchAction', 'target': {'@type': 'EntryPoint', 'urlTemplate': base + 'catalogo/?q={q}'},
                              'query-input': 'required name=q'}},
         {'@type': 'SoftwareApplication', 'name': 'Biblioteca de traducciones', 'url': base, 'description': desc, 'inLanguage': 'es',
-         'operatingSystem': 'Windows 10, Windows 11', 'applicationCategory': 'UtilitiesApplication', 'softwareVersion': version,
+         'operatingSystem': 'Windows 10, Windows 11, Linux', 'applicationCategory': 'UtilitiesApplication', 'softwareVersion': version,
          'downloadUrl': INSTALADOR, 'license': 'https://www.gnu.org/licenses/gpl-3.0.html', 'image': base + 'img/vista-previa.png',
          'offers': {'@type': 'Offer', 'price': '0', 'priceCurrency': 'EUR'}}]}
     return pagina(raiz, 'Biblioteca de traducciones: juegos traducidos al español por fans', desc, '', cuerpo, base, ld=ld)
