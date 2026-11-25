@@ -1129,6 +1129,11 @@ def pagina(raiz, titulo, descripcion, ruta, cuerpo, base, imagen='img/vista-prev
     # «Descargar» en la cabecera solo en la portada (ruta ''): en una ficha se leía como descargar el juego (15-11-2026).
     descargar = (f'\n    <a class="btn primario" href="{INSTALADOR}" data-goatcounter-click="descarga-cabecera">Descargar</a>'
                  if not ruta else '')
+    # Quien entra desde un Linux de escritorio de 64 bits (ni Android ni ChromeOS) se lleva la AppImage con ese mismo botón.
+    descargar_linux = ("<script>try{if(/Linux x86_64/.test(navigator.platform)&&!/Android|CrOS/.test(navigator.userAgent)){"
+                       "var a=document.querySelector('a[data-goatcounter-click=descarga-cabecera]');"
+                       f"a.href='{APPIMAGE}';a.dataset.goatcounterClick='descarga-cabecera-linux';"
+                       "a.title='AppImage para Linux de 64 bits'}}catch(e){}</script>\n") if descargar else ''
     return f'''<!doctype html>
 <html lang="es">
 <head>
@@ -1179,7 +1184,7 @@ def pagina(raiz, titulo, descripcion, ruta, cuerpo, base, imagen='img/vista-prev
   </div>
 </footer>
 <script src="{raiz}listas.js" defer></script>
-{cuenta}</body>
+{descargar_linux}{cuenta}</body>
 </html>
 '''
 
