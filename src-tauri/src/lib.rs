@@ -166,7 +166,9 @@ fn ver_carpeta(ruta: PathBuf) -> Result<(), String> {
 
 #[tauri::command]
 fn abrir_web(url: String) -> Result<(), String> {
-    if !(url.starts_with("https://") || url.starts_with("http://")) {
+    // También el correo de contacto, con el asunto ya escrito («Avisar de un problema» de la ficha).
+    let correo = url.starts_with("mailto:contacto@bibliotecadetraducciones.com");
+    if !(url.starts_with("https://") || url.starts_with("http://") || correo) {
         return Err("Solo se abren páginas web.".into());
     }
     tauri_plugin_opener::open_url(&url, None::<&str>).map_err(|e| e.to_string())

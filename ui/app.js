@@ -13,12 +13,19 @@ const TIENDA = {steam: 'Steam', gog: 'GOG', epic: 'Epic Games'};
 const F = {sistema:0, juego:1, orig:2, grupo:3, version:4, fecha:5, estado:6, fmt:7, rom:8, crc:9, sha1:10, url:11, fuente:12, notas:13};
 const FUENTE = {wave: 'Traducciones Wave', rhdn2021: 'la copia de romhacking.net (2021) en archive.org', github: 'GitHub',
                 ra: 'la copia de parches de RetroAchievements en GitHub'};
-const VISTAS = {inicio: 'Inicio', mios: 'Mis juegos', todas: 'Descubrir', hechas: 'Traducidos', descargas: 'Descargas', ajustes: 'Ajustes'};
+const VISTAS = {inicio: 'Inicio', mios: 'Mis juegos', todas: 'Descubrir', explorar: 'Explorar', hechas: 'Traducidos', descargas: 'Descargas', ajustes: 'Ajustes',
+  grupos: 'Grupos de traducción', doblajes: 'Doblajes al español', encamino: 'Traducciones en camino', perdidas: 'Traducciones perdidas'};
+// Las secciones que cuelgan de Explorar: un grupo, un sistema, una saga o tema y las colecciones.
+const DE_EXPLORAR = /^(grupo|sistema|sel):|^(grupos|doblajes|encamino|perdidas)$/;
+// Las secciones con rejilla de juegos (donde se busca y se filtra).
+const esRejilla = v => ['mios', 'todas', 'hechas', 'doblajes', 'encamino', 'perdidas'].includes(v) || /^(lista|grupo|sistema|sel):/.test(v);
 
 let filas = [], grupos = [], porClave = new Map(), porJuego = new Map(), centro = {sistemas: {}, filas: {}}, traducidos = {}, tes = new Map();
 let juegos = [], pares = [], paresPorFila = new Map();
 let vista = 'inicio', limit = 60, lista = [];
-let filtro = {sys: '', directa: false, completa: false, sinia: false, steam: false};
+let filtro = {sys: '', directa: false, completa: false, sinia: false, steam: false, latino: false, catalan: false, doblaje: false, logros: false, voces: ''};
+const CHIPS = ['directa', 'completa', 'sinia', 'steam', 'latino', 'catalan', 'doblaje', 'logros'];
+const hayFiltro = () => CHIPS.some(k => filtro[k]);
 let escaneando = false, trabajos = [], espera = null, ajustes = {}, propias = {};
 // En Linux no hay RetroBat y de los juegos de PC solo se buscan los de Steam.
 const enWindows = () => !ajustes.so || ajustes.so === 'windows';
@@ -98,11 +105,116 @@ function cargarDatos(d) {
     const crcs = new Set([...a[F.crc].split('|'), ...(x.d || []).flatMap(d => d.c || [])]
       .map(c => c.trim().toLowerCase()).filter(c => /^[0-9a-f]{8}$/.test(c)));
     const titulos = [a[F.orig], a[F.juego], ...a[F.rom].split('|')].map(tokens).filter(t => t.length);
-    return {i, a, key, s: a[F.sistema], crcs, titulos, x};
+    const r = {i, a, key, s: a[F.sistema], crcs, titulos, x};
+    r.m = marcas(r);
+    return r;
   });
   porClave = new Map(filas.map(r => [r.key, r]));
   agrupar();
+  agruparGrupos();
 }
+
+// ---------------------------------------------------------------- marcas de las notas (como tools/web.py)
+// La variante del español, otra lengua, el doblaje, los logros de RetroAchievements y las traducciones perdidas salen
+// de frases fijas de las notas del catálogo (ver catalogo\LEEME_catalogo.txt). Si no lo dicen, no se afirma nada.
+const RE_LATINO = /latino|latinoam[eé]ric|español de am[eé]rica|español americano|mexican|argentin|chilen|colombian|venezolan|peruan|uruguay/;
+const RE_NEUTRO = /\bneutr[oa]\b/;
+const RE_ESPANA = /español de españa|castellano|peninsular|\bespaña\b/;
+const VARIANTES = {latino: 'latino', neutro: 'neutro', espana: 'de España'};
+const RE_DOBLAJE = /(Traducción y doblaje|Doblaje)( parcial)? al (castellano|español)/;
+const RE_VOCES = /(?:Traducción y doblaje|Doblaje)(?: parcial)? al (castellano|español latino)/;
+const RE_VOCES_NOTA = /voces(?:\/[a-zá-ú]+)? en (?:español )?(latino|castellano)/;
+const RE_LENGUA = /(Traducción al|También en) (catalán|gallego|euskera)\./;
+// Traducciones cuyo parche ya no se conserva: su web cerró y archive.org guarda la página, pero no el fichero.
+const RE_PERDIDA = /no está en archive\.org|archive\.org no (?:lo )?guarda/i;
+const EN_CURSO = new Set(['beta', 'parcial', 'en curso', 'en desarrollo', 'en actualización']);
+function marcas(r) {
+  const n = r.a[F.notas], t = (n + ' ' + r.a[F.grupo]).toLowerCase();
+  const dob = RE_DOBLAJE.exec(n), voc = RE_VOCES.exec(n) || RE_VOCES_NOTA.exec(n), len = RE_LENGUA.exec(n);
+  return {
+    variante: RE_LATINO.test(t) ? 'latino' : RE_NEUTRO.test(t) ? 'neutro' : RE_ESPANA.test(t) ? 'espana' : '',
+    doblaje: !dob ? '' : dob[1] === 'Doblaje' ? 'doblaje' : 'ambos', dobParcial: !!(dob && dob[2]),
+    voces: !voc ? '' : voc[1].endsWith('latino') ? 'latino' : 'espana',
+    lengua: len ? len[2] : '', soloLengua: !!(len && len[1] === 'Traducción al'),
+    logros: /RAPatches/.test(JSON.stringify(r.x.d || '') + r.a[F.url] + r.a[F.fuente]),
+    perdida: !!(r.a[F.url].trim() && RE_PERDIDA.test(n)),
+    enCurso: EN_CURSO.has(r.a[F.estado].trim().toLowerCase()),
+  };
+}
+const sinAcentos = s => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+const POR_TITULO = new Intl.Collator('es', {sensitivity: 'base', numeric: true});
+const porTitulo = grs => grs.slice().sort((x, y) => POR_TITULO.compare(x.titulo, y.titulo));
+
+// ---------------------------------------------------------------- grupos de traducción
+// «pitito / Wesker» son dos. Cada uno con la forma de escribirlo que más usa el catálogo (como partes_grupo() en web.py).
+const GRUPO_ALIAS = {'Wave': 'Traducciones Wave', 'Charnego': 'CharnegoTranslations'};
+const claveGrupo = n => sinAcentos(n).toLowerCase();
+let porGrupo = new Map();
+function agruparGrupos() {
+  const formas = new Map();
+  for (const r of filas) {
+    r.grupos = r.a[F.grupo].split(/\s*\/\s*|\s*;\s*/).map(p => p.trim()).filter(Boolean).map(p => GRUPO_ALIAS[p] || p);
+    for (const p of r.grupos) {
+      const k = claveGrupo(p);
+      if (!formas.has(k)) formas.set(k, new Map());
+      formas.get(k).set(p, (formas.get(k).get(p) || 0) + 1);
+    }
+  }
+  porGrupo = new Map();
+  for (const [k, m] of formas) porGrupo.set(k, {k, nombre: [...m].sort((x, y) => y[1] - x[1])[0][0], filas: [], juegos: new Set()});
+  for (const r of filas) for (const p of r.grupos) {
+    const g = porGrupo.get(claveGrupo(p));
+    g.filas.push(r);
+    g.juegos.add(r.gr);
+  }
+}
+const enGrupo = (r, k) => r.grupos.some(p => claveGrupo(p) === k);
+// El nombre de los grupos de una traducción, cada uno un botón que lleva a su página.
+const gruposHtml = r => r.grupos.length ? r.grupos.map(p => {
+  const g = porGrupo.get(claveGrupo(p));
+  return `<button type="button" class="enlace" data-ir="grupo:${esc(g.k)}">${esc(g.nombre)}</button>`;
+}).join(' / ') : 'Grupo desconocido';
+
+// ---------------------------------------------------------------- sagas y temas (como SAGAS y TEMAS en web.py)
+// Por nombre: el del juego o el de alguna de sus traducciones.
+const SAGAS = [
+  ['final-fantasy', 'Final Fantasy', /\bFinal Fantasy\b/], ['dragon-quest', 'Dragon Quest', /\bDragon (?:Quest|Warrior)\b/],
+  ['shin-megami-tensei', 'Shin Megami Tensei y Persona', /\b(?:Megami Tensei|Persona [1-5Q]|Persona:|Devil Summoner|Devil Survivor|Majin Tensei)/],
+  ['tales-of', 'Tales of', /^Tales of (?!Monkey)/], ['mega-man', 'Mega Man', /\b(?:Mega ?Man|Rockman)\b/],
+  ['castlevania', 'Castlevania', /\b(?:Castlevania|Akumajou Dracula)\b/], ['zelda', 'The Legend of Zelda', /\bZelda\b/],
+  ['mario', 'Mario', /\bMario\b/], ['sonic', 'Sonic', /\bSonic\b(?! Blast Man)/], ['dragon-ball', 'Dragon Ball', /\bDragon Ball\b/],
+  ['captain-tsubasa', 'Captain Tsubasa', /\bCaptain Tsubasa\b/], ['pokemon', 'Pokémon', /\bPok[eé]mon\b/],
+  ['fire-emblem', 'Fire Emblem', /\bFire Emblem\b/], ['resident-evil', 'Resident Evil', /\b(?:Resident Evil|Biohazard)\b/],
+  ['star-wars', 'Star Wars', /\bStar Wars\b/], ['phantasy-star', 'Phantasy Star', /\bPhantasy Star\b/],
+].map(([id, nombre, re]) => ({id, nombre, res: [re]}));
+const TEMAS = [
+  ['chicas-al-poder', 'Chicas al poder', 'Juegos protagonizados por mujeres: de Samus Aran y Lara Croft a Laura Bow, Shantae o las guerreras de Sailor Moon.',
+    [/^(Super )?Metroid\b/, /^Tomb Raider/, /^Clock Tower/, /^Parasite Eve/, /^(FATAL FRAME|Fatal Frame)/, /^Shantae/, /^(Syd of )?Valis\b/,
+      /^Wonder Momo/, /^Athena$/, /Sailor Moon/, /^Magic Knight Rayearth/, /^Valkyrie Profile$/, /^Princess Crown/, /^Lady Stalker/,
+      /^Atelier /, /^Night in the Woods/, /^Wild Arms 3/, /^Magical Pop'n/, /^Little Witch in the Woods/, /^WitchSpring/,
+      /^Touhou Luna Nights/, /^Heroine's Quest/, /^Miracle Girls/, /^YAWARA/, /Madoka Magica/, /Neptunia|Superdimension Neptune/, /^Arcana Heart/,
+      /Gal'?s Fi/, /^Xenosaga Episode I:/, /Little Mermaid/, /^Blackwell/, /^Kathy Rain/, /Perils of Rosella/, /^Kuon$/,
+      /^Nancy Drew/, /^Phantasmagoria$/, /Colonel's Bequest/, /Dagger of Amon Ra/, /^Dreamfall/]],
+  ['mucho-texto', 'Mucho texto', 'Rol, novelas visuales y aventuras en las que se lee muchísimo: los juegos donde más se agradece una traducción.',
+    [/^Planescape/, /^Disco Elysium/, /^Baldur's Gate/, /^Icewind Dale/, /^Arcanum/, /^Fallout( 2)?(:|$)/, /^Dragon Age/,
+      /Knights of the Old Republic/, /^Divinity: Original Sin/, /^Ultima VII/, /^Roadwarden/, /^Citizen Sleeper/, /^Sunless Sea/,
+      /^Snatcher/, /^Policenauts/, /^Famicom Detective Club/, /Ace Attorney/, /^Danganronpa/, /^AI: The Somnium/, /^Paranormasight/,
+      /^Steins;Gate/, /^(CHAOS|Chaos);/, /^Anonymous;Code/, /^Ever17/, /^CLANNAD/, /^Little Busters/, /^AIR$/, /^Fate\/stay night/,
+      /^Tsukihime/, /^Higurashi/, /^Umineko/, /^Saya no Uta/, /^The House in Fata Morgana/, /^Kara no Sho/, /^Sharin no Kuni/,
+      /Grisaia/, /^Persona [2-5Q]/, /^Shin Megami Tensei: Persona/, /^Suikoden/, /^Chrono Trigger/, /^Mother 3/, /^EarthBound/,
+      /^Lunar: The Silver Star/, /^Xenogears/, /^Xenosaga/, /^Tales of (?!Monkey|Maj)/, /^Trails /, /^Yakuza/, /^Valkyrie Profile/,
+      /^Vagrant Story/, /^Final Fantasy Tactics/, /^Tactics Ogre/, /^(UNDERTALE|Undertale|DELTARUNE)/, /^OMORI/, /^Grim Fandango/,
+      /^Monkey Island 2/, /^Gabriel Knight/, /^Quest for Glory/, /^Langrisser/]],
+  ['basados-en-animes', 'Juegos basados en animes', 'Dragon Ball, Saint Seiya, Sailor Moon, Captain Tsubasa, Ranma, Hokuto no Ken y otras series de anime convertidas en videojuego.',
+    [/Sailor Moon/, /^Dragon Ball/, /Saint Seiya/, /Captain Tsubasa/, /^Ranma/, /Yu ?Yu Hakusho/, /Hokuto no Ken|Fist of the North Star/,
+      /Evangelion/, /Gundam/, /Macross/, /^Lupin/, /^Doraemon/, /Kinnikuman|M\.U\.S\.C\.L\.E/, /^Dr\. Slump/, /One Piece/, /^Naruto/,
+      /^Digimon Adventure/, /^Magic Knight Rayearth/, /Madoka Magica/, /^Slayers/, /Record of Lodoss War/, /Berserk/, /Shin-?Chan/,
+      /Chibi Maruko/, /^JoJo/, /^City Hunter/, /Urusei Yatsura/, /Patlabor/, /^Mazinger/, /Super Robot (Taisen|Wars)/, /^Shaman King/,
+      /Hajime no Ippo/, /^Attack on Titan/, /^Ashita no Joe/, /^Bastard!!/, /^Devilman/, /^Dirty Pair/, /Gegege no Kit/,
+      /Hattori-kun/, /^YAWARA/, /^Tenchi Muy/, /^Yaiba/, /^Maison Ikkoku/]],
+].map(([id, nombre, lead, res]) => ({id, nombre, lead, res}));
+const SELECCIONES = [...TEMAS, ...SAGAS];
+const enSeleccion = (sel, gr) => gr.filas.some(r => sel.res.some(re => re.test(r.a[F.juego])));
 
 // Un juego, una ficha: las traducciones del mismo juego (mismo sistema y mismo título, o mismo AppID de
 // Steam) van juntas, y dentro de la ficha se elige cuál.
@@ -212,14 +324,37 @@ function gruposDeTodos(v) {
   if (v === 'hechas') return grupos.filter(gr => gr.filas.some(r => hecha(r, (mejorPar(r) || {}).g)));
   const l = listaDe(v);
   if (l) return l.juegos.map(j => porJuego.get(j.k)).filter(Boolean);
+  if (v.startsWith('grupo:')) { const g = porGrupo.get(v.slice(6)); return g ? porTitulo([...g.juegos]) : []; }
+  if (v.startsWith('sistema:')) return porTitulo(grupos.filter(gr => gr.s === v.slice(8)));
+  if (v.startsWith('sel:')) { const sel = SELECCIONES.find(x => x.id === v.slice(4)); return sel ? porTitulo(grupos.filter(gr => enSeleccion(sel, gr))) : []; }
+  if (v === 'doblajes') return porTitulo(grupos.filter(gr => gr.filas.some(r => r.m.doblaje)));
+  if (v === 'perdidas') return porTitulo(grupos.filter(gr => gr.filas.some(r => r.m.perdida)));
+  // En camino: las que están a medias (beta, parcial, en curso), de la más reciente a la más antigua, salvo los juegos que ya
+  // tienen una traducción completa.
+  if (v === 'encamino') {
+    const fecha = gr => gr.filas.filter(r => r.m.enCurso).map(r => r.a[F.fecha]).sort().pop() || '';
+    return grupos.filter(gr => gr.filas.some(r => r.m.enCurso) && !gr.filas.some(r => r.a[F.estado].trim().toLowerCase() === 'completa'))
+      .sort((x, y) => fecha(y).localeCompare(fecha(x)));
+  }
   return grupos;
+}
+// En algunas secciones la tarjeta enseña la traducción que la ha traído: la del grupo, el doblaje, la perdida…
+function valeEnVista(v) {
+  if (v.startsWith('grupo:')) return r => enGrupo(r, v.slice(6));
+  if (v === 'doblajes') return r => !!r.m.doblaje && (!filtro.voces || r.m.voces === filtro.voces);
+  if (v === 'perdidas') return r => r.m.perdida;
+  if (v === 'encamino') return r => r.m.enCurso;
+  return () => true;
 }
 const gruposDe = v => gruposDeTodos(v).filter(visible);
 const itemsDe = v => gruposDe(v).map(gr => elegida(gr, undefined, guardada(listaDe(v), gr)));
 
 function filtrar(grs) {
   const q = tokens($('q').value);
-  const vale = r => (!filtro.directa || directa(r)) && (!filtro.completa || completa(r)) && (!filtro.sinia || !esIA(r)) && (!filtro.steam || !!r.x.steam);
+  const deVista = valeEnVista(vista);
+  const vale = r => deVista(r) && (!filtro.directa || directa(r)) && (!filtro.completa || completa(r)) && (!filtro.sinia || !esIA(r)) && (!filtro.steam || !!r.x.steam)
+    && (!filtro.latino || r.m.variante === 'latino' || r.m.variante === 'neutro') && (!filtro.catalan || r.m.lengua === 'catalán')
+    && (!filtro.doblaje || !!r.m.doblaje) && (!filtro.logros || r.m.logros);
   const l = listaDe(vista);
   const out = [];
   for (const gr of grs) {
@@ -230,6 +365,13 @@ function filtrar(grs) {
     }
     const it = elegida(gr, vale, guardada(l, gr));
     if (it) out.push(it);
+  }
+  // Al buscar, primero los juegos que lo tienen en el título (no solo en otro nombre o en el grupo) y los que más
+  // traducciones tienen, como en la web.
+  if (q.length) {
+    const enTitulo = it => { const t = tokens(it.gr.titulo); return q.every(w => t.some(x => x.startsWith(w))) ? 1 : 0; };
+    const pt = new Map(out.map(it => [it, enTitulo(it)]));
+    out.sort((x, y) => pt.get(y) - pt.get(x) || y.gr.filas.length - x.gr.filas.length);
   }
   return out;
 }
@@ -333,6 +475,19 @@ const thumb = (sys, name, tipo) => 'https://raw.githubusercontent.com/libretro-t
   encodeURIComponent(name.replace(/[&*\/:`<>?\\|"]/g, '_')) + '.png';
 // Juegos de PC: la carátula vertical de Steam y, si no la tiene, su cabecera.
 const steamImg = (id, f) => `https://cdn.cloudflare.steamstatic.com/steam/apps/${encodeURIComponent(id)}/${f}`;
+const CORREO = 'contacto@bibliotecadetraducciones.com';
+// Los archivos de las traducciones de PC y de las consolas de hoy pueden traer un instalador o un .exe (como ANTIVIRUS en web.py).
+const ANTIVIRUS = '<p class="f-note"><b>Antes de abrir un instalador o un .exe, pásale el antivirus</b> o analízalo en <a href="https://www.virustotal.com/" target="_blank" rel="noopener">VirusTotal</a>. Los archivos están en la página de su autor: no los alojamos ni podemos revisarlos uno a uno.</p>';
+const notaSinIA = n => String(n).replace(/^\[IA\]\s*/, '').trim();
+// «Avisar de un problema»: el correo de contacto con el juego, el sistema y la traducción ya escritos.
+function avisarProblema(r) {
+  const sis = SYS[r.s] || r.s;
+  const cuerpo = `Juego: ${r.gr.titulo} (${sis})\nTraducción: ${r.a[F.grupo] || 'grupo desconocido'}${versionDe(r) ? ' ' + versionDe(r) : ''}\n\n`
+    + 'Qué pasa (si es con tu copia del juego, di qué ficheros tienes: .bin/.cue, .chd, .iso…): \n';
+  const q = (k, v) => k + '=' + encodeURIComponent(v.replace(/\n/g, '\r\n'));
+  api('abrir_web', {url: `mailto:${CORREO}?${q('subject', `Problema con ${r.gr.titulo} (${sis})`)}&${q('body', cuerpo)}`})
+    .catch(() => aviso(`No se ha podido abrir tu programa de correo. Escríbenos a ${CORREO}.`, 'bad'));
+}
 const REPO_UI = 'https://raw.githubusercontent.com/alucardog-dotcom/biblioteca-traducciones/main/ui/';
 const WEB = 'https://bibliotecadetraducciones.com/';
 // Los juegos de PC que no están en Steam suelen estar en itch.io o en la web de su autor ("pj" en el catálogo).
@@ -433,6 +588,19 @@ function badges(r, p) {
   return `<div class="badges">${b.join('')}</div>`;
 }
 
+// Las etiquetas de una traducción en su ficha (como chips_trad() en web.py).
+function etiquetas(r) {
+  const b = [], m = r.m, est = r.a[F.estado].trim();
+  if (est) b.push(`<span class="badge ${/complet|publicad/i.test(est) ? 'ok' : 'warn'}">${esc(est[0].toUpperCase() + est.slice(1))}</span>`);
+  if (directa(r)) b.push('<span class="badge acc" title="El programa la descarga y la aplica él solo">Un clic</span>');
+  if (esIA(r)) b.push('<span class="badge warn" title="Hecha con IA o con traducción automática">IA</span>');
+  if (m.variante) b.push(`<span class="badge var" title="La variante del español, según sus autores">Español ${VARIANTES[m.variante]}</span>`);
+  if (m.lengua) b.push(`<span class="badge var" title="${m.soloLengua ? 'Traducción' : 'El parche trae también la traducción'} al ${m.lengua}">${m.soloLengua ? 'En' : 'También en'} ${m.lengua}</span>`);
+  if (m.doblaje) b.push(`<span class="badge dob" title="Lleva voces en español${m.dobParcial ? ' en una parte del juego' : ''}">${m.doblaje === 'doblaje' ? 'Doblaje' : 'Con doblaje'}${m.dobParcial ? ' parcial' : ''}</span>`);
+  if (m.logros) b.push('<span class="badge ra" title="Con la versión de este parche que guarda RetroAchievements, el juego traducido tiene logros">Logros</span>');
+  return b.length ? `<div class="badges f-etq">${b.join('')}</div>` : '';
+}
+
 function boton(r, p) {
   const g = p && p.g;
   if (hecha(r, g)) return `<button class="btn primary" data-act="jugar">Jugar</button>`;
@@ -475,7 +643,7 @@ function recordarFoco(raiz) {
   if (a.id) return {id: a.id};
   const card = a.closest('.card');
   if (card) return {n: card.dataset.n, sel: a.classList.contains('fav') ? '.fav' : a.dataset.act ? `[data-act="${a.dataset.act}"]` : '.title'};
-  for (const k of ['f', 'g', 'go', 'lista', 'l', 'act', 'portada', 'tanda']) if (a.dataset[k] !== undefined) return {sel: `[data-${k}="${CSS.escape(a.dataset[k])}"]`};
+  for (const k of ['f', 'g', 'go', 'lista', 'l', 'act', 'portada', 'tanda', 'voces', 'ir', 'k']) if (a.dataset[k] !== undefined) return {sel: `[data-${k}="${CSS.escape(a.dataset[k])}"]`};
   return null;
 }
 function devolverFoco(raiz, f) {
@@ -493,11 +661,16 @@ function contadores() {
   return mios;
 }
 
-const marcarNav = () => document.querySelectorAll('.nav[data-go]').forEach(b => b.toggleAttribute('aria-current', b.dataset.go === vista) && b.setAttribute('aria-current', 'page'));
+const marcarNav = () => {
+  const v = DE_EXPLORAR.test(vista) ? 'explorar' : vista;
+  document.querySelectorAll('.nav[data-go]').forEach(b => b.toggleAttribute('aria-current', b.dataset.go === v) && b.setAttribute('aria-current', 'page'));
+};
 
 function pintar() {
   // Una lista que ya no existe (borrada, o recordada de la última vez): se vuelve a Inicio.
   if (vista.startsWith('lista:') && !listaDe(vista)) vista = 'inicio';
+  // Un grupo o una selección que ya no existe (recordada de la última vez): se vuelve a Explorar.
+  if ((vista.startsWith('grupo:') && !porGrupo.has(vista.slice(6))) || (vista.startsWith('sel:') && !SELECCIONES.some(x => x.id === vista.slice(4)))) vista = 'explorar';
   marcarNav();
   contadores();
   tarjetas = [];
@@ -505,6 +678,8 @@ function pintar() {
   if (vista === 'inicio') pintarInicio();
   else if (vista === 'descargas') pintarDescargas();
   else if (vista === 'ajustes') pintarAjustes();
+  else if (vista === 'explorar') pintarExplorar();
+  else if (vista === 'grupos') pintarGrupos();
   else pintarRejilla();
   devolverFoco(main, foco);
 }
@@ -572,7 +747,7 @@ function pintarRejilla() {
   lista = filtrar(gruposDe(vista));
   const nTrad = lista.reduce((n, it) => n + it.gr.filas.length, 0);
   // En Descubrir, sin buscar ni filtrar nada: una tanda de juegos al azar para empezar por algún sitio.
-  const recomendando = vista === 'todas' && !filtro.sys && !tokens($('q').value).length && !filtro.directa && !filtro.completa && !filtro.sinia && !filtro.steam;
+  const recomendando = vista === 'todas' && !filtro.sys && !tokens($('q').value).length && !hayFiltro();
   const chip = (k, t, ayuda) => `<button class="chip" data-f="${k}" aria-pressed="${filtro[k]}"${ayuda ? ` title="${ayuda}"` : ''}>${t}</button>`;
   const l = listaDe(vista);
   let vacio = 'No hay resultados con estos filtros.';
@@ -586,16 +761,105 @@ function pintarRejilla() {
   const cabecera = l ? `<div class="lista-h"><h1>${esc(l.nombre)}</h1>${l.id === 'fav' ? ''
     : '<button class="btn ghost" data-lista="renombrar">Cambiar el nombre</button><button class="btn ghost" data-lista="borrar">Borrar la lista</button>'}</div>`
     + (faltan > 0 ? `<p class="lead">${faltan === 1 ? 'Un juego de esta lista ya no está' : faltan + ' juegos de esta lista ya no están'} en el catálogo.</p>` : '')
-    : `<h1>${VISTAS[vista]}</h1>`;
+    : cabeceraExplorar(vista) || `<h1>${VISTAS[vista]}</h1>`;
   main.innerHTML = `${cabecera}${recomendando ? bloqueRecomendados() : ''}
     <div class="filters">
-      <select id="sys" aria-label="Sistema"><option value="">Todos los sistemas</option>${sistemas.map(s => `<option value="${esc(s)}" ${s === filtro.sys ? 'selected' : ''}>${esc(SYS[s] || s)}</option>`).join('')}</select>
+      ${vista === 'doblajes' ? ['', 'espana', 'latino'].map(k => `<button class="chip" data-voces="${k}" aria-pressed="${filtro.voces === k}">${{'': 'Todos', espana: 'Voces de España', latino: 'Voces latinas'}[k]}</button>`).join('') : ''}
+      <select id="sys" aria-label="Sistema"${vista.startsWith('sistema:') ? ' hidden' : ''}><option value="">Todos los sistemas</option>${sistemas.map(s => `<option value="${esc(s)}" ${s === filtro.sys ? 'selected' : ''}>${esc(SYS[s] || s)}</option>`).join('')}</select>
       ${chip('directa', 'Traducción de un clic')}${chip('completa', 'Completas')}${chip('sinia', 'Sin IA')}${chip('steam', 'En Steam', 'Solo los juegos que se venden en Steam: fuera los gratuitos de itch.io y los que ya no están a la venta')}
+      ${chip('latino', 'Español latino', 'Traducciones en español latino o neutro, según sus autores')}${chip('catalan', 'Catalán', 'Traducciones al catalán, solas o junto al español')}${vista === 'doblajes' ? '' : chip('doblaje', 'Doblajes', 'Juegos con voces en español hechas por aficionados')}${chip('logros', 'Con logros', 'Traducciones con las que RetroAchievements tiene logros')}
       <span class="count">${lista.length.toLocaleString('es')} ${lista.length === 1 ? 'juego' : 'juegos'} · ${nTrad.toLocaleString('es')} ${nTrad === 1 ? 'traducción' : 'traducciones'}</span>
     </div>
     ${lista.length ? `<div class="grid">${lista.slice(0, limit).map(tarjeta).join('')}</div><div id="more"></div>` : `<div class="empty">${vacio}</div>`}`;
   $('sys').onchange = e => { filtro.sys = e.target.value; limit = 60; pintar(); };
   if ($('more')) masAlFinal.observe($('more'));
+}
+
+// ---------------------------------------------------------------- explorar
+// Las colecciones de la web: sistemas, grupos de traducción, doblajes, en camino, perdidas, sagas y temas.
+const migas = (...pasos) => `<nav class="migas" aria-label="Estás en"><button type="button" class="enlace" data-go="explorar">Explorar</button>${pasos.map(([t, v]) => ` › ${v ? `<button type="button" class="enlace" data-go="${esc(v)}">${esc(t)}</button>` : esc(t)}`).join('')}</nav>`;
+const LEADS = {
+  doblajes: 'Juegos con voces en español hechas por aficionados, solas o con la traducción de los textos. Elige si quieres las voces de España o las latinas.',
+  encamino: 'Traducciones que ya se pueden jugar aunque aún no estén terminadas (en beta, parciales o en curso), de la más reciente a la más antigua. Los juegos que ya tienen una traducción completa no salen aquí.',
+  perdidas: `Traducciones de las que solo queda la página donde se anunciaban: su web cerró y archive.org no guardó el parche. Si conservas alguno, escríbenos a <b>${CORREO}</b> y lo recuperamos con el crédito de sus autores.`,
+};
+function cabeceraExplorar(v) {
+  if (v.startsWith('grupo:')) {
+    const g = porGrupo.get(v.slice(6));
+    const sis = new Set(g.filas.map(r => r.s)).size;
+    return `${migas(['Grupos de traducción', 'grupos'], [g.nombre])}<h1>${esc(g.nombre)}</h1>
+      <p class="lead">${g.filas.length.toLocaleString('es')} ${g.filas.length === 1 ? 'traducción' : 'traducciones'} en el catálogo, de ${sis} ${sis === 1 ? 'sistema' : 'sistemas'}.</p>`;
+  }
+  if (v.startsWith('sistema:')) {
+    const s = v.slice(8);
+    return `${migas([SYS[s] || s])}<h1>${esc(SYS[s] || s)}</h1><p class="lead">Todos los juegos de ${esc(SYS[s] || s)} con traducción al español en el catálogo.</p>`;
+  }
+  if (v.startsWith('sel:')) {
+    const sel = SELECCIONES.find(x => x.id === v.slice(4));
+    return `${migas([sel.nombre])}<h1>${esc(sel.nombre)}</h1><p class="lead">${sel.lead ? esc(sel.lead) : `Los juegos de la saga ${esc(sel.nombre)} con traducción al español.`}</p>`;
+  }
+  if (LEADS[v]) return `${migas([VISTAS[v]])}<h1>${VISTAS[v]}</h1><p class="lead">${LEADS[v]}</p>`;
+  return '';
+}
+
+function pintarExplorar() {
+  const vis = gruposDe('todas');
+  const porSis = new Map();
+  for (const gr of vis) porSis.set(gr.s, (porSis.get(gr.s) || 0) + 1);
+  const sistemas = [...porSis].sort((x, y) => (SYS[x[0]] || x[0]).localeCompare(SYS[y[0]] || y[0]));
+  const n = v => gruposDe(v).length;
+  const nGrupos = [...porGrupo.values()].filter(g => g.filas.length >= 3).length;
+  const col = (v, titulo, texto, num) => `<button type="button" class="stat" data-go="${v}"><b>${num.toLocaleString('es')}</b><span>${titulo}</span><small>${texto}</small></button>`;
+  const sel = lista => lista.map(x => { const k = vis.filter(gr => enSeleccion(x, gr)).length; return k ? `<button type="button" class="chip" data-go="sel:${x.id}">${esc(x.nombre)} <b class="n">${k}</b></button>` : ''; }).join('');
+  main.innerHTML = `<h1>Explorar</h1>
+    <p class="lead">El catálogo por sistemas, grupos de traducción y colecciones, como en la web.</p>
+    <div class="stats colecciones">
+      ${col('grupos', 'Grupos de traducción', 'Los grupos y traductores con tres traducciones o más.', nGrupos)}
+      ${col('doblajes', 'Doblajes al español', 'Voces en español hechas por aficionados.', n('doblajes'))}
+      ${col('encamino', 'En camino', 'Se pueden jugar, pero aún no están terminadas.', n('encamino'))}
+      ${col('perdidas', 'Perdidas', 'Su parche se perdió: ¿lo conservas?', n('perdidas'))}
+    </div>
+    <div class="row-h"><h2>Sistemas</h2></div>
+    <div class="chips">${sistemas.map(([s, k]) => `<button type="button" class="chip" data-go="sistema:${esc(s)}">${esc(SYS[s] || s)} <b class="n">${k.toLocaleString('es')}</b></button>`).join('')}</div>
+    <div class="row-h"><h2>Temas</h2></div>
+    <div class="chips">${sel(TEMAS)}</div>
+    <div class="row-h"><h2>Sagas</h2></div>
+    <div class="chips">${sel(SAGAS)}</div>`;
+}
+
+// Los grupos de traducción con tres traducciones o más (como pagina_grupos() en web.py); la búsqueda de arriba los filtra.
+function pintarGrupos() {
+  const q = tokens($('q').value);
+  const todos = [...porGrupo.values()].filter(g => g.filas.length >= 3 && [...g.juegos].some(visible))
+    .sort((x, y) => POR_TITULO.compare(x.nombre, y.nombre));
+  const lista = q.length ? todos.filter(g => { const t = tokens(g.nombre); return q.every(w => t.some(x => x.startsWith(w))); }) : todos;
+  main.innerHTML = `${migas([VISTAS.grupos])}<h1>${VISTAS.grupos}</h1>
+    <p class="lead">Los grupos y traductores con tres traducciones o más en el catálogo. Busca arriba por su nombre; pulsa uno para ver sus traducciones.</p>
+    ${lista.length ? `<div class="grupos">${lista.map(g => `<button type="button" class="grupo" data-go="grupo:${esc(g.k)}"><b>${esc(g.nombre)}</b><span>${g.filas.length.toLocaleString('es')} traducciones · ${new Set(g.filas.map(r => r.s)).size} sist.</span></button>`).join('')}</div>`
+    : '<div class="empty">Ningún grupo con ese nombre.</div>'}`;
+}
+
+// Abajo de la ficha: juegos vecinos del mismo sistema (por orden alfabético, como relacionados() en web.py) y más
+// traducciones del mismo grupo. Cada uno abre su ficha.
+function vecinos(lista, gr, k = 3) {
+  const i = lista.indexOf(gr);
+  return i < 0 ? lista.filter(x => x !== gr).slice(0, 2 * k) : [...lista.slice(Math.max(0, i - k), i), ...lista.slice(i + 1, i + 1 + k)];
+}
+function parecidos(r) {
+  const gr = r.gr, mini = g => `<button type="button" class="mini" data-k="${esc(g.k)}" title="${esc(g.titulo)}">${portada(g.portada, false)}<span>${esc(g.titulo)}</span></button>`;
+  let html = '';
+  const cerca = vecinos(porTitulo(grupos.filter(g => g.s === gr.s && visible(g))), gr);
+  if (cerca.length) html += `<div class="f-sec">Más juegos de ${esc(SYS[gr.s] || gr.s)} en español</div><div class="minis">${cerca.map(mini).join('')}</div>
+    <p><button type="button" class="enlace" data-ir="sistema:${esc(gr.s)}">Todos los juegos de ${esc(SYS[gr.s] || gr.s)}</button></p>`;
+  for (const p of r.grupos) {
+    const g = porGrupo.get(claveGrupo(p));
+    const otros = vecinos(porTitulo([...g.juegos].filter(visible)), gr);
+    if (!otros.length) continue;
+    html += `<div class="f-sec">Más traducciones de ${esc(g.nombre)}</div><div class="minis">${otros.map(mini).join('')}</div>
+      <p><button type="button" class="enlace" data-ir="grupo:${esc(g.k)}">Todas las de ${esc(g.nombre)} (${g.filas.length})</button></p>`;
+    break;
+  }
+  return html ? `<div class="f-parecidos">${html}</div>` : '';
 }
 
 const masAlFinal = new IntersectionObserver(es => {
@@ -773,11 +1037,13 @@ function abrirFicha(r, p) {
       <a class="btn ghost" href="${esc(buscarImg)}" target="_blank" rel="noopener">Buscar en Google Imágenes</a>
       <p class="hint">También puedes copiar una imagen en el navegador y pulsar <kbd>Ctrl</kbd>+<kbd>V</kbd> aquí, o arrastrarla desde una carpeta.</p>
     </div></div><div>`
-    + (todas.length > 1 ? `<h3 class="f-cual">Traducción de ${esc(a[F.grupo] || 'grupo desconocido')}${a[F.juego] !== gr.titulo ? ` <span class="muted">(${esc(a[F.juego])})</span>` : ''}</h3>` : '')
+    + `<h3 class="f-cual">${r.m.doblaje === 'doblaje' ? 'Doblaje' : 'Traducción'} de ${gruposHtml(r)}${a[F.juego] !== gr.titulo ? ` <span class="muted">(${esc(a[F.juego])})</span>` : ''}</h3>`
+    + etiquetas(r)
+    + (esAdulto(r) ? '<p class="f-note warn">Juego para adultos (+18): solo para mayores de edad.</p>' : '')
     + dl([['Título original', esc(a[F.orig])], ['Versión', esc(a[F.version])], ['Fecha', esc(a[F.fecha])], ['Estado', esc(a[F.estado])],
           ['Formato', esc(a[F.fmt].toUpperCase())], ['Juego que necesitas', esc(a[F.rom]).split(' | ').join('<br>')],
           ['CRC32', a[F.crc] ? `<code>${esc(a[F.crc].toUpperCase())}</code>` : '']])
-    + (a[F.notas] ? `<p class="f-note">${notaHtml(a[F.notas])}</p>` : '');
+    + (notaSinIA(a[F.notas]) ? `<p class="f-note">${notaHtml(notaSinIA(a[F.notas]))}</p>` : '');
 
   html += '<div class="f-sec">Tu juego</div>';
   if (A_MANO.has(r.s)) {
@@ -792,18 +1058,6 @@ function abrirFicha(r, p) {
     } else if (MODERNAS.has(r.s)) {
       html += '<p class="muted">No lo encuentro en tus carpetas de juegos.</p>';
     }
-    // Los que están en Steam: si no lo tienes, su página de la tienda (no es un enlace de afiliado). Si la traducción es
-    // para la versión de GOG (la ficha tiene AppID y aun así una página, "pj", de gog.com), se enseña la de GOG en su lugar.
-    const enGog = (r.gr ? r.gr.filas : [r]).find(f => f.x.steam && webSegura(f.x.pj) && /\.gog\.com\//i.test(f.x.pj));
-    const enSteam = enGog ? null : (r.gr ? r.gr.filas : [r]).find(f => f.x.steam);
-    if (enSteam && !opciones.length) {
-      html += `<div class="f-compra"><a class="btn" href="https://store.steampowered.com/app/${encodeURIComponent(enSteam.x.steam)}/" target="_blank" rel="noopener">¿No lo tienes? Página del juego en Steam</a></div>`;
-    }
-    // Los que no están en Steam: la página oficial del juego, si la conocemos.
-    const conPagina = enGog || (r.gr ? r.gr.filas : [r]).find(f => webSegura(f.x.pj));
-    if (conPagina && !enSteam && !opciones.length) {
-      html += `<div class="f-compra"><a class="btn" href="${esc(conPagina.x.pj)}" target="_blank" rel="noopener">¿No lo tienes? Página del juego en ${esc(sitioPagina(conPagina.x.pj))}${conPagina.x.pj18 ? ' (18+)' : ''}</a></div>`;
-    }
   } else if (!opciones.length) {
     html += `<p class="muted">No tienes este juego. Pon tu copia en una de tus carpetas de juegos (${esc((ajustes.carpetas || []).join(', '))}) y pulsa <b>Buscar mis juegos</b>.</p>`;
   } else {
@@ -814,11 +1068,25 @@ function abrirFicha(r, p) {
     }
   }
 
+  // La página del juego, en todas las fichas que la tienen: la de Steam (no es un enlace de afiliado) o, si la traducción es
+  // para la versión de GOG (la ficha tiene AppID y aun así una página, "pj", de gog.com), la de GOG; si no está en Steam,
+  // la página oficial (itch.io, Game Jolt o la web de su autor).
+  const enGog = gr.filas.find(f => f.x.steam && webSegura(f.x.pj) && /\.gog\.com\//i.test(f.x.pj));
+  const enSteam = enGog ? null : gr.filas.find(f => f.x.steam);
+  const conPagina = enGog || gr.filas.find(f => webSegura(f.x.pj));
+  const noLoTienes = opciones.length ? '' : '¿No lo tienes? ';
+  if (enSteam) {
+    html += `<div class="f-compra"><a class="btn" href="https://store.steampowered.com/app/${encodeURIComponent(enSteam.x.steam)}/" target="_blank" rel="noopener">${noLoTienes}Página del juego en Steam</a></div>`;
+  } else if (conPagina) {
+    html += `<div class="f-compra"><a class="btn" href="${esc(conPagina.x.pj)}" target="_blank" rel="noopener">${noLoTienes}Página del juego en ${esc(sitioPagina(conPagina.x.pj))}${conPagina.x.pj18 ? ' (18+)' : ''}</a></div>`;
+  }
+
   html += '<div class="f-sec">Descarga</div>';
   if (A_MANO.has(r.s)) {
     html += a[F.url]
       ? '<p>Descárgala desde la página de la traducción y sigue sus instrucciones.</p>'
       : '<p>De esta traducción no se conoce la página: búscala en Google.</p>';
+    html += ANTIVIRUS;
   } else if (d0) {
     html += `<p>Se descarga directamente de ${esc(FUENTE[d0.t] || d0.t)}.</p>`;
     // Las versiones se comparan sin la «v» delante: tokens() se come «v1» y «v1.0» quedaría como «0».
@@ -836,16 +1104,18 @@ function abrirFicha(r, p) {
       ? '<p>No hay descarga directa. Abre la página, descarga el parche y la biblioteca lo recogerá de tu carpeta Descargas y lo aplicará sola.</p>'
       : '<p>De esta traducción no se conoce la página, así que se busca en Google. Si encuentras el parche, descárgalo y la biblioteca lo recogerá de tu carpeta Descargas y lo aplicará sola.</p>';
   }
+  if (r.m.perdida) html += `<p class="f-note warn">El parche se ha perdido: su web cerró y archive.org no guardó el fichero. La página que se abre es la copia archivada. ¿Lo conservas? Escríbenos con <b>Avisar de un problema</b> o mira las <a href="${WEB}perdidas/" target="_blank" rel="noopener">traducciones perdidas</a> en la web.</p>`;
   const puede = elegido && elegido.tipo !== 'otra' && !A_MANO.has(r.s);
   const salida = salidaDe(r, elegido && elegido.g);
   html += '<div class="f-actions">';
   if (salida) html += '<button class="btn primary" data-act="jugar">Jugar</button><button class="btn" data-act="carpeta">Ver en la carpeta</button>';
   if (puede && d0) html += `<button class="btn${salida ? '' : ' primary'}" data-act="traducir">${salida ? 'Volver a traducir' : 'Traducir'}</button>`;
   if (puede) html += `<button class="btn" data-act="esperar">${a[F.url] ? 'Abrir página' : 'Buscar en Google'} y esperar la descarga</button>`;
-  if (webSegura(a[F.url])) html += `<a class="btn" href="${esc(a[F.url])}" target="_blank" rel="noopener">Abrir página</a>`;
+  if (webSegura(a[F.url])) html += `<a class="btn" href="${esc(a[F.url])}" target="_blank" rel="noopener">${r.m.perdida ? 'Abrir página archivada' : 'Abrir página'}</a>`;
   // Sin página, el botón de esperar ya busca en Google.
   if (a[F.url] || !puede) html += `<a class="btn" href="https://www.google.com/search?q=${encodeURIComponent('traducción español ' + (a[F.orig] || a[F.juego]) + ' ' + (SYS[r.s] || r.s) + ' ' + a[F.grupo])}" target="_blank" rel="noopener">Buscar en Google</a>`;
-  html += '</div></div></div>';
+  html += '<button class="btn ghost" data-act="avisar">Avisar de un problema</button>';
+  html += '</div></div></div>' + parecidos(r);
   $('f-body').innerHTML = html;
   if (!$('ficha').open) { listasCambiadas = false; $('ficha').showModal(); }
 }
@@ -953,6 +1223,8 @@ main.addEventListener('click', e => {
   const f = e.target.closest('.chip[data-f]');
   if (f) { filtro[f.dataset.f] = !filtro[f.dataset.f]; limit = 60; return pintar(); }
   if (e.target.closest('[data-tanda]')) { tanda++; return pintar(); }
+  const voc = e.target.closest('[data-voces]');
+  if (voc) { filtro.voces = voc.dataset.voces; limit = 60; return pintar(); }
   if (e.target.dataset.jugar) return jugar(e.target.dataset.jugar, e.target.dataset.sis || '');
   if (e.target.dataset.ruta) return verCarpeta(e.target.dataset.ruta);
   if (e.target.dataset.lista) return accionLista(e.target.dataset.lista);
@@ -968,10 +1240,15 @@ $('f-body').addEventListener('click', e => {
   if (e.target.dataset.carpetaJuego) return verCarpeta(e.target.dataset.carpetaJuego);
   const pt = e.target.closest('[data-portada]');
   if (pt && fichaActual) return portadaFicha(pt.dataset.portada, fichaActual.gr);
+  const ir_ = e.target.closest('[data-ir]');
+  if (ir_) { $('ficha').close(); return ir(ir_.dataset.ir); }
+  const mini = e.target.closest('.mini[data-k]');
+  if (mini) { const it = elegida(porJuego.get(mini.dataset.k)); if (it) { abrirFicha(it.r, it.p); $('ficha').scrollTop = 0; } return; }
   const otra = e.target.closest('.f-trad');
   if (otra && fichaActual) { const t = fichaActual.todas[+otra.dataset.fila]; return abrirFicha(t, mejorPar(t)); }
   const btn = e.target.closest('button[data-act]');
   if (!btn || !fichaActual) return;
+  if (btn.dataset.act === 'avisar') return avisarProblema(fichaActual.r);
   const p = juegoElegido(), act = btn.dataset.act;
   if (act !== 'carpeta' && act !== 'jugar' && !p) return;
   if (act !== 'carpeta') $('ficha').close();
@@ -1036,7 +1313,7 @@ document.querySelectorAll('.nav[data-go]').forEach(b => b.addEventListener('clic
 let tq;
 $('q').addEventListener('input', () => {
   clearTimeout(tq);
-  tq = setTimeout(() => { if (!['mios', 'todas', 'hechas'].includes(vista) && !listaDe(vista)) vista = 'todas'; limit = 60; pintar(); }, 150);
+  tq = setTimeout(() => { if (!esRejilla(vista) && vista !== 'grupos') vista = 'todas'; limit = 60; pintar(); }, 150);
 });
 $('scan').addEventListener('click', async () => {
   try { await api('escanear'); escaneando = true; pintarEscaneo(''); sondear(); } catch (e) { aviso(e.message, 'bad'); }
@@ -1194,7 +1471,7 @@ async function buscarActualizaciones() {
 
 (async function inicio() {
   try { vista = localStorage.getItem('vista') || 'inicio'; } catch (e) { }
-  if (!VISTAS[vista] && !vista.startsWith('lista:')) vista = 'inicio';
+  if (!VISTAS[vista] && !/^(lista|grupo|sistema|sel):/.test(vista)) vista = 'inicio';
   ajustes = await api('ajustes').catch(() => ({}));
   try {
     await cargarTodo();

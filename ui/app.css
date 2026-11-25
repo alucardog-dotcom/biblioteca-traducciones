@@ -278,3 +278,32 @@ kbd { font: inherit; font-size: 11px; background: var(--panel-2); border: 1px so
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }
 #more { height: 1px; }
+
+/* ---------------------------------------------------------------- explorar y marcas de la ficha */
+.enlace { background: none; border: 0; padding: 0; color: var(--acc); cursor: pointer; font: inherit; text-align: left; }
+.enlace:hover { text-decoration: underline; }
+.migas { color: var(--muted); font-size: 13px; margin: 10px 0 -4px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chips .chip { color: var(--text); }
+.chip .n { margin-left: 4px; }
+.stats.colecciones { margin: 8px 0 6px; }
+.stats.colecciones .stat { background: var(--panel); text-align: left; color: var(--text); display: flex; flex-direction: column; gap: 2px; flex: 1 1 200px; }
+.stat small { color: var(--muted); font-size: 12px; }
+.stat span { font-weight: 600; }
+.grupos { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
+.grupo { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; cursor: pointer; text-align: left; min-width: 0; }
+.grupo:hover { border-color: #3A4352; }
+.grupo b { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.grupo span { font-size: 12px; color: var(--muted); }
+.badge.var { background: rgba(110,160,240,.15); color: #9DBDF2; }
+.badge.dob { background: rgba(190,120,230,.15); color: #CFA0EE; }
+.badge.ra { background: rgba(63,185,122,.12); color: #7FD9A8; }
+.f-etq { margin: -4px 0 12px; }
+.f-parecidos { margin-top: 22px; border-top: 1px solid var(--line); padding-top: 4px; }
+.f-parecidos p { margin: 6px 0 0; }
+.minis { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 10px; }
+.mini { display: flex; flex-direction: column; gap: 4px; background: none; border: 0; padding: 0; cursor: pointer; color: var(--text); text-align: left; font-size: 12px; min-width: 0; }
+.mini .cover { border-radius: 8px; }
+.mini .cover .sys, .mini .cover .soltar { display: none; }
+.mini > span { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.mini:hover .cover { outline: 1px solid #3A4352; }
