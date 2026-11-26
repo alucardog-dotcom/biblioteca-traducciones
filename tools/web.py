@@ -187,7 +187,7 @@ def datos_a_mano():
         return a_mano
     for l in open(ruta, encoding='utf-8'):
         p = [x.strip() for x in l.rstrip('\n').split('\t')]
-        if l.startswith('#') or len(p) < 3 or '|' not in p[0] or p[1] not in ('v', 't', 's') or not p[2]:
+        if l.startswith('#') or len(p) < 3 or '|' not in p[0] or p[1] not in ('v', 't', 's', 'a', 'd') or not p[2]:
             continue
         sistema, titulo = p[0].split('|', 1)
         d = a_mano.setdefault((sistema.strip(), sin_acentos(titulo.strip()).lower()), {})
@@ -599,7 +599,7 @@ def seccion_en_espanol(gr, raiz):
   </section>'''
 
 
-def seccion_juego(gr, nombre_sis):
+def seccion_juego(gr, nombre_sis, raiz=''):
     """«El juego»: la descripción, sus datos, capturas del juego original y el vídeo (que no se carga hasta que lo pulsas)."""
     d = gr['dj']
     if not d:
@@ -611,7 +611,8 @@ def seccion_juego(gr, nombre_sis):
     dl = ''.join(f'<dt>{k}</dt><dd>{e(v)}</dd>' for k, v in datos)
     imgs = (([d['t']] if d.get('t') else []) + d.get('s', []))[:4]
     capturas = ''.join(f'<a href="{e(grande)}" target="_blank" rel="noopener"><img loading="lazy" src="{e(mini)}" alt="Captura de {e(titulo)}" '
-                       f'referrerpolicy="no-referrer" onerror="this.parentNode.remove()"></a>' for mini, grande in map(captura, imgs))
+                       f'referrerpolicy="no-referrer" onerror="this.parentNode.remove()"></a>'
+                       for mini, grande in ((raiz + 'capturas_mano/' + i[4:],) * 2 if i.startswith('web:') else captura(i) for i in imgs))
     # Las de Steam son panorámicas (16:9) y las de LaunchBox, casi todas de 4:3.
     de_steam = bool(imgs) and all(i.startswith('steam:') for i in imgs)
     # Si el juego no las tiene en su sistema, son de otra versión que se ve igual («sp», de datos_launchbox.py o de
@@ -621,7 +622,8 @@ def seccion_juego(gr, nombre_sis):
     # Las de itch.io (datos_itch.py) son de la página del juego o de la de la traducción, que puede enseñarlo traducido.
     # Las de libretro-thumbnails vienen de web/datos_a_mano.tsv y de web/capturas_libretro.tsv; el resto, de LaunchBox.
     origen = 'su página de Steam' if de_steam else ' y '.join(dict.fromkeys('libretro-thumbnails' if i.startswith('libretro:') else 'LaunchBox' for i in imgs))
-    pie_capturas = (f'Capturas del juego original, sin traducir{version} (de {origen}).'
+    pie_capturas = ('Capturas del juego original, sin traducir.' if all(i.startswith('web:') for i in imgs) else
+                    f'Capturas del juego original, sin traducir{version} (de {origen}).'
                     if d.get('si') not in ('juego', 'traduccion') else
                     'Capturas de la página del juego en itch.io.' if d['si'] == 'juego' else
                     'Capturas de la página de la traducción en itch.io.')
@@ -1474,7 +1476,7 @@ def pagina_juego(gr, sysn, libretro, base, ctx):
     <div class="trads">{''.join(tarjeta_trad(f, ruta=gr['ruta']) for f in gr['filas'])}</div>
   </section>
   {seccion_en_espanol(gr, raiz)}
-  {seccion_juego(gr, nombre_sis)}
+  {seccion_juego(gr, nombre_sis, raiz)}
   <section class="bloque">
     <h2>En resumen</h2>
     {resumen_juego(gr, nombre_sis)}
@@ -2791,6 +2793,10 @@ def main():
     # en un emulador y salen en la ficha como «Así se ve en español».
     if os.path.isdir(os.path.join(WEB, 'capturas_es')):
         shutil.copytree(os.path.join(WEB, 'capturas_es'), os.path.join(salida, 'capturas_es'))
+    # Capturas del juego original que trae alguien a mano (web/capturas_mano/, desde el 27-11-2026, Midnight Scenes):
+    # en web/datos_a_mano.tsv, «s» con «web:<ruta dentro de esa carpeta>».
+    if os.path.isdir(os.path.join(WEB, 'capturas_mano')):
+        shutil.copytree(os.path.join(WEB, 'capturas_mano'), os.path.join(salida, 'capturas_mano'))
     # El logotipo (web/icono.svg: el cartucho con las iniciales BT, desde el 12-11-2026) o, si no está, el del programa;
     # y sus copias en PNG para el iPhone (fondo blanco) y en ICO para quien pida /favicon.ico.
     icono = os.path.join(WEB, 'icono.svg')

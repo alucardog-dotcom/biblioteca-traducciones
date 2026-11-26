@@ -3,8 +3,15 @@
 #   v: vídeo de YouTube (su código de 11 caracteres)
 #   t: pantalla de título; s: una captura (una por línea, en el orden en que salen)
 # Una imagen de LaunchBox es su nombre de fichero; una de libretro-thumbnails, «libretro:<sistema>/<tipo>/<nombre>.png».
+# Una propia, guardada en web/capturas_mano/, «web:<ruta dentro de esa carpeta>».
+#   a: año; d: desarrolladora (para la descripción, si LaunchBox no tiene el juego)
 # Si un juego tiene aquí «t» o «s», sus capturas son estas y no las de LaunchBox, Steam o itch.io.
 psx|Iwatobi Penguin Rocky x Hopper 2: Tantei Monogatari	t	libretro:Sony - PlayStation/Named_Titles/Iwatobi Penguin Rocky x Hopper 2 - Tantei Monogatari (Japan).png	17-11-2026: LaunchBox no tiene capturas de juego ni vídeo
 psx|Iwatobi Penguin Rocky x Hopper 2: Tantei Monogatari	s	libretro:Sony - PlayStation/Named_Snaps/Iwatobi Penguin Rocky x Hopper 2 - Tantei Monogatari (Japan).png
 psx|Iwatobi Penguin Rocky x Hopper 2: Tantei Monogatari	v	38b1W4oXWxY	The Video Game Museum en YouTube (5:24)
 psx|Twilight Syndrome: Tansaku-hen	v	o3QATpdhC94	20-11-2026: tráiler que trajo el usuario; LaunchBox no tiene vídeo
+pc|Midnight Scenes	a	2017	27-11-2026: serie de seis episodios (2017-2026); LaunchBox solo tiene los tres primeros, por separado
+pc|Midnight Scenes	d	Octavi Navarrete	
+pc|Midnight Scenes	s	web:pc/midnight-scenes/01.webp	capturas que trajo el usuario
+pc|Midnight Scenes	s	web:pc/midnight-scenes/02.webp	
+pc|Midnight Scenes	s	web:pc/midnight-scenes/03.webp	
