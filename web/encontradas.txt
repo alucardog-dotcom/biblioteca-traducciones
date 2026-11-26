@@ -58,3 +58,6 @@ dreamcast|Mr. Driller|BnD Translations / Locobos|2026-11-24|en un recopilatorio 
 dreamcast|Neo Golden Logres|BnD Translations / tiu|2026-11-24|en un recopilatorio de parches de Dreamcast enlazado en el hilo «Lista de juegos de Dreamcast en español» de El Otro Lado. Nos avisó Leonardo, un lector
 dreamcast|Tony Hawk's Pro Skater 2|BnD Translations / a4tech|2026-11-24|en un recopilatorio de parches de Dreamcast enlazado en el hilo «Lista de juegos de Dreamcast en español» de El Otro Lado. Nos avisó Leonardo, un lector
 psx|Dead or Alive|SK50 Translate / Asitaka|2026-11-25|en la copia del parche que conservaba un lector. Nos la mandó Anko_07
+psx|Marvel vs. Capcom: Clash of Super Heroes|BnD Translations / gaki_deka|2026-11-26|en la copia del parche que conservaba un lector. Nos la mandó Anko_07
+psx|X-Men vs. Street Fighter|BnD Translations / DC_Tradu|2026-11-26|en la copia del parche que conservaba un lector. Nos la mandó Anko_07
+psx|Tomb Raider|SK50 Translate / Kairon|2026-11-26|en la copia del parche que conservaba un lector. Nos la mandó Anko_07
