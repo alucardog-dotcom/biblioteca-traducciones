@@ -1100,8 +1100,10 @@ def migas_ld(base, pasos):
 
 # ---------------------------------------------------------------- páginas
 def pagina(raiz, titulo, descripcion, ruta, cuerpo, base, imagen='img/vista-previa.png', tipo='website', ld=None, indexar=True, previa='',
-           adulto=False):
+           adulto=False, canonica=True):
     """`indexar=False` pide a los buscadores que no guarden la página (Mis listas y la 404, sin contenido propio);
+    `canonica=False` la deja sin <link rel="canonical"> (la 404: GoatCounter toma la ruta del canonical, y con él todos
+    los errores se contaban como «/404.html», sin saber qué dirección había fallado);
     `previa` es el origen (https://host) de la imagen principal, para abrir la conexión antes de que el navegador la pida.
     `adulto=True` es la ficha de un juego para adultos: quien llega directamente (desde un buscador o un enlace) ve
     primero un aviso de mayoría de edad en lugar de la ficha. No sale a quien ya activó «Mostrar juegos para adultos»
@@ -1142,7 +1144,7 @@ def pagina(raiz, titulo, descripcion, ruta, cuerpo, base, imagen='img/vista-prev
 <meta name="referrer" content="strict-origin">
 <title>{e(titulo)}</title>
 <meta name="description" content="{e(descripcion)}">
-{extra}<link rel="canonical" href="{e(canon)}">
+{extra}{f'<link rel="canonical" href="{e(canon)}">' if canonica else ''}
 <link rel="icon" href="{raiz}icono.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="{raiz}apple-touch-icon.png">
 <link rel="stylesheet" href="{raiz}estilo.css">
@@ -2566,11 +2568,29 @@ def pagina_listas(base):
 
 
 def pagina_404(base):
+    """La página de error. Sin canonical, y GoatCounter cuenta cada error como «/404/<dirección que falló>», para ver
+    en su panel qué enlaces están rotos (filtrando las rutas por «404»). Si la dirección era la de una ficha, ofrece
+    buscar ese juego en el catálogo: suele ser una ficha retirada a petición de su autor o un título corregido."""
     cuerpo = f'''<main class="sistema">
   <h1>Esta página no existe</h1>
-  <p class="lede">Puede que el juego haya cambiado de nombre en el catálogo. Búscalo en el <a href="{base}catalogo/">catálogo</a> o vuelve al <a href="{base}">inicio</a>.</p>
-</main>'''
-    return pagina(base, f'Página no encontrada · {SITIO}', 'Esta página no existe.', '404.html', cuerpo, base, indexar=False)
+  <p class="lede">Puede que la ficha se haya retirado a petición de su autor, o que el juego haya cambiado de nombre en el catálogo.</p>
+  <p class="texto" id="buscar-404" hidden><a class="btn primario" id="buscar-404-a" href="{base}catalogo/">Buscar en el catálogo</a></p>
+  <p class="texto">También puedes ir al <a href="{base}catalogo/">catálogo</a> o volver al <a href="{base}">inicio</a>. Si has llegado desde un enlace de otra web y crees que debería funcionar, escríbeme a {contacto('Enlace roto', clic='correo-404')}.</p>
+</main>
+<script>
+window.goatcounter = {{path: function () {{ return '/404' + location.pathname + location.search; }}}};
+(function () {{
+  var m = location.pathname.match(/\\/juego\\/[^\\/]+\\/([^\\/]+)/);
+  if (!m) return;
+  var q = decodeURIComponent(m[1]).replace(/-/g, ' ').trim();
+  if (!q) return;
+  var a = document.getElementById('buscar-404-a');
+  a.href = '{base}catalogo/?q=' + encodeURIComponent(q);
+  a.textContent = 'Buscar «' + q + '» en el catálogo';
+  document.getElementById('buscar-404').hidden = false;
+}})();
+</script>'''
+    return pagina(base, f'Página no encontrada · {SITIO}', 'Esta página no existe.', '404.html', cuerpo, base, indexar=False, canonica=False)
 
 
 def parches_json(filas):
