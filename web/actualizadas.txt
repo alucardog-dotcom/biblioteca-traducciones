@@ -33,6 +33,7 @@ nes|Captain Tsubasa Vol. II: Super Striker PLUS|vhernandezm|2026-11-19
 ps2|Rurouni Kenshin: Enjou! Kyoto Rinne|alexen64bits|2026-11-19
 3ds|Phoenix Wright: Ace Attorney Trilogy|alexen64bits|2026-11-21
 psx|Devilman|alexen64bits|2026-11-21
-gba|Fire Emblem: hack de parejas del mismo género|alexen64bits|2026-11-25
 psvita|Time Travelers|alexen64bits|2026-11-25
 psp|Persona 2: Eternal Punishment|alexen64bits|2026-11-25
+3ds|Shin Megami Tensei: Strange Journey Redux|alexen64bits|2026-11-27
+gba|Fire Emblem: hack de parejas del mismo género|alexen64bits|2026-11-27
