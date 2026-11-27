@@ -36,8 +36,9 @@ psx|Devilman|alexen64bits|2026-11-21
 psvita|Time Travelers|alexen64bits|2026-11-25
 psp|Persona 2: Eternal Punishment|alexen64bits|2026-11-25
 3ds|Shin Megami Tensei: Strange Journey Redux|alexen64bits|2026-11-27
-gba|Fire Emblem: hack de parejas del mismo género|alexen64bits|2026-11-27
 3ds|MonHun Nikki: Poka Poka Airou Mura DX|ramiro634|2026-11-27
 psp|Shin Megami Tensei: Persona|Jayssie|2026-11-27
 megadrive|Mazin Saga: Mutant Fighter|FuchikomaRed|2026-11-27
 nds|Knights in the Nightmare|Alesssro|2026-11-27
+nds|Dramatic Dungeon: Sakura Taisen – Kimi Aru ga Tame|alexen64bits|2026-11-28
+gba|Fire Emblem: hack de parejas del mismo género|alexen64bits|2026-11-28
