@@ -3,22 +3,25 @@
 <h1 align="center">Biblioteca de traducciones</h1>
 
 <p align="center"><b>Juega en español a juegos que nunca salieron traducidos.</b><br>
-Más de 6.000 traducciones hechas por aficionados, de la NES a la Switch y los juegos de PC de hoy.</p>
+Más de 7.000 traducciones y doblajes hechos por aficionados, de la NES a la Switch y los juegos de PC de hoy. Para Windows y Linux.</p>
 
 <p align="center">
   <a href="https://github.com/alucardog-dotcom/biblioteca-traducciones/releases/latest"><img alt="Última versión" src="https://img.shields.io/github/v/release/alucardog-dotcom/biblioteca-traducciones?label=versi%C3%B3n&color=c60b1e"></a>
   <a href="https://github.com/alucardog-dotcom/biblioteca-traducciones/releases"><img alt="Descargas" src="https://img.shields.io/github/downloads/alucardog-dotcom/biblioteca-traducciones/total?label=descargas"></a>
   <img alt="Windows 10 y 11" src="https://img.shields.io/badge/Windows-10%20y%2011-0078D6">
+  <img alt="Linux (AppImage)" src="https://img.shields.io/badge/Linux-AppImage-FCC624">
   <a href="LICENSE"><img alt="Licencia GPL-3.0" src="https://img.shields.io/badge/licencia-GPL--3.0-blue"></a>
 </p>
 
-<p align="center"><a href="https://github.com/alucardog-dotcom/biblioteca-traducciones/releases/latest"><b>⬇️ Descargar para Windows</b></a> · <a href="https://bibliotecadetraducciones.com/"><b>🔎 Buscar tu juego en la web</b></a></p>
+<p align="center"><a href="https://github.com/alucardog-dotcom/biblioteca-traducciones/releases/latest"><b>⬇️ Descargar para Windows</b></a> · <a href="https://github.com/alucardog-dotcom/biblioteca-traducciones/releases/latest/download/Biblioteca-de-traducciones-x86_64.AppImage"><b>🐧 Descargar para Linux</b></a> · <a href="https://bibliotecadetraducciones.com/"><b>🔎 Buscar tu juego en la web</b></a></p>
 
 ¿Tienes un juego japonés de Super Nintendo, un RPG de PlayStation que nunca llegó a España o un juego de Steam que solo está en inglés? Hay muchas probabilidades de que alguien lo haya traducido. La Biblioteca de traducciones busca tus juegos, te dice cuáles tienen traducción al español y la aplica con un clic. **Nunca descarga juegos**: solo los parches de traducción, que se aplican sobre tu propia copia, y tu copia queda intacta.
 
 ## Qué hace
 
-- **Catálogo** de 6.844 traducciones al español de 5.995 juegos: consolas y ordenadores clásicos (NES, Super Nintendo, Mega Drive, Game Boy, PlayStation, PS2, Nintendo DS…), MS-DOS, PC y consolas actuales (Switch, PS3, PS4 y Xbox 360). Cada juego tiene una sola ficha, y dentro eliges entre sus traducciones.
+- **Catálogo** de más de 7.000 traducciones al español de más de 6.000 juegos: consolas y ordenadores clásicos (NES, Super Nintendo, Mega Drive, Game Boy, PlayStation, PS2, Nintendo DS…), MS-DOS, PC y consolas actuales (Switch, PS3, PS4 y Xbox 360). Cada juego tiene una sola ficha, y dentro eliges entre sus traducciones. También hay doblajes al español hechos por aficionados y algunas traducciones al catalán.
+- **Filtros** para quedarte con lo que buscas: con descarga directa, traducción completa, sin IA, en Steam, en español latino, en catalán, doblajes o con logros de RetroAchievements.
+- **Explorar** el catálogo por grupos de traducción y por sistemas, ver los doblajes, las traducciones que están en camino y las traducciones perdidas.
 - **Busca tus juegos** en las carpetas que elijas: ROMs sueltas o en .zip, .7z y .rar; discos .cue/.bin, .gdi y .chd; juegos de Switch, Wii U, PS3, PS4 y Xbox 360 (.nsp, .xci, .wua, .pkg, .xex…). También encuentra los juegos de PC que tienes instalados con Steam, GOG y Epic.
 - **Comprueba que tu copia es la buena**: por su CRC32 sabe si es la versión que pide la traducción, también sin la cabecera de NES o de SNES.
 - **Descarga el parche y lo aplica**: IPS, BPS, UPS, PPF, APS y xdelta. Saca el juego de su comprimido o de su .chd y devuelve los discos traducidos en .chd. El traducido queda junto al original con la etiqueta `[T-Es]`, o en la carpeta que elijas.
@@ -27,17 +30,23 @@ Más de 6.000 traducciones hechas por aficionados, de la NES a la Switch y los j
 - **¿No tienes el juego?** En los que se venden en Steam, la ficha enlaza a su página de la tienda. En los que no están en Steam, si se conoce su página oficial (itch.io, Game Jolt o la web de su autor), enlaza a ella. Ninguno es un enlace de afiliado.
 - **Portadas** de libretro-thumbnails, Steam y LaunchBox. Si falta alguna, puedes poner la tuya: elegir una imagen, pegarla con Ctrl+V o soltarla sobre el juego.
 - **Favoritos y listas**: pulsa el corazón de un juego para tenerlo en Favoritos, o guárdalo en tus propias listas («Pendientes», «RPG japoneses»…) para volver a él más tarde.
-- **Con RetroBat**, el botón Jugar abre el juego traducido con su emulador.
+- **Con RetroBat** (en Windows), el botón Jugar abre el juego traducido con su emulador.
 - **Descubrir** te propone cada día una tanda de juegos al azar con traducción completa, uno por sistema, para empezar por algún sitio.
 - **Juegos para adultos**: sus traducciones van ocultas de serie. Si eres mayor de edad, actívalas en Ajustes.
 
 ## Instalar
 
-Descarga el instalador (`Biblioteca-de-traducciones-setup.exe`) de la [última versión](../../releases/latest) y ábrelo. Funciona en Windows 10 y 11 de 64 bits.
+**Windows:** descarga el instalador (`Biblioteca-de-traducciones-setup.exe`) de la [última versión](../../releases/latest) y ábrelo. Funciona en Windows 10 y 11 de 64 bits.
 
 El instalador no está firmado (el porqué, en [Code signing policy](#code-signing-policy)), así que Windows puede avisar con «Windows protegió su PC». Para instalarlo, pulsa **Más información** y luego **Ejecutar de todas formas**.
 
+**Linux** (en pruebas): descarga `Biblioteca-de-traducciones-x86_64.AppImage` de la [última versión](../../releases/latest), dale permiso de ejecución (`chmod +x Biblioteca-de-traducciones-x86_64.AppImage`) y ábrelo. Funciona en cualquier distribución de 64 bits con glibc 2.35 o más nueva (Ubuntu 22.04, Debian 12 o Fedora 36 en adelante) y lleva dentro 7-Zip, xdelta3 y chdman. Diferencias con Windows: la carpeta de juegos por defecto es `~/Games`, de los juegos de PC solo encuentra los de Steam (también el de Flatpak) y no hay RetroBat, así que Jugar abre el juego con el programa que tengas para ese tipo de fichero.
+
 Al abrirlo por primera vez te pregunta en qué carpetas tienes tus juegos. El catálogo se pone al día solo cada vez que lo abres, y cada seis horas mientras siga abierto, sin reinstalar nada. Cuando sale una versión nueva del programa, aparece un aviso abajo a la izquierda. Si no quieres esperar, en Ajustes › Acerca de el botón **Buscar actualizaciones** comprueba las dos cosas al momento.
+
+## Traducciones propias
+
+Además de reunir las de otros, la Biblioteca hace algunas traducciones de juegos que no tenían ninguna al español, como Athena: Awakening from the Ordinary Life y Boundary Gate de PlayStation, Legend of Kartia, Castlevania: Rondo of Blood de PC Engine CD o Wizardry: Labyrinth of Lost Souls de PC. Sus parches están en [traducciones-biblioteca](https://github.com/alucardog-dotcom/traducciones-biblioteca) y salen en el catálogo como cualquier otra.
 
 ## De dónde salen las traducciones
 
@@ -56,11 +65,11 @@ El programa no envía datos tuyos a ningún sitio. Solo se conecta para:
 - **Versión y catálogo nuevos:** api.github.com y raw.githubusercontent.com, para ver si hay una versión nueva del programa y para traer el catálogo más reciente.
 - **Saber cuánta gente lo usa:** como mucho una vez al día, stats.bibliotecadetraducciones.com (las estadísticas de la web, con [GoatCounter](https://www.goatcounter.com/)) recibe un aviso de que se ha abierto el programa y con qué versión. No lleva tus juegos, tus carpetas ni ningún identificador, y GoatCounter no usa cookies ni guarda la IP. Se quita en Ajustes, «Estadísticas de uso».
 
-Tus ajustes, tus listas y tus datos se guardan en tu equipo: `%APPDATA%\es.traducciones.biblioteca` y `%LOCALAPPDATA%\es.traducciones.biblioteca`.
+Tus ajustes, tus listas y tus datos se guardan en tu equipo: en Windows, `%APPDATA%\es.traducciones.biblioteca` y `%LOCALAPPDATA%\es.traducciones.biblioteca`; en Linux, `~/.config/es.traducciones.biblioteca` y `~/.local/share/es.traducciones.biblioteca`.
 
 ## Code signing policy
 
-El instalador no está firmado todavía. En noviembre de 2026 se pidió la firma gratuita de [SignPath Foundation](https://signpath.org), que la da a programas de código libre con cierta difusión, y la dejaron para más adelante porque el proyecto era demasiado nuevo; se volverá a pedir cuando tenga más usuarios. Mientras tanto, cada instalador lo compila GitHub Actions desde este repositorio ([publicar.yml](.github/workflows/publicar.yml)) y en la página de cada versión GitHub muestra su huella SHA-256, con la que puedes comprobar que el fichero que has bajado es el que se publicó.
+El instalador de Windows no está firmado todavía. En noviembre de 2026 se pidió la firma gratuita de [SignPath Foundation](https://signpath.org), que la da a programas de código libre con cierta difusión, y la dejaron para más adelante porque el proyecto era demasiado nuevo; se volverá a pedir cuando tenga más usuarios. Mientras tanto, cada instalador lo compila GitHub Actions desde este repositorio ([publicar.yml](.github/workflows/publicar.yml)) y en la página de cada versión GitHub muestra su huella SHA-256, con la que puedes comprobar que el fichero que has bajado es el que se publicó.
 
 ## ¿Te gusta?
 
