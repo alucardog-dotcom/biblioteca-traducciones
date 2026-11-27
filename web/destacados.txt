@@ -1,17 +1,16 @@
 # Juegos que van siempre en el mosaico de la portada de la web (si tienen portada), uno por línea: sistema|título tal como está en el catálogo.
 # El resto del mosaico lo eligen las novedades con tirón y los juegos de más tirón del catálogo (web/popularidad.tsv).
 # Con «-» delante del sistema, el juego no sale en el mosaico. Con «|hasta AAAA-MM-DD» al final, la línea vale hasta ese día incluido.
-# 21-11-2026: el usuario pidió rotar el mosaico: sus dos traducciones que aún no estaban y siete juegos nuevos, del mismo
-# estilo que la tanda anterior (conocidos, nunca publicados en español y de sistemas distintos).
-psx|Legend of Kartia
-pc|Wizardry: Labyrinth of Lost Souls
-psx|Valkyrie Profile
-gba|Mother 3
-snes|Seiken Densetsu 3
-snes|Bahamut Lagoon
-saturn|Radiant Silvergun
-nes|Sweet Home
-psp|Persona 2: Innocent Sin
+# 27-11-2026: el usuario pidió rehacer el mosaico con una mezcla de novedades, con Wild Arms 5 y juegos interesantes: los nueve son de la última semana.
+ps2|Wild Arms 5
+ps2|Namco x Capcom
+psx|Vandal Hearts
+nds|Knights in the Nightmare
+3ds|Shin Megami Tensei: Strange Journey Redux
+psp|Persona 2: Eternal Punishment
+xbox360|Tales of Vesperia
+snes|Castlevania: Dracula X
+psvita|Corpse Party: Blood Drive
 # Desde el 12-11-2026: Super Mario 64 fuera.
 -n64|Super Mario 64
 # 16-11-2026: el usuario pidió rehacer el mosaico con juegos completamente distintos de los que había. Los que estaban
@@ -37,3 +36,13 @@ psp|Persona 2: Innocent Sin
 -pc|GNOSIA|hasta 2026-11-28
 -pc|The Hundred Line -Last Defense Academy-|hasta 2026-11-28
 -dreamcast|Grandia II|hasta 2026-11-28
+# 27-11-2026: los nueve de la tanda del 21-11 no vuelven a salir solos durante una semana.
+-psx|Legend of Kartia|hasta 2026-12-04
+-pc|Wizardry: Labyrinth of Lost Souls|hasta 2026-12-04
+-psx|Valkyrie Profile|hasta 2026-12-04
+-gba|Mother 3|hasta 2026-12-04
+-snes|Seiken Densetsu 3|hasta 2026-12-04
+-snes|Bahamut Lagoon|hasta 2026-12-04
+-saturn|Radiant Silvergun|hasta 2026-12-04
+-nes|Sweet Home|hasta 2026-12-04
+-psp|Persona 2: Innocent Sin|hasta 2026-12-04
