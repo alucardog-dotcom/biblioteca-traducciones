@@ -40,3 +40,4 @@ gba|Fire Emblem: hack de parejas del mismo género|alexen64bits|2026-11-27
 3ds|MonHun Nikki: Poka Poka Airou Mura DX|ramiro634|2026-11-27
 psp|Shin Megami Tensei: Persona|Jayssie|2026-11-27
 megadrive|Mazin Saga: Mutant Fighter|FuchikomaRed|2026-11-27
+nds|Knights in the Nightmare|Alesssro|2026-11-27
