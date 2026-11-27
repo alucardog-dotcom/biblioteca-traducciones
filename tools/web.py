@@ -255,6 +255,26 @@ def fuera_de_novedades_portada():
     return fuera
 
 
+def primero_en_novedades():
+    """Novedades potentes que se ponen a mano las primeras de su día en las novedades (portada, /novedades/ y RSS),
+    aunque sean de IA: líneas «+sistema|título tal como está en el catálogo» de web/portada_novedades.txt, con
+    «|hasta AAAA-MM-DD» opcional. Desde el 27-11-2026, por Wild Arms 5 de JinK. Devuelve {(sistema, título sin
+    acentos en minúsculas)}."""
+    ruta = os.path.join(WEB, 'portada_novedades.txt')
+    primero = set()
+    if not os.path.isfile(ruta):
+        return primero
+    hoy = date.today().isoformat()
+    for l in open(ruta, encoding='utf-8'):
+        partes = [p.strip() for p in l.strip().split('|')]
+        if len(partes) < 2 or not partes[0].startswith('+'):
+            continue
+        hasta = next((p[6:].strip() for p in partes[2:] if p.startswith('hasta ')), '')
+        if not (hasta and hoy > hasta):
+            primero.add((partes[0][1:].strip(), sin_acentos(partes[1]).lower()))
+    return primero
+
+
 def propia(f):
     """Traducción hecha por la propia Biblioteca (Athena, 16-11-2026): va la primera de su día en las novedades."""
     return f['grupo'].strip() == 'Biblioteca de traducciones'
@@ -1029,7 +1049,9 @@ def novedades(filas, sin_adultos=False):
     las que vuelven al catálogo con el permiso de sus autores (READMITIDAS; decisión del usuario el 13-11-2026,
     con Drakengard 3 de Traducciones Vacuno), luego las que nos mandan sus propios autores, que encabezan el día aunque
     sean de IA; luego las nuevas antes que las puestas al día; luego las que tienen portada y no son de IA, y luego por
-    la fecha de la traducción, para que la portada luzca."""
+    la fecha de la traducción, para que la portada luzca. Antes que todas, las que se ponen a mano con «+» en
+    web/portada_novedades.txt (primero_en_novedades())."""
+    primero = primero_en_novedades()
     dias = {}
     for f in filas:
         # Las que solo están en catalán (u otra lengua de España) entran en el catálogo pero no son novedad (20-11-2026).
@@ -1039,7 +1061,8 @@ def novedades(filas, sin_adultos=False):
         fs.sort(key=fecha_iso, reverse=True)
         # Las puestas al día («Actualizado», de web/actualizadas.txt) van detrás de las nuevas de su día: desde el
         # 15-11-2026 llegan de 20 en 20 con la revisión semanal de actualizaciones y no deben tapar las altas.
-        fs.sort(key=lambda f: (not propia(f), clave_fila(f) not in READMITIDAS or bool(f.get('act')), not enviada_por_autor(f),
+        fs.sort(key=lambda f: ((f['sistema'], sin_acentos(f['juego']).lower()) not in primero,
+                               not propia(f), clave_fila(f) not in READMITIDAS or bool(f.get('act')), not enviada_por_autor(f),
                                bool(f.get('act')), not con_portada(f), es_ia(f)))
     return sorted(dias.items(), reverse=True)
 

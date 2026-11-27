@@ -1,5 +1,9 @@
 # Juegos que no salen en «Últimas traducciones» ni en «Últimos doblajes» de la portada (siguen en /novedades/ y en su ficha).
 # Una línea por juego: -sistema|título tal como está en el catálogo. Con «|hasta AAAA-MM-DD» al final, la línea vale hasta ese día incluido.
 # Las traducciones propias de la Biblioteca van siempre las primeras de su día (web.py, propia()).
+# Con «+» delante del sistema, el juego va el primero de su día en las novedades (portada, /novedades/ y RSS), aunque
+# sea de IA (web.py, primero_en_novedades()).
+# 27-11-2026: Wild Arms 5 de JinK, la primera de su día por decisión del usuario («es una novedad potente»).
++ps2|Wild Arms 5|hasta 2026-12-04
 # 16-11-2026: Athena, la traducción propia, ocupa en la portada el sitio de Dissidia 012, por decisión del usuario.
 -psp|Dissidia 012 [duodecim] Final Fantasy|hasta 2026-11-23
