@@ -11,6 +11,7 @@ nes|Super Mario Bros.|Her-Saki	100	lb:1240 +7trad
 nes|Super Mario Bros.|LadyMariann	100	lb:1240 +7trad
 nes|Super Mario Bros.|Traducciones Crackowia (Rod Mérida)	100	lb:1240 +7trad
 nes|Super Mario Bros.|Traducciones Wave	100	lb:1240 +7trad
+pc|Grand Theft Auto V|Hanibalmax	100	lb:827 st:1906083
 snes|Donkey Kong Country|Eduard Ereza	100	lb:1229 +3trad
 snes|Donkey Kong Country|Traducciones Wave	100	lb:1229 +3trad
 snes|Donkey Kong Country|hrtoledo	100	lb:1229 +3trad
@@ -348,6 +349,7 @@ nes|Teenage Mutant Ninja Turtles|Traducciones Wave	80	lb:319 +2trad
 pc|Batman: Arkham Asylum|IG Studios	80	lb:152 st:63387
 pc|Dead Space (2023)|ErehYagger	80	lb:157 st:64471
 pc|Lies of P|Ecos del Doblaje	80	lb:82 st:59638
+pc|Mass Effect Legendary Edition|ondaplana	80	lb:143 st:64493
 pc|Oneshot|Clan DLAN	80	lb:28 st:60059
 pc|The Elder Scrolls IV: Oblivion Remastered|ondaplana	80	lb:63 st:60189
 snes|Mega Man VII|DCD Soft	80	lb:266 +4trad
@@ -437,6 +439,9 @@ psx|Mega Man X4|ElRetroDan	78	lb:239 +3trad
 psx|Mega Man X4|Estudio Cases	78	lb:239 +3trad
 psx|Mega Man X4|Vagrant Traducciones	78	lb:239 +3trad
 psx|Resident Evil 3: Nemesis|HistoryGames	78	lb:382
+psx|Vagrant Story|SK50 Translate	78	lb:240 +3trad
+psx|Vagrant Story|Vagrant Traducciones	78	lb:240 +3trad
+psx|Vagrant Story|Vegetal Translations	78	lb:240 +3trad
 snes|Aero Fighters|Chilensis / Strider	78	lb:236 +4trad
 snes|Aero Fighters|Duncan	78	lb:236 +4trad
 snes|Aero Fighters|Oderflapmc	78	lb:236 +4trad
@@ -534,8 +539,6 @@ pc|Warm Snow|shadowman1	76	lb:6 st:35380
 pc|Wolfenstein II: The New Colossus|Fur3r	76	lb:111 st:35738
 psx|Breath of Fire III|Vagrant Traducciones	76	lb:232 +2trad
 psx|Breath of Fire III|Vegetal Translations	76	lb:232 +2trad
-psx|Vagrant Story|SK50 Translate	76	lb:240 +2trad
-psx|Vagrant Story|Vagrant Traducciones	76	lb:240 +2trad
 snes|Batman Returns|Traducciones Wave	76	lb:316
 snes|Battletoads in Battlemaniacs|Chilensis	76	lb:206 +6trad
 snes|Battletoads in Battlemaniacs|Rocky	76	lb:206 +6trad
@@ -906,6 +909,8 @@ pc|Stationeers|socramazibi	70	lb:2 st:8668 +2trad
 pc|Sword and Fairy 7|shadowman1	70	lb:19 st:15611
 pc|Tales From The Borderlands|Clan DLAN	70	lb:48 st:15192
 psx|Blood Omen|MsULTIMATEMAX	70	lb:206
+psx|Brave Fencer Musashi|JinK	70	lb:146 +2trad
+psx|Brave Fencer Musashi|shamus	70	lb:146 +2trad
 psx|Breath of Fire IV|CUE	70	lb:210
 psx|Medal of Honor|BnD Translations / Wataro	70	lb:204
 psx|Tony Hawk's Skateboarding|BnD Translations / Tubular	70	lb:207
@@ -982,6 +987,8 @@ pc|Yakuza 5 Remastered|Farolito Productions (Cafe y osa), con diálogos neutros 
 pc|Yakuza 5 Remastered|FarolitoProductions	69	lb:42 st:6273 +3trad
 pc|Yakuza 5 Remastered|NMUI	69	lb:42 st:6273 +3trad
 pc|Yet Another Zombie Survivors|shadowman1	69	lb:14 st:14770
+psx|Apocalypse|Asc	69	lb:144 +2trad
+psx|Apocalypse|PeterDelta	69	lb:144 +2trad
 psx|Mega Man Legends|Vagrant Traducciones	69	lb:183
 psx|Megaman Legends|	69	lb:183
 psx|Rayman|PeterDelta	69	lb:194
@@ -1207,7 +1214,6 @@ pc|The Song of Saya|Dantalian (basada en la de 07th Inquisition)	66	st:9744
 pc|Troubleshooter|shadowman1	66	lb:5 st:9537
 pc|WORLD OF HORROR|Asenath	66	lb:15 st:9089
 ps2|Silent Hill 4: The Room|danuffo	66	lb:153
-psx|Brave Fencer Musashi|JinK	66	lb:146
 psx|Croc: Legend of the Gobbos|danuffo	66	lb:148
 psx|Digimon World: Horizon|felixcarmona	66	lb:145
 psx|Disney-Pixar's Toy Story 2 - Buzz Lightyear to the Rescue!|danuffo	66	lb:154
@@ -1351,7 +1357,6 @@ pc|Steins;Gate 0|delta3pc (traducción de Gate of Steiner)	65	lb:4 st:8035
 pc|Sunless Sea (con Zubmariner)|HoJu	65	lb:26 st:7650
 pc|The Walking Dead: Saints & Sinners|Hanibalmax	65	lb:6 st:7644
 pc|Yakuza 3 Remastered|Dragones de Dojima (Crazy56, KARU y Kcat0)	65	lb:34 st:7907
-psx|Apocalypse|PeterDelta	65	lb:144
 psx|Diablo|Marcelo Amor	65	lb:137
 psx|Jackie Chan Stuntmaster|BnD Translations / DarkWater	65	lb:140
 psx|Legend of Mana|GreenGoblin	65	lb:139
@@ -1465,6 +1470,7 @@ pc|Ultimate Admiral: Dreadnoughts|Lord Kur	64	st:6707
 pc|WitchSpring R|locoroco96	64	lb:6 st:6910
 psx|Alundra 2: A New Legend Begins|Bytechip	64	lb:126
 psx|Dragon Ball: Final Bout|BnD Translations / Clark	64	lb:124
+psx|Fighting Force|	64	lb:127
 psx|Medal of Honor: Underground|BnD Translations / Wataro	64	lb:133
 psx|Spiderman 2|PeterDelta	64	lb:129
 saturn|Dragon Force|FJVERALV (Fveralv)	64	lb:124
@@ -1602,6 +1608,8 @@ ps2|Xenosaga Episode II: Jenseits von Gut und Böse|Batnoska	63	lb:91 +2trad
 ps2|Xenosaga Episode II: Jenseits von Gut und Böse|JinK	63	lb:91 +2trad
 ps3|Persona 5|SeppNel (backport) y Artur16211	63	lb:122
 psp|Shin Megami Tensei: Persona 3 Portable|HxCannon	63	lb:117
+psx|Alone in the Dark: The New Nightmare|eduardo_a2j	63	lb:117
+psx|Ridge Racer Revolution|BnD Translations / Sr0dds	63	lb:121
 psx|Street Fighter EX2 Plus|BnD Translations / Er_Sevi	63	lb:116
 saturn|Die Hard Arcade|Zurin y Los SaturninoS	63	lb:121
 snes|Cool Spot|Traducciones Wave	63	lb:119
@@ -1733,7 +1741,9 @@ psp|Dissidia 012 [duodecim] Final Fantasy|RetroKodes	62	lb:108
 psp|Shin Megami Tensei: Persona|Jayssie	62	lb:79 +2trad
 psp|Shin Megami Tensei: Persona|Quete_importa (Jose-Chavez96)	62	lb:79 +2trad
 psx|Dead or Alive|SK50 Translate / Asitaka	62	lb:107
+psx|Front Mission 3|	62	lb:112
 psx|Mortal Kombat Mythologies: Sub-Zero|Futuretime23	62	lb:112
+psx|Syphon Filter 3|eduardo_a2j	62	lb:109
 saturn|Shinobi X (Shin Shinobi Den)|kitchen34 (Delta Island) / Lg30 / Ml-Virtual	62	lb:113
 snes|Aero the Acro-Bat 2|semco	62	lb:107
 snes|Bishoujo Senshi Sailor Moon Another Story|Max1323	62	lb:80 +2trad
@@ -2387,6 +2397,7 @@ pcengine|Chew-Man-Fu|Lukas	58	lb:79
 pcengine|Gradius|Traducciones Wave	58	lb:83
 pc|Akiba's Trip: Undead & Undressed|CepitaUva	58	lb:17 st:3078
 pc|Beacon Pines|shadowman1	58	lb:12 st:3114
+pc|Bleak Faith: Forsaken|JinK	58	lb:5 st:2885
 pc|CARIMARA: Beneath the forlorn limbs (español neutro)|BenoAbarcaS	58	st:2950
 pc|Caribbean Legend|Jtem-esp	58	lb:1 st:2994
 pc|Contradiction: Spot the Liar!|Artemis y Pakolmo	58	lb:5 st:2841
@@ -2976,8 +2987,10 @@ ps2|Evil Dead: A Fistful of Boomstick|	55	lb:63
 ps2|Kuon|Mr.Nobody	55	lb:63
 ps2|Psychonauts|	55	lb:63
 ps2|Saint Seiya: Sanctuary Juunikyuu-hen|TeamBT4	55	lb:62
+ps2|Wild Arms 5|JinK	55	lb:62
 psx|Bust-A-Move 4|BnD Translations / DarkWater	55	lb:62
 psx|Chocobo's Dungeon 2|Bytechip	55	lb:66
+psx|Chrono Trigger|Gammasoft / Gandalf	55	lb:63
 psx|King's Field II|	55	lb:65
 psx|Kula World|BnD Translations / Zeisler	55	lb:62
 psx|Tail Concerto|Mr.Nobody	55	lb:64
@@ -4042,6 +4055,7 @@ ps2|Digimon World: Data Squad|Kiridor y colaboradores (PS2 Traducciones)	49	lb:3
 ps2|Killer7|losjacksonfiveCPU	49	lb:42
 ps2|Phantasy Star Universe|Bytechip	49	lb:39
 ps2|Raw Danger!|	49	lb:39
+ps2|Shin Megami Tensei: Devil Summoner 2: Raidou Kuzunoha vs. King Abaddon|alexen64bits	49	lb:41
 psx|Arc the Lad II|JinK	49	lb:39
 psx|Clock Tower: The First Fear|arcraith	49	lb:42
 psx|Mizzurna Falls|Mr.Nobody	49	lb:40
@@ -4501,6 +4515,7 @@ psx|Blaze & Blade: Eternal Quest|johanderohan (Parches en Castellano)	46	lb:32
 psx|Hokuto no Ken: Seiki Matsu Kyuseishu Densetsu|ScorpioN-MsX	46	lb:32
 psx|Hoshigami: Ruining Blue Earth|delno	46	lb:33
 psx|Legend|Locobos	46	lb:33
+psx|Panzer Front|BnD Translations / Scorpio	46	lb:32
 psx|Ready 2 Rumble Boxing: Round 2|BnD Translations / Gusp	46	lb:33
 scummvm|Amazon: Guardians of Eden (CD)|pakolmo	46	lb:31
 scummvm|Conquests of Camelot: The Search for the Grail|Patricio Abusleme y SkaZZ	46	lb:31
@@ -4620,6 +4635,7 @@ ps3|Valkyria Chronicles|Selvaria Team	45	lb:29
 psx|...Iru!|Mr.Nobody	45	lb:29
 psx|Mort the Chicken|BnD Translations / Scorpio	45	lb:29
 psx|Nekketsu Oyako|Max1323	45	lb:30
+psx|Rugrats: Studio Tour|BnD Translations / Wataro	45	lb:29
 psx|Shin Megami Tensei|johanderohan (Parches en Castellano)	45	lb:30
 scummvm|Phantasmagoria: A Puzzle of Flesh|pakolmo, kelmer, asperet, walas74, Marta García y Tamara Morales	45	lb:29
 scummvm|Rise of the Dragon|walas74 y SkaZZ	45	lb:30
@@ -4729,6 +4745,7 @@ pc|Yume Nikki|TheFireRed, Lautaro1428 y AegisTrad; guía de V I R A L	44	lb:28
 psx|Dr. Slump|johanderohan (Parches en Castellano)	44	lb:27
 psx|Penny Racers|BnD Translations / Estratega	44	lb:28
 psx|RPG Maker|BnD Translations / Lobap	44	lb:27
+psx|The King of Fighters '98: Dream Match Never Ends|BnD Translations / gaki_deka	44	lb:28
 saturn|Myst|kitchen34 (Delta Island)	44	lb:28
 scummvm|Dragonsphere|rubenbirri y raulpuro	44	lb:28
 scummvm|Return to Zork|Cait Sith	44	lb:28
@@ -4927,6 +4944,7 @@ pc|Yggdra Union: We'll Never Fight Alone|Yuzuy	42	lb:3 st:316
 psp|Mana Khemia: Student Alliance|El-ladronfantasma	42	lb:23
 psp|Valkyria Chronicles 3|Selvaria Team	42	lb:24
 psx|Echo Night 2: El Señor de las Pesadillas|alexen64bits	42	lb:24
+psx|Real Bout Fatal Fury|borre	42	lb:24
 psx|The King of Fighters Kyo|Iroquois	42	lb:24
 saturn|Frankenstein: Through the Eyes of the Monster|kitchen34 (Delta Island)	42	lb:23
 scummvm|Elvira|PiCoTTo	42	lb:23
@@ -5156,6 +5174,7 @@ psp|Persona 2: Eternal Punishment|alexen64bits	39	lb:19
 psp|Shadow of Destiny (Shadow of Memories)|Bytechip	39	lb:19
 psx|Baroque|Mr.Nobody	39	lb:18
 psx|Juggernaut|Mr.Nobody	39	lb:19
+psx|Metal Slug|Asc	39	lb:19
 psx|Rugrats: Totally Angelica|BnD Translations / Scorpio	39	lb:18
 psx|Suikogaiden Vol. 1|FJVERALV (Fveralv)	39	lb:19
 scummvm|EcoQuest: The Search for Cetus|SkaZZ	39	lb:18
@@ -5549,6 +5568,7 @@ msx1|Guardic|Traducciones Wave	32	lb:10
 nes|Basse Def Adventures|koda	32	lb:10
 nes|Destroyer|Traducciones Wave	32	lb:10
 nes|Dream Fighter|Traducciones Wave	32	lb:10
+nes|Full Quiet|alexen64bits	32	lb:10
 nes|Plasma Ball|Jona Gameplays	32	lb:10
 nes|Power Soccer|Traducciones Wave	32	lb:10
 nes|SD Gundam: Gachapon Senshi 2 - Capsule Senki|Max1323	32	lb:10
@@ -5559,6 +5579,7 @@ pc|5 Days a Stranger|kurt y raulpuro	32	lb:10
 pc|Baldur's Gate y Tales of the Sword Coast|Clan DLAN	32	lb:10
 pc|Gothic II|Clan DLAN	32	lb:10
 psp|Sol Trigger|PeronchoCraft	32	lb:10
+psx|Castrol Honda VTR|BnD Translations / Scorpio	32	lb:10
 psx|Devilman|alexen64bits	32	lb:10
 scummvm|Nippon Safes, Inc.|cireja	32	lb:10
 scummvm|Pajama Sam 3: You are What You Eat from Your Head to Your Feet|pakolmo	32	lb:10
@@ -5611,8 +5632,12 @@ pc|Drova - Forsaken Kin|Beat	30	lb:6 +2trad
 pc|Drova - Forsaken Kin|MancoMeLevanto	30	lb:6 +2trad
 pc|If On a Winter's Night, Four Travelers|walas74	30	lb:9
 pc|STALCRAFT|paulvilla	30	lb:9
+pc|The Supper|JoanMon Games	30	lb:6 +2trad
+pc|The Supper|ORider	30	lb:6 +2trad
 pc|The Walking Dead: Temporada 1|Clan DLAN	30	lb:9
+ps2|Fullmetal Alchemist 3: Kami o Tsugu Shoujo|alexen64bits	30	lb:9
 ps2|Neon Genesis Evangelion 2|alexen64bits	30	lb:9
+psx|Rurouni Kenshin: Ishin Gekitou-hen|RetroCastellanoES	30	lb:9
 psx|Shin Megami Tensei Devil Children: Kuro no Sho / Aka no Sho|johanderohan (Parches en Castellano)	30	lb:9
 psx|Shin Megami Tensei II|johanderohan (Parches en Castellano)	30	lb:9
 scummvm|Fuck Quest|El Club del Alpedismo	30	lb:9
@@ -5753,7 +5778,6 @@ pc|Priest Simulator|SrGalletaEXT	26	lb:6
 pc|Simon the Sorcerer 3D|DarkNeo (Ruben Birri)	26	lb:6
 pc|Starlancer|Clan DLAN	26	lb:6
 pc|Starsector|vfernandezmeca	26	lb:6
-pc|The Supper|JoanMon Games	26	lb:6
 ps2|The Tairyou Jigoku|Mr.Nobody	26	lb:6
 psp|Puella Magi Madoka Magica Portable|Christiabel (con Sebox, KanedaVN, Sekaide, IrlyCracker)	26	lb:6
 psvita|Lost Dimension|alexen64bits	26	lb:6
@@ -5870,6 +5894,7 @@ pc|Zak McKracken: Between Time and Space|Danstructor, Koke_ween, Tamara Morales 
 pc|Zak McKracken: Hot Coffee|ORider	21	lb:4
 psp|Doko Demo Issho|johanderohan (Parches en Castellano)	21	lb:4
 psvita|Lone Survivor|R41D3R	21	lb:4
+psvita|Sword Art Online: Hollow Fragment|alexen64bits	21	lb:4
 psx|Manic Game Girl|Mr.Nobody	21	lb:4
 psx|Psychic Force: Puzzle Taisen|FuchikomaRed	21	lb:4
 psx|Sound Novel Evolution 1: Otogirisou - Sosei-hen|Talion (Secabel)	21	lb:4
@@ -6024,6 +6049,7 @@ pc|Well of Souls|Abandojuegos	14	lb:2
 psp|Digivice Ver. Portable|Bunkai	14	lb:2
 psp|Doko Demo Issho: Let's Gakkou!|johanderohan (Parches en Castellano)	14	lb:2
 psvita|Chaos Rings III|Joseas	14	lb:2
+psx|Side by Side Special|BnD Translations	14	lb:2
 psx|Slayers Wonderful|Bytechip	14	lb:2
 psx|Yarudora Series Vol. 3: Sampaguita|FuchikomaRed	14	lb:2
 saturn|Heart of Darkness (demo E3 1996)|kitchen34 (Delta Island)	14	lb:2
