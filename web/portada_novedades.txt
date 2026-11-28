@@ -5,5 +5,7 @@
 # sea de IA (web.py, primero_en_novedades()).
 # 27-11-2026: Wild Arms 5 de JinK, la primera de su día por decisión del usuario («es una novedad potente»).
 +ps2|Wild Arms 5|hasta 2026-12-04
+# 28-11-2026: el doblaje completo de GTA V de Hanibalmax, el primero de «Últimos doblajes» por decisión del usuario.
++pc|Grand Theft Auto V|hasta 2026-12-05
 # 16-11-2026: Athena, la traducción propia, ocupa en la portada el sitio de Dissidia 012, por decisión del usuario.
 -psp|Dissidia 012 [duodecim] Final Fantasy|hasta 2026-11-23
